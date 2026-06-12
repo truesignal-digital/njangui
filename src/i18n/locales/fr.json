@@ -1,0 +1,169 @@
+{
+  "common": {
+    "appName": "Njangi",
+    "loading": "Chargement…",
+    "back": "Retour",
+    "continue": "Continuer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "copy": "Copier",
+    "copied": "Copié ✓",
+    "error": "Une erreur s'est produite. Réessayez.",
+    "comingSoon": "Bientôt disponible"
+  },
+  "auth": {
+    "tagline": "Le carnet de votre tontine (njangi), noir sur blanc.",
+    "signInHeading": "Se connecter",
+    "signInDesc": "Entrez votre numéro de téléphone. Un code vous arrive par SMS.",
+    "signUpHeading": "Créer un compte",
+    "signUpDesc": "Votre numéro de téléphone suffit. Un code vous arrive par SMS.",
+    "custodyNote": "Pas de frais. Votre argent ne passe jamais par l'appli.",
+    "finishingSignInTitle": "Finalisation de la connexion…",
+    "finishingSignInBody": "Connexion de votre compte en cours. Cela ne prend qu’un instant.",
+    "nativeBuildRequiredTitle": "Build natif requis",
+    "nativeBuildRequiredBody": "La connexion nécessite le module natif Clerk. Lancez un build de développement (bun run ios / android) au lieu d’Expo Go."
+  },
+  "onboarding": {
+    "title": "Comment le groupe vous appelle-t-il ?",
+    "desc": "Ce nom apparaîtra dans le carnet de votre groupe.",
+    "nameLabel": "Votre nom",
+    "namePlaceholder": "ex. Mama Ngozi",
+    "submit": "C'est parti",
+    "skip": "Plus tard"
+  },
+  "home": {
+    "heading": "Mes njangis",
+    "createGroup": "Créer un groupe",
+    "emptyTitle": "Pas encore de njangi ici.",
+    "emptyBody": "Créez le vôtre ou demandez le lien d'invitation à votre président.",
+    "emptyCreate": "Créer un njangi",
+    "emptyHaveLink": "J'ai un code",
+    "haveLink": "J'ai un code d'invitation"
+  },
+  "groups": {
+    "memberCount_one": "{{count}} membre",
+    "memberCount_other": "{{count}} membres",
+    "status": {
+      "setup": "En préparation",
+      "active": "Cycle en cours",
+      "paused": "En pause",
+      "between_cycles": "Entre deux cycles",
+      "archived": "Archivé"
+    },
+    "schedule": {
+      "weekly": "hebdomadaire",
+      "biweekly": "tous les 15 jours",
+      "monthly": "mensuel"
+    },
+    "days": {
+      "0": "dimanche",
+      "1": "lundi",
+      "2": "mardi",
+      "3": "mercredi",
+      "4": "jeudi",
+      "5": "vendredi",
+      "6": "samedi"
+    },
+    "roles": {
+      "president": "Président(e)",
+      "treasurer": "Trésorier(ère)",
+      "member": "Membre"
+    },
+    "memberStatus": {
+      "pending_approval": "en attente",
+      "active": "actif",
+      "rejected": "refusé(e)",
+      "exited": "sorti(e)",
+      "deceased": "décédé(e)"
+    },
+    "collectionMode": {
+      "via_treasurer": "Via le trésorier / la trésorière",
+      "direct_to_beneficiary": "Directement au bénéficiaire"
+    },
+    "wizard": {
+      "title": "Créer un njangi",
+      "step": "Étape {{current}} sur {{total}}",
+      "nameTitle": "Votre njangi",
+      "nameLabel": "Nom du groupe",
+      "namePlaceholder": "ex. Njangi des femmes de Bonabéri",
+      "nameRequired": "Donnez un nom à votre groupe.",
+      "currencyNote": "Devise : franc CFA (FCFA) — fixe",
+      "rhythmTitle": "Le rythme",
+      "scheduleLabel": "Cotisations",
+      "scheduleWeekly": "Chaque semaine",
+      "scheduleBiweekly": "Tous les 15 jours",
+      "scheduleMonthly": "Chaque mois",
+      "dayLabel": "Jour de réunion",
+      "amountLabel": "Cotisation par membre",
+      "amountPlaceholder": "10 000",
+      "amountRequired": "Entrez le montant de la cotisation.",
+      "amountPreview": "{{amount}} par membre, à chaque tour",
+      "modeTitle": "Comment l'argent circule-t-il ?",
+      "modeViaTreasurer": "Via le trésorier / la trésorière",
+      "modeViaTreasurerDesc": "Les membres remettent leur cotisation au trésorier, qui remet le pot au bénéficiaire du tour.",
+      "modeDirect": "Directement au bénéficiaire",
+      "modeDirectDesc": "Chaque membre remet sa cotisation directement au bénéficiaire du tour.",
+      "modeCustodyNote": "Dans les deux cas, l'argent passe par MoMo, Orange Money ou en espèces — jamais par l'appli.",
+      "roleLabel": "Votre rôle dans ce groupe",
+      "roleHint": "C'est souvent le trésorier ou la trésorière qui crée le groupe — choisissez votre vrai rôle.",
+      "create": "Créer le groupe",
+      "creating": "Création…",
+      "inviteTitle": "Invitez le groupe",
+      "inviteHint": "Envoyez le code dans le groupe WhatsApp de votre njangi. Vous pourrez aussi ajouter des membres vous-même.",
+      "finish": "Terminer ✓"
+    },
+    "detail": {
+      "membersTitle": "Membres",
+      "pendingTitle": "Demandes en attente",
+      "approve": "Approuver",
+      "reject": "Refuser",
+      "approvedToast": "{{name}} a rejoint le groupe ✓",
+      "rejectedToast": "Demande refusée",
+      "addMember": "Ajouter un membre",
+      "addMemberTitle": "Ajouter un membre sans smartphone",
+      "addMemberDesc": "Pour les membres qui n'ont pas l'appli : vous tenez le carnet pour eux. S'ils s'inscrivent plus tard avec ce numéro, ils retrouvent leur place et leur historique.",
+      "memberName": "Nom",
+      "memberNamePlaceholder": "ex. Mama Ngozi",
+      "memberPhone": "Numéro de téléphone",
+      "memberPhonePlaceholder": "6 7X XX XX XX",
+      "add": "Ajouter",
+      "adding": "Ajout…",
+      "memberAddedToast": "{{name}} a été ajouté(e) ✓",
+      "noApp": "sans l'appli",
+      "you": "Vous",
+      "setupBanner_one": "{{count}} membre ajouté — démarrez le cycle quand tout le monde a rejoint.",
+      "setupBanner_other": "{{count}} membres ajoutés — démarrez le cycle quand tout le monde a rejoint.",
+      "rotationTitle": "Ordre de rotation et tours",
+      "rotationPlaceholder": "Le démarrage du cycle, l'ordre de rotation et les tours apparaîtront ici très bientôt.",
+      "rulesTitle": "Règles du groupe",
+      "contribution": "Cotisation",
+      "rhythm": "Rythme",
+      "collection": "Circulation de l'argent",
+      "perMember": "{{amount}} / membre",
+      "notFound": "Groupe introuvable.",
+      "backHome": "Retour à l'accueil"
+    },
+    "invite": {
+      "title": "Inviter des membres",
+      "codeLabel": "Code d'invitation",
+      "linkLabel": "Lien d'invitation",
+      "copyLink": "Copier le lien",
+      "copyCode": "Copier le code",
+      "whatsapp": "Partager sur WhatsApp",
+      "whatsappMessage": "Rejoignez notre tontine (njangi) « {{groupName}} » sur l'appli Njangi. Code d'invitation : {{code}}. Dans l'appli, touchez « J'ai un code » et entrez-le. L'appli remplace le cahier — l'argent ne passe jamais par elle.",
+      "copiedToast": "Copié ✓"
+    },
+    "join": {
+      "title": "Rejoindre avec un code",
+      "desc": "Entrez le code à 6 caractères reçu sur WhatsApp, ou collez le message d'invitation.",
+      "codeLabel": "Code d'invitation",
+      "placeholder": "ex. K7M2PQ",
+      "submit": "Rejoindre",
+      "submitting": "Vérification…",
+      "invalid": "Ce code n'est pas valide. Vérifiez le message reçu.",
+      "requestSentTitle": "Demande envoyée",
+      "requestSentBody": "Le président ou le trésorier doit vous approuver. Vous serez notifié(e).",
+      "joined": "Vous avez rejoint le groupe ✓"
+    }
+  }
+}

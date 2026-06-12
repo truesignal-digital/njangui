@@ -1,0 +1,29 @@
+import { Stack } from 'expo-router';
+
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
+/**
+ * Authed-area stack. Join-by-code and feature-phone add are presented
+ * workflows (piol's mobile-presented-workflows pattern, inlined while the
+ * app has only two modals).
+ */
+export default function AppLayout() {
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="groups/new" />
+      <Stack.Screen name="groups/[groupId]/index" />
+      <Stack.Screen
+        name="join-by-code"
+        options={{ presentation: 'modal', gestureEnabled: true }}
+      />
+      <Stack.Screen
+        name="groups/[groupId]/add-member"
+        options={{ presentation: 'modal', gestureEnabled: true }}
+      />
+    </Stack>
+  );
+}

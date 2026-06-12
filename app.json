@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "Njangi",
+    "slug": "njangi",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "njangi",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.truesignal.njangi",
+      "entitlements": {
+        "keychain-access-groups": [
+          "$(AppIdentifierPrefix)$(CFBundleIdentifier)"
+        ]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "fr",
+        "CFBundleAllowMixedLocalizations": true
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png",
+        "backgroundColor": "#0C1222"
+      },
+      "package": "com.truesignal.njangi"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0C1222",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#0C1222",
+            "image": "./assets/splash-icon.png"
+          }
+        }
+      ],
+      "@clerk/expo",
+      "expo-localization",
+      "expo-secure-store",
+      "expo-image",
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "buildReactNativeFromSource": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "onDemandFilesystem": false
+    },
+    "extra": {
+      "router": {}
+    }
+  }
+}

@@ -1,0 +1,27 @@
+node_modules
+dist
+.output
+.vinxi
+.tanstack
+.env
+.env.local
+.env.test
+*.tsbuildinfo
+playwright-report
+test-results
+*.log
+e2e/.auth/
+.DS_Store
+.vercel
+
+# Expo / React Native
+.expo/
+expo-env.d.ts
+ios/
+android/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
