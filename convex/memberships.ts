@@ -7,8 +7,9 @@ import { getCurrentUser, getCurrentUserOrNull, requireMembership, requireRole } 
 import { isValidE164, normalizePhone } from './utils/phone';
 
 // Hard cap on active + pending memberships per group (02 §a, 05 Week 6
-// DECISION). Both approval and direct add are rejected above it.
-const MEMBERSHIP_CAP = 40;
+// DECISION). Both approval and direct add are rejected above it; the
+// cycle-lock guard (cycles.startCycle) reuses the same number.
+export const MEMBERSHIP_CAP = 40;
 
 // ============================================================================
 // Reusable return type validators

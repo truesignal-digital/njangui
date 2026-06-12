@@ -443,3 +443,40 @@ describe('disputed → cancelled (rows 10 & 11)', () => {
     expect(canTransition(disputed, 'cancelled', system)).toBe(false); // disputes never auto-resolve
   });
 });
+
+// ── disputed exits for PAYEE-SIDE claims (Meeting Mode) ──────
+// Rows 9/10 are claimant-relative, not hardcoded payer/payee: when the
+// treasurer's roll-call tick is disputed by the payer, the claimant must
+// never be able to confirm their own contested claim (row 4's
+// no-self-confirmation rule), and only the claimant withdraws.
+
+describe('disputed exits — payee-side claims (Meeting Mode)', () => {
+  const disputed = record({ state: 'disputed', claimedBySide: 'payee' });
+
+  test('the disputing PAYER (counterparty) late-confirms — « c’est exact finalement »', () => {
+    const result = expectEdge(validateTransition(disputed, 'confirmed', payer), 'late_confirm');
+    expect(result.requiresNote).toBe(false);
+  });
+
+  test('the claimant payee can NEVER confirm their own contested claim', () => {
+    expect(canTransition(disputed, 'confirmed', payee)).toBe(false);
+  });
+
+  test('only the claimant payee withdraws — the disputing payer cannot cancel the other side’s claim', () => {
+    const result = expectEdge(validateTransition(disputed, 'cancelled', payee), 'withdraw_from_dispute');
+    expect(result.recreatePendingIfObligationUnmet).toBe(true);
+    expect(canTransition(disputed, 'cancelled', payer)).toBe(false);
+  });
+
+  test('president override stays available on both exits — mandatory note', () => {
+    expectEdge(validateTransition(disputed, 'confirmed', president), 'override_confirm');
+    expectEdge(validateTransition(disputed, 'cancelled', president), 'override_cancel');
+  });
+
+  test('a disputed record missing claimedBySide is rejected (data integrity)', () => {
+    const broken = record({ state: 'disputed', claimedBySide: undefined });
+    expect(canTransition(broken, 'confirmed', payer)).toBe(false);
+    expect(canTransition(broken, 'confirmed', president)).toBe(false);
+    expect(canTransition(broken, 'cancelled', payee)).toBe(false);
+  });
+});

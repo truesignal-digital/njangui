@@ -67,7 +67,8 @@ export const roundStatusValidator = v.union(
   v.literal('closed'), // contributions closed; obligation statuses frozen; payout not yet confirmed
   v.literal('payout'), // waiting on the beneficiary to confirm the payout record
   v.literal('completed'), // payout confirmed (or no payout record in direct mode) — terminal
-  v.literal('skipped') // president skipped (mandatory note); later rounds shift one period — terminal
+  v.literal('skipped'), // president skipped (mandatory note); later rounds shift one period — terminal
+  v.literal('cancelled') // beneficiary exited/deceased; future round removed via system OrderChange (02 §a/§e) — terminal
 );
 
 // Per-member status frozen on the round at close (02 §b closing rule 1).
@@ -254,6 +255,7 @@ export default defineSchema({
     schedule: scheduleValidator, // snapshot at lock
     beneficiaryContributes: v.boolean(), // snapshot at lock
     collectionMode: collectionModeValidator, // snapshot at lock
+    graceDays: v.number(), // snapshot at lock — graceEndAt = dueAt + graceDays is materialized per round at cycle lock (02 §a/§b); editing groups.graceDays mid-cycle must never rewrite history
     startDate: v.string(), // YYYY-MM-DD — date of round 1's réunion
     lockedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
@@ -293,7 +295,7 @@ export default defineSchema({
     roundId: v.optional(v.id('rounds')), // required for contribution/payout (mutation-enforced); optional for fine/assistance
     kind: paymentKindValidator,
     state: paymentStateValidator,
-    method: paymentMethodValidator,
+    method: v.optional(paymentMethodValidator), // absent on system pre-created `pending` rows (02 §b round-open pre-creation: the obligation exists before anyone knows how the money will move); set at claim
     amount: v.number(), // int XAF > 0; prefilled with the expected amount, EDITABLE at claim — partial/over amounts are normal (02 §e7)
     payerMembershipId: v.id('memberships'),
     payeeMembershipId: v.id('memberships'),
@@ -311,6 +313,8 @@ export default defineSchema({
     confirmedAt: v.optional(v.number()), // denormalized from confirmations for cheap reads
     disputedAt: v.optional(v.number()),
     cancelledAt: v.optional(v.number()),
+    reminder1SentAt: v.optional(v.number()), // T_CONFIRM_REMIND_1 fired (02 §c row 14) — keeps the 15-min tick idempotent
+    reminder2SentAt: v.optional(v.number()), // T_CONFIRM_REMIND_2 fired (02 §c row 14)
   })
     .index('by_round', ['roundId'])
     .index('by_round_and_kind', ['roundId', 'kind'])

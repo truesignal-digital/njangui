@@ -82,7 +82,9 @@ export function autoDisputeFiresAt(input: {
   dueAt?: number;
 }): number {
   const unanchored = input.claimedAt + autoDisputeWindowMs(input.kind);
-  return input.dueAt === undefined ? unanchored : Math.max(unanchored, input.dueAt);
+  return input.dueAt === undefined
+    ? unanchored
+    : Math.max(unanchored, input.dueAt);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -134,17 +136,18 @@ export const PAYMENT_STATES: readonly PaymentState[] = [
   'cancelled',
 ];
 
-export const LEGAL_TRANSITIONS: Record<PaymentState, readonly PaymentState[]> = {
-  // pending → confirmed exists ONLY for self-records (payer = payee).
-  pending: ['claimed', 'confirmed', 'cancelled'],
-  claimed: ['confirmed', 'disputed', 'cancelled'],
-  // `confirmed` is ledger-final (02 §c): NO state-mutating exit. Corrections
-  // to confirmed records are president-override amendment records (02 row 12)
-  // plus an immutable presidentOverrides row — never a transition.
-  confirmed: [],
-  disputed: ['confirmed', 'cancelled'],
-  cancelled: [],
-};
+export const LEGAL_TRANSITIONS: Record<PaymentState, readonly PaymentState[]> =
+  {
+    // pending → confirmed exists ONLY for self-records (payer = payee).
+    pending: ['claimed', 'confirmed', 'cancelled'],
+    claimed: ['confirmed', 'disputed', 'cancelled'],
+    // `confirmed` is ledger-final (02 §c): NO state-mutating exit. Corrections
+    // to confirmed records are president-override amendment records (02 row 12)
+    // plus an immutable presidentOverrides row — never a transition.
+    confirmed: [],
+    disputed: ['confirmed', 'cancelled'],
+    cancelled: [],
+  };
 
 /** The treasurer's own contribution every round, the treasurer-as-beneficiary payout, etc. */
 export function isSelfRecord(
@@ -158,7 +161,10 @@ export function counterpartySideOf(side: PaymentSide): PaymentSide {
 }
 
 export function membershipIdForSide(
-  record: Pick<PaymentRecordSnapshot, 'payerMembershipId' | 'payeeMembershipId'>,
+  record: Pick<
+    PaymentRecordSnapshot,
+    'payerMembershipId' | 'payeeMembershipId'
+  >,
   side: PaymentSide
 ): string {
   return side === 'payer' ? record.payerMembershipId : record.payeeMembershipId;
@@ -209,7 +215,9 @@ export type TransitionResult =
 
 function allow(
   edge: TransitionEdge,
-  opts: Partial<Omit<Extract<TransitionResult, { ok: true }>, 'ok' | 'edge'>> = {}
+  opts: Partial<
+    Omit<Extract<TransitionResult, { ok: true }>, 'ok' | 'edge'>
+  > = {}
 ): TransitionResult {
   return {
     ok: true,
@@ -284,7 +292,10 @@ export function validateTransition(
         'pending → confirmed is reserved for self-records (payer = payee); all other records must be claimed and confirmed by the counterparty'
       );
     }
-    if (actor.type !== 'member' || actor.membershipId !== record.payerMembershipId) {
+    if (
+      actor.type !== 'member' ||
+      actor.membershipId !== record.payerMembershipId
+    ) {
       return reject('only the self-record holder may record their own payment');
     }
     // Feed-labeled « auto — même personne »; excluded from pilot entry-metric denominator.
@@ -299,25 +310,34 @@ export function validateTransition(
     if (actor.isPresident) {
       return allow('cancel_obligation', { requiresNote: true });
     }
-    return reject('only the system or the president (mandatory note) may cancel a pending obligation');
+    return reject(
+      'only the system or the president (mandatory note) may cancel a pending obligation'
+    );
   }
 
   // claimed-state transitions need to know which side asserted the claim.
   const claimedBySide = record.claimedBySide;
   if (from === 'claimed' && claimedBySide === undefined) {
-    return reject('claimed record is missing claimedBySide — data integrity error');
+    return reject(
+      'claimed record is missing claimedBySide — data integrity error'
+    );
   }
 
   // ── claimed → confirmed (rows 4–5) ───────────────────────────
   if (from === 'claimed' && to === 'confirmed') {
     const side = claimedBySide as PaymentSide;
     const claimantId = membershipIdForSide(record, side);
-    const counterpartyId = membershipIdForSide(record, counterpartySideOf(side));
+    const counterpartyId = membershipIdForSide(
+      record,
+      counterpartySideOf(side)
+    );
     if (actor.type === 'system') {
       // Row 5: auto-confirm applies EXCLUSIVELY to payee-side claims — a
       // silent feature-phone payer auto-confirms, never auto-disputes.
       if (side !== 'payee') {
-        return reject('auto-confirm (T_AUTO_CONFIRM) applies to payee-side claims only');
+        return reject(
+          'auto-confirm (T_AUTO_CONFIRM) applies to payee-side claims only'
+        );
       }
       return allow('auto_confirm');
     }
@@ -327,7 +347,9 @@ export function validateTransition(
     if (actor.membershipId === claimantId) {
       // Covers the president too: never the record's other party — the
       // paying treasurer can never confirm their own payout claim.
-      return reject('no self-confirmation: the claimant cannot confirm their own claim');
+      return reject(
+        'no self-confirmation: the claimant cannot confirm their own claim'
+      );
     }
     if (actor.isPresident) {
       if (!ctx.counterpartyNeedsRepresentation) {
@@ -337,19 +359,26 @@ export function validateTransition(
       }
       return allow('confirm_on_behalf', { requiresNote: true });
     }
-    return reject('only the counterparty (or a qualifying president on-behalf) may confirm');
+    return reject(
+      'only the counterparty (or a qualifying president on-behalf) may confirm'
+    );
   }
 
   // ── claimed → disputed (rows 6–7) ────────────────────────────
   if (from === 'claimed' && to === 'disputed') {
     const side = claimedBySide as PaymentSide;
     const claimantId = membershipIdForSide(record, side);
-    const counterpartyId = membershipIdForSide(record, counterpartySideOf(side));
+    const counterpartyId = membershipIdForSide(
+      record,
+      counterpartySideOf(side)
+    );
     if (actor.type === 'system') {
       // Row 7: anchored auto-dispute applies EXCLUSIVELY to payer-side claims
       // (payee never acknowledged receiving money). Private escalation only.
       if (side !== 'payer') {
-        return reject('auto-dispute (T_AUTO_DISPUTE) applies to payer-side claims only');
+        return reject(
+          'auto-dispute (T_AUTO_DISPUTE) applies to payer-side claims only'
+        );
       }
       return allow('auto_dispute');
     }
@@ -357,7 +386,9 @@ export function validateTransition(
       return allow('dispute_by_counterparty', { requiresReason: true });
     }
     if (actor.membershipId === claimantId) {
-      return reject('the claimant cannot dispute their own claim — withdraw it instead (claimed → cancelled)');
+      return reject(
+        'the claimant cannot dispute their own claim — withdraw it instead (claimed → cancelled)'
+      );
     }
     if (actor.isPresident) {
       // Row 6: symmetric on-behalf objection right — the objection window
@@ -369,7 +400,9 @@ export function validateTransition(
       }
       return allow('dispute_on_behalf', { requiresReason: true });
     }
-    return reject('only the counterparty (or a qualifying president on-behalf) may open a dispute');
+    return reject(
+      'only the counterparty (or a qualifying president on-behalf) may open a dispute'
+    );
   }
 
   // ── claimed → cancelled (row 8) ──────────────────────────────
@@ -377,37 +410,73 @@ export function validateTransition(
     const side = claimedBySide as PaymentSide;
     const claimantId = membershipIdForSide(record, side);
     if (actor.type !== 'member' || actor.membershipId !== claimantId) {
-      return reject('only the claimant may withdraw their own claim (« Je me suis trompé »)');
+      return reject(
+        'only the claimant may withdraw their own claim (« Je me suis trompé »)'
+      );
     }
     return allow('withdraw_claim', { recreatePendingIfObligationUnmet: true });
+  }
+
+  // Disputed-state transitions are claimant-relative, exactly like the
+  // claimed-state ones. 02 rows 9/10 were written for payer-side claims
+  // (payee late-confirms, payer withdraws); for payee-side claims (Meeting
+  // Mode) the sides invert — the claimant must NEVER be able to confirm
+  // their own contested claim (row 4's no-self-confirmation rule), and only
+  // the claimant may withdraw their own declaration.
+  if (from === 'disputed' && record.claimedBySide === undefined) {
+    return reject(
+      'disputed record is missing claimedBySide — data integrity error'
+    );
   }
 
   // ── disputed → confirmed (rows 9 & 11) ───────────────────────
   if (from === 'disputed' && to === 'confirmed') {
     if (actor.type !== 'member') {
-      return reject('disputes never auto-resolve — only humans close them (02 §d)');
+      return reject(
+        'disputes never auto-resolve — only humans close them (02 §d)'
+      );
     }
-    if (actor.membershipId === record.payeeMembershipId) {
-      // Row 9: payee late-confirms (« finalement reçu ») — party action,
-      // available even when the payee is also the president.
+    const side = record.claimedBySide as PaymentSide;
+    const claimantId = membershipIdForSide(record, side);
+    const counterpartyId = membershipIdForSide(
+      record,
+      counterpartySideOf(side)
+    );
+    if (actor.membershipId === counterpartyId) {
+      // Row 9: the side that did NOT claim acknowledges after all
+      // (« finalement reçu » / « c'est exact finalement ») — party action,
+      // available even when that party is also the president.
       return allow('late_confirm');
+    }
+    if (actor.membershipId === claimantId && !actor.isPresident) {
+      return reject(
+        'no self-confirmation: the claimant cannot resolve their own contested claim'
+      );
     }
     if (actor.isPresident) {
       // Row 11: override always allowed, even when the president is a party
       // (UI badges « résolu par le président (partie au litige) »).
       return allow('override_confirm', { requiresNote: true });
     }
-    return reject('only the payee (late-confirm) or the president (override) may resolve a dispute to confirmed');
+    return reject(
+      'only the counterparty (late-confirm) or the president (override) may resolve a dispute to confirmed'
+    );
   }
 
   // ── disputed → cancelled (rows 10 & 11) ──────────────────────
   if (from === 'disputed' && to === 'cancelled') {
     if (actor.type !== 'member') {
-      return reject('disputes never auto-resolve — only humans close them (02 §d)');
+      return reject(
+        'disputes never auto-resolve — only humans close them (02 §d)'
+      );
     }
-    if (actor.membershipId === record.payerMembershipId) {
-      // Row 10: payer withdraws the claim — party action.
-      return allow('withdraw_from_dispute', { recreatePendingIfObligationUnmet: true });
+    const side = record.claimedBySide as PaymentSide;
+    const claimantId = membershipIdForSide(record, side);
+    if (actor.membershipId === claimantId) {
+      // Row 10: the claimant withdraws their own declaration — party action.
+      return allow('withdraw_from_dispute', {
+        recreatePendingIfObligationUnmet: true,
+      });
     }
     if (actor.isPresident) {
       return allow('override_cancel', {
@@ -415,7 +484,9 @@ export function validateTransition(
         recreatePendingIfObligationUnmet: true,
       });
     }
-    return reject('only the payer (withdraw) or the president (override) may resolve a dispute to cancelled');
+    return reject(
+      'only the claimant (withdraw) or the president (override) may resolve a dispute to cancelled'
+    );
   }
 
   return reject(`illegal transition: ${from} → ${to}`);

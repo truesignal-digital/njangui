@@ -8,10 +8,15 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
+import type * as cycles from "../cycles.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as lib_paymentStateMachine from "../lib/paymentStateMachine.js";
+import type * as lib_roundMath from "../lib/roundMath.js";
 import type * as memberships from "../memberships.js";
+import type * as paymentRecords from "../paymentRecords.js";
+import type * as rounds from "../rounds.js";
 import type * as users from "../users.js";
 import type * as utils_activity from "../utils/activity.js";
 import type * as utils_auth from "../utils/auth.js";
@@ -24,10 +29,15 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
+  cycles: typeof cycles;
   groups: typeof groups;
   http: typeof http;
   "lib/paymentStateMachine": typeof lib_paymentStateMachine;
+  "lib/roundMath": typeof lib_roundMath;
   memberships: typeof memberships;
+  paymentRecords: typeof paymentRecords;
+  rounds: typeof rounds;
   users: typeof users;
   "utils/activity": typeof utils_activity;
   "utils/auth": typeof utils_auth;
