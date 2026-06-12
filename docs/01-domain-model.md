@@ -132,7 +132,8 @@ export const paymentKindValidator = v.union(
   v.literal('contribution'), // member → treasurer (or → beneficiary in direct mode), for a round
   v.literal('payout'), // treasurer → beneficiary, for a round (via_treasurer mode only)
   v.literal('fine'), // member → treasurer, settles a fines row
-  v.literal('assistance') // member → treasurer, settles an assistanceLevies row
+  v.literal('assistance'), // member → treasurer, settles an assistanceLevies row
+  v.literal('disbursement') // treasurer → recipient membership, round-independent: refunds, family settlements, assistance hand-overs (02 §c/§e/§f). Code lands Week 5 with fines/assistance — additive union extension, non-breaking.
 );
 
 export const paymentStateValidator = v.union(
@@ -339,7 +340,7 @@ export default defineSchema({
 
   paymentRecords: defineTable({
     groupId: v.id('groups'),
-    roundId: v.optional(v.id('rounds')), // required for contribution/payout (mutation-enforced); optional for fine/assistance
+    roundId: v.optional(v.id('rounds')), // required for contribution/payout (mutation-enforced); optional for fine/assistance; never set for disbursement (round-independent, I-5)
     kind: paymentKindValidator,
     state: paymentStateValidator,
     method: paymentMethodValidator,
@@ -645,10 +646,10 @@ export default defineSchema({
 ### 3.3 Invariants (mutation-enforced; Convex mutations are serializable transactions, so check-then-write is safe)
 
 - **I-1 — One confirmed payout per round (`via_treasurer` mode).** Before inserting or confirming a `kind='payout'` record: query `by_round_and_kind`, throw if any non-cancelled payout exists beyond the pre-created one. A round moves `payout → completed` (not `closed` — close is the system-driven contributions cutoff at `graceEndAt`, per 02 §b) only when its payout is `confirmed`. In `direct_to_beneficiary` mode there is no payout record and the round moves `closed → completed` immediately.
-- **I-2 — Exactly one active treasurer per group.** The role-change mutation swaps atomically (demote + promote) **and, in the same transaction, re-points `payeeMembershipId` of all non-terminal (`pending`/`claimed`/`disputed`) contribution/fine/assistance records to the new treasurer** (02 edge case 5; 05 R2). Confirmed records keep the historical treasurer — the ledger says who actually held the cash. The mutation posts a feed entry and surfaces the **handover statement** to both treasurers: ledger cash-with-treasurer = confirmed contributions + fines + assistance − confirmed payouts (a fold over confirmed records — custody-framed per §3.4). I-5's payee check is evaluated against the active treasurer **at write time**.
+- **I-2 — Exactly one active treasurer per group.** The role-change mutation swaps atomically (demote + promote) **and, in the same transaction, re-points `payeeMembershipId` of `pending` contribution/fine/assistance records only to the new treasurer** (02 §e5; 05 R2). **`claimed` and `disputed` records keep the old treasurer as payee** — they assert money already handed to the old treasurer, who must still confirm or resolve what they allegedly received (truth = payee confirmation; the new treasurer cannot truthfully confirm cash they never held, and must never inherit a predecessor's dispute — if the old treasurer is gone, the president resolves via on-behalf confirm/override, 02 §c rows 4/6/11). Confirmed records keep the historical treasurer — the ledger says who actually held the cash. The mutation posts a feed entry and surfaces the **handover statement** to both treasurers: ledger cash-with-treasurer = confirmed contributions + fines + assistance − confirmed payouts − confirmed disbursements (a fold over confirmed records — custody-framed per §3.4). I-5's payee check is evaluated against the active treasurer **at write time**.
 - **I-3 — Membership has `userId` or `phone`**; at most one non-terminal membership per (group, user) and per (group, phone).
 - **I-4 — Round/rotation integrity.** At lock: `rotationOrder` contains each active membership exactly once; `rounds.length === rotationOrder.length`. After `status='active'`, `rotationOrder` and future rounds' `beneficiaryMembershipId` are mutable **only for not-yet-open rounds and only via an `orderChanges` record written in the same mutation** (president-only, mandatory note, feed-visible). Standing invariant: rounds and their beneficiaries always match the orderChanges-adjusted rotation — full audit trail, no silent edits.
-- **I-5 — Kind-shape constraints (collection-mode aware).** `contribution`/`payout` ⇒ `roundId` set; `fine` ⇒ `fineId` set; `assistance` ⇒ `assistanceLevyId` set. In `via_treasurer` mode: contribution payee and payout payer must be the group's active treasurer (at write time, per I-2), payout payee must equal `round.beneficiaryMembershipId`. In `direct_to_beneficiary` mode: contribution payee must equal `round.beneficiaryMembershipId`, and no payout record exists — the member→treasurer→beneficiary double hop (two sets of MoMo fees) is never fabricated; the ledger records who actually received the money. `amount` is a positive integer.
+- **I-5 — Kind-shape constraints (collection-mode aware).** `contribution`/`payout` ⇒ `roundId` set; `fine` ⇒ `fineId` set; `assistance` ⇒ `assistanceLevyId` set; `disbursement` ⇒ `roundId` absent, mandatory note, payer = active treasurer, optional `assistanceLevyId` link (02 §f). In `via_treasurer` mode: contribution payee and payout payer must be the group's active treasurer (at write time, per I-2), payout payee must equal `round.beneficiaryMembershipId`. In `direct_to_beneficiary` mode: contribution payee must equal `round.beneficiaryMembershipId`, and no payout record exists — the member→treasurer→beneficiary double hop (two sets of MoMo fees) is never fabricated; the ledger records who actually received the money. `amount` is a positive integer.
 - **I-6 — At most one open dispute per paymentRecord.**
 - **I-7 — At most one active cycle per group.**
 - **I-8 — `fines.status='paid'` and levy progress are set only by confirmed paymentRecords**, in the same transaction as the confirmation.
