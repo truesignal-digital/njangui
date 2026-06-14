@@ -60,7 +60,7 @@ proposer rebuts with evidence; judges re-evaluate. Up to 3 rounds. Outcome:
 
 | # | Feature | Size | Status | Branch |
 |---|---------|------|--------|--------|
-| 1 | Cycle-start UI (rotation builder + lock) + live rotation | M | gating | `feat/cycle-start-ui` |
+| 1 | Cycle-start UI (rotation builder + lock) + live rotation | M | ✅ shipped | `feat/cycle-start-ui` (merged) |
 | 2 | Round / claim contribution UI (+ USSD method screens) | L | queued | `feat/round-claim-ui` |
 | 3 | Treasurer confirmation inbox | M | queued | `feat/treasurer-inbox` |
 | 4 | Push notifications + in-app inbox | L | queued | `feat/push-inbox` |
