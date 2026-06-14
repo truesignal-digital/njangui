@@ -14,7 +14,12 @@ import {
   scheduleValidator,
 } from './schema';
 import { logActivityEvent } from './utils/activity';
-import { getCurrentUser, getCurrentUserOrNull, requireMembership, requireRole } from './utils/auth';
+import {
+  getCurrentUser,
+  getCurrentUserOrNull,
+  requireMembership,
+  requireRole,
+} from './utils/auth';
 
 // ============================================================================
 // Invite codes — 6 chars, uppercase, no 0/O/1/I (02 §a, designed for WhatsApp)
@@ -26,12 +31,17 @@ const INVITE_CODE_LENGTH = 6;
 function randomInviteCode(): string {
   let code = '';
   for (let i = 0; i < INVITE_CODE_LENGTH; i++) {
-    code += INVITE_CODE_ALPHABET[Math.floor(Math.random() * INVITE_CODE_ALPHABET.length)];
+    code +=
+      INVITE_CODE_ALPHABET[
+        Math.floor(Math.random() * INVITE_CODE_ALPHABET.length)
+      ];
   }
   return code;
 }
 
-async function generateUniqueInviteCode(ctx: MutationCtx): Promise<string> {
+export async function generateUniqueInviteCode(
+  ctx: MutationCtx
+): Promise<string> {
   for (let attempt = 0; attempt < 10; attempt++) {
     const code = randomInviteCode();
     const existing = await ctx.db
@@ -59,19 +69,31 @@ function assertGroupSettings(settings: {
   graceDays: number;
   lateFineAmount: number | undefined;
 }) {
-  if (!Number.isInteger(settings.contributionAmount) || settings.contributionAmount <= 0) {
-    throw new Error('Contribution amount must be a positive whole number of XAF');
+  if (
+    !Number.isInteger(settings.contributionAmount) ||
+    settings.contributionAmount <= 0
+  ) {
+    throw new Error(
+      'Contribution amount must be a positive whole number of XAF'
+    );
   }
   if (
     !Number.isInteger(settings.graceDays) ||
     settings.graceDays < GRACE_DAYS_MIN ||
     settings.graceDays > GRACE_DAYS_MAX
   ) {
-    throw new Error(`Grace days must be between ${GRACE_DAYS_MIN} and ${GRACE_DAYS_MAX}`);
+    throw new Error(
+      `Grace days must be between ${GRACE_DAYS_MIN} and ${GRACE_DAYS_MAX}`
+    );
   }
   // 01 §3.1: meetingDayOfWeek required for weekly/biweekly (mutation-enforced).
-  if (settings.schedule !== 'monthly' && settings.meetingDayOfWeek === undefined) {
-    throw new Error('Meeting day of week is required for weekly and biweekly schedules');
+  if (
+    settings.schedule !== 'monthly' &&
+    settings.meetingDayOfWeek === undefined
+  ) {
+    throw new Error(
+      'Meeting day of week is required for weekly and biweekly schedules'
+    );
   }
   if (
     settings.meetingDayOfWeek !== undefined &&
@@ -81,7 +103,10 @@ function assertGroupSettings(settings: {
   ) {
     throw new Error('Meeting day of week must be 0–6 (Sunday–Saturday)');
   }
-  if (settings.meetingTime !== undefined && !MEETING_TIME_RE.test(settings.meetingTime)) {
+  if (
+    settings.meetingTime !== undefined &&
+    !MEETING_TIME_RE.test(settings.meetingTime)
+  ) {
     throw new Error('Meeting time must be HH:mm');
   }
   if (
@@ -260,7 +285,10 @@ export const updateGroupSettings = mutation({
   handler: async (ctx, args) => {
     // During `setup` the creator administers regardless of which officer
     // role they picked (02 §a) — so president OR treasurer may edit.
-    const { membership } = await requireRole(ctx, args.groupId, ['president', 'treasurer']);
+    const { membership } = await requireRole(ctx, args.groupId, [
+      'president',
+      'treasurer',
+    ]);
 
     const group = await ctx.db.get(args.groupId);
     if (!group) {
@@ -290,18 +318,26 @@ export const updateGroupSettings = mutation({
       ...(args.description !== undefined && { description: args.description }),
       ...(args.city !== undefined && { city: args.city }),
       ...(args.schedule !== undefined && { schedule: args.schedule }),
-      ...(args.meetingDayOfWeek !== undefined && { meetingDayOfWeek: args.meetingDayOfWeek }),
+      ...(args.meetingDayOfWeek !== undefined && {
+        meetingDayOfWeek: args.meetingDayOfWeek,
+      }),
       ...(args.meetingTime !== undefined && { meetingTime: args.meetingTime }),
       ...(args.contributionAmount !== undefined && {
         contributionAmount: args.contributionAmount,
       }),
       ...(args.graceDays !== undefined && { graceDays: args.graceDays }),
-      ...(args.finesEnabled !== undefined && { finesEnabled: args.finesEnabled }),
-      ...(args.lateFineAmount !== undefined && { lateFineAmount: args.lateFineAmount }),
+      ...(args.finesEnabled !== undefined && {
+        finesEnabled: args.finesEnabled,
+      }),
+      ...(args.lateFineAmount !== undefined && {
+        lateFineAmount: args.lateFineAmount,
+      }),
       ...(args.beneficiaryContributes !== undefined && {
         beneficiaryContributes: args.beneficiaryContributes,
       }),
-      ...(args.collectionMode !== undefined && { collectionMode: args.collectionMode }),
+      ...(args.collectionMode !== undefined && {
+        collectionMode: args.collectionMode,
+      }),
       ...(args.language !== undefined && { language: args.language }),
     });
 
@@ -326,7 +362,10 @@ export const generateInviteCode = mutation({
   },
   returns: inviteCodeResultValidator,
   handler: async (ctx, args) => {
-    const { membership } = await requireRole(ctx, args.groupId, ['president', 'treasurer']);
+    const { membership } = await requireRole(ctx, args.groupId, [
+      'president',
+      'treasurer',
+    ]);
 
     const group = await ctx.db.get(args.groupId);
     if (!group) {
@@ -398,7 +437,8 @@ export const getGroup = query({
       status: group.status,
       language: group.language,
       memberCount: memberships.filter((m) => m.status === 'active').length,
-      pendingCount: memberships.filter((m) => m.status === 'pending_approval').length,
+      pendingCount: memberships.filter((m) => m.status === 'pending_approval')
+        .length,
       viewerMembershipId: membership._id,
       viewerRole: membership.role,
       viewerStatus: membership.status,
@@ -438,7 +478,8 @@ export const listMyGroups = query({
             status: group.status,
             schedule: group.schedule,
             contributionAmount: group.contributionAmount,
-            memberCount: groupMemberships.filter((gm) => gm.status === 'active').length,
+            memberCount: groupMemberships.filter((gm) => gm.status === 'active')
+              .length,
             membershipId: m._id,
             role: m.role,
             membershipStatus: m.status,
