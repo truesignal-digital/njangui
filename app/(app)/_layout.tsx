@@ -17,6 +17,10 @@ export default function AppLayout() {
       <Stack.Screen name="groups/new" />
       <Stack.Screen name="groups/[groupId]/index" />
       <Stack.Screen
+        name="groups/[groupId]/start-cycle"
+        options={{ presentation: 'modal', gestureEnabled: true }}
+      />
+      <Stack.Screen
         name="join-by-code"
         options={{ presentation: 'modal', gestureEnabled: true }}
       />

@@ -4,7 +4,7 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeftIcon, ClockIcon, PlusIcon } from 'react-native-heroicons/outline';
+import { ChevronLeftIcon, PlusIcon } from 'react-native-heroicons/outline';
 
 import { api, type Id } from '../../../../src/lib/convex-api';
 import { useAuth } from '../../../../src/lib/clerk-client';
@@ -15,6 +15,7 @@ import { AppButton } from '../../../../src/components/ui/button';
 import { Skeleton } from '../../../../src/components/skeleton';
 import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
+import { RotationSection } from '../../../../src/components/groups/rotation-section';
 
 /**
  * Group home shell (docs/03 B2, Week 1 slice): roster with roles + status
@@ -30,7 +31,9 @@ export default function GroupHomeScreen() {
   const { isAuthenticated } = useConvexAuth();
 
   const queryArgs =
-    isAuthenticated && groupId ? { groupId: groupId as Id<'groups'> } : ('skip' as const);
+    isAuthenticated && groupId
+      ? { groupId: groupId as Id<'groups'> }
+      : ('skip' as const);
   const group = useQuery(api.groups.getGroup, queryArgs);
   const members = useQuery(api.memberships.listMembers, queryArgs);
 
@@ -99,13 +102,18 @@ export default function GroupHomeScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace('/')
+          }
           className="mt-[2px] h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
         >
           <ChevronLeftIcon size={22} color={theme.textMuted} />
         </Pressable>
         <View className="min-w-0 flex-1 gap-xs">
-          <Text numberOfLines={1} className="font-heading text-headline text-foreground">
+          <Text
+            numberOfLines={1}
+            className="font-heading text-headline text-foreground"
+          >
             {group.name}
           </Text>
           <Badge
@@ -126,7 +134,9 @@ export default function GroupHomeScreen() {
 
       {/* Pending approvals — problems float up (president/treasurer only) */}
       {canManage && pendingMembers.length > 0 ? (
-        <SectionCard title={`${t('groups.detail.pendingTitle')} (${pendingMembers.length})`}>
+        <SectionCard
+          title={`${t('groups.detail.pendingTitle')} (${pendingMembers.length})`}
+        >
           <MemberList members={pendingMembers} canManage={canManage} />
         </SectionCard>
       ) : null}
@@ -173,14 +183,14 @@ export default function GroupHomeScreen() {
         </SectionCard>
       ) : null}
 
-      {/* Rotation / rounds — Week 2 placeholder */}
+      {/* Rotation / rounds — state-driven (setup → start CTA, active → live order) */}
       <SectionCard title={t('groups.detail.rotationTitle')}>
-        <View className="flex-row items-center gap-sm">
-          <ClockIcon size={20} color={theme.textMuted} />
-          <Text className="flex-1 font-body text-body-sm text-muted">
-            {t('groups.detail.rotationPlaceholder')}
-          </Text>
-        </View>
+        <RotationSection
+          groupId={group._id}
+          groupStatus={group.status}
+          viewerRole={group.viewerRole}
+          activeMemberCount={activeMembers.length}
+        />
       </SectionCard>
 
       {/* Group rules */}
@@ -212,7 +222,13 @@ export default function GroupHomeScreen() {
   );
 }
 
-function SectionCard({ title, children }: { title: string; children: ReactNode }) {
+function SectionCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
   const shadow = useShadow();
 
   return (
@@ -220,7 +236,9 @@ function SectionCard({ title, children }: { title: string; children: ReactNode }
       className="mt-lg rounded-xl border border-border-subtle bg-surface p-lg"
       style={shadow('card')}
     >
-      <Text className="pb-sm font-body-semi text-title text-foreground">{title}</Text>
+      <Text className="pb-sm font-body-semi text-title text-foreground">
+        {title}
+      </Text>
       {children}
     </View>
   );
