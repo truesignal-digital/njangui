@@ -1,4 +1,7 @@
+import { Fragment } from 'react';
 import { Stack } from 'expo-router';
+
+import { DevSeedButton } from '../../src/components/dev/dev-tools';
 
 export const unstable_settings = {
   initialRouteName: 'index',
@@ -11,19 +14,26 @@ export const unstable_settings = {
  */
 export default function AppLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="groups/new" />
-      <Stack.Screen name="groups/[groupId]/index" />
-      <Stack.Screen
-        name="join-by-code"
-        options={{ presentation: 'modal', gestureEnabled: true }}
-      />
-      <Stack.Screen
-        name="groups/[groupId]/add-member"
-        options={{ presentation: 'modal', gestureEnabled: true }}
-      />
-    </Stack>
+    <Fragment>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="groups/new" />
+        <Stack.Screen name="groups/[groupId]/index" />
+        <Stack.Screen
+          name="groups/[groupId]/start-cycle"
+          options={{ presentation: 'modal', gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="join-by-code"
+          options={{ presentation: 'modal', gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="groups/[groupId]/add-member"
+          options={{ presentation: 'modal', gestureEnabled: true }}
+        />
+      </Stack>
+      {__DEV__ ? <DevSeedButton /> : null}
+    </Fragment>
   );
 }

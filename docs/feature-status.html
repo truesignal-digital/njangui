@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Njangi — Feature Status</title>
+<style>
+  :root {
+    --bg:#0f1115; --panel:#171a21; --panel2:#1d2129; --ink:#e8eaed; --muted:#9aa3b2;
+    --line:#2a2f3a; --accent:#f0b429; --green:#34c98a; --blue:#5b9dff; --slate:#7c869c;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:40px 22px 80px; }
+  header.top { border-bottom:1px solid var(--line); padding-bottom:22px; margin-bottom:30px; }
+  .brand { display:flex; align-items:baseline; gap:12px; }
+  h1 { font-size:30px; margin:0; letter-spacing:-.5px; }
+  .tag { color:var(--muted); font-size:13px; }
+  .lede { color:var(--muted); margin:14px 0 0; max-width:80ch; }
+  .stats { display:flex; gap:14px; margin:24px 0 0; flex-wrap:wrap; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:12px 18px; min-width:120px; }
+  .stat .n { font-size:24px; font-weight:700; }
+  .stat.s .n { color:var(--green); } .stat.b .n { color:var(--blue); } .stat.p .n { color:var(--accent); }
+  .stat .l { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+  section { margin-top:42px; }
+  .sec-head { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .dot { width:11px; height:11px; border-radius:50%; }
+  .dot.s{background:var(--green)} .dot.b{background:var(--blue)} .dot.p{background:var(--accent)}
+  h2 { font-size:19px; margin:0; }
+  .sec-sub { color:var(--muted); font-size:13.5px; margin:2px 0 20px 23px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+    border-left:3px solid var(--slate); }
+  .card.shipped { border-left-color:var(--green); }
+  .card.backend { border-left-color:var(--blue); }
+  .card.planned { border-left-color:var(--accent); }
+  .card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .card h3 { font-size:15.5px; margin:0 0 4px; }
+  .what { color:var(--muted); font-size:13.5px; margin:4px 0 10px; }
+  .why { font-size:13.5px; margin:0; padding-top:9px; border-top:1px dashed var(--line); }
+  .why-label { color:var(--accent); font-weight:600; font-size:11px; text-transform:uppercase;
+    letter-spacing:.5px; margin-right:6px; }
+  .size { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; flex:none;
+    background:var(--panel2); border:1px solid var(--line); }
+  .size-S { color:var(--green); } .size-M { color:var(--accent); } .size-L { color:#ff7a7a; }
+  .planned .card { counter-increment:step; position:relative; }
+  .note { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:14px 16px;
+    color:var(--muted); font-size:13px; margin-top:14px; }
+  footer { margin-top:50px; padding-top:18px; border-top:1px solid var(--line); color:var(--slate); font-size:12px; }
+  code { background:var(--panel2); padding:1px 6px; border-radius:5px; font-size:12.5px; color:#cfd6e4; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Njangi</h1><span class="tag">Feature Status &middot; custody-free njangi ledger</span></div>
+    <p class="lede">The committed backend is far ahead of the frontend: the custody-free engine — cycle lock + locked rotation order, the full two-sided PaymentRecord handshake (claim/confirm/dispute/cancel/resolveDispute), round lifecycle internals, and the 15-min lifecycle cron — is built and deployed, but no UI calls any of it (zero api.cycles/rounds/paymentRecords references across app/ and src/). The frontend is roughly at end-of-week-1: phone auth, name onboarding, groups list, the group-creation wizard, invites/join, the member roster, approvals, and feature-phone add are wired end-to-end. Net: the trust ledger exists server-side but is not yet usable by members; the next build phase is purely UI, starting with the cycle-start screen and the round/claim flow.</p>
+    <div class="stats">
+      <div class="stat s"><div class="n">10</div><div class="l">Shipped &amp; usable</div></div>
+      <div class="stat b"><div class="n">13</div><div class="l">Backend ready (no UI)</div></div>
+      <div class="stat p"><div class="n">14</div><div class="l">Planned</div></div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><span class="dot s"></span><h2>Shipped &mdash; usable in the app today</h2></div>
+    <p class="sec-sub">Screen exists and is wired to the backend. A member can do this now.</p>
+    <div class="grid">
+      <div class="card shipped">
+        <div class="card-head"><h3>Phone (SMS OTP) sign-in / sign-up</h3></div>
+        <p class="what">Sign in or create an account by phone number via Clerk SMS OTP; a Convex user row is provisioned on first login (app/(auth)/sign-in.tsx -&gt; clerk-auth-screen.tsx, api.users.current + getOrCreateCurrentUser).</p>
+        <p class="why"><span class="why-label">Why</span> The phone number is the identity members already recognize and the single point of failure for in-person onboarding — it&#x27;s what lets a champion sign 15-30 members up live at the reunion.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>Name onboarding</h3></div>
+        <p class="what">A first-time or name-less user sets the display name the group will call them by, then routes home (app/(app)/onboarding.tsx, api.users.updateMyName, gated by needsOnboarding redirect).</p>
+        <p class="why"><span class="why-label">Why</span> The feed and roster name people, never IDs, so a recognizable display name is required before a member can appear in the group&#x27;s trust artifacts.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>FR/EN language toggle</h3></div>
+        <p class="what">Switch the app between French and English; the choice persists locally and syncs to the user record when signed in (language-toggle.tsx, api.users.updateLanguage, i18n in src/lib/i18n.ts).</p>
+        <p class="why"><span class="why-label">Why</span> Pilot groups and their summaries/notifications are bilingual FR/EN, so language must follow the member for the WhatsApp share and notification copy to land.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>My groups home list</h3></div>
+        <p class="what">A signed-in member sees their njangi groups with member count, amount, schedule and status, and taps into each (app/(app)/index.tsx -&gt; group-card.tsx, api.groups.listMyGroups).</p>
+        <p class="why"><span class="why-label">Why</span> The group is the unit of the product; the home list is how a member who belongs to multiple njangis reaches the one in session.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>Group creation wizard</h3></div>
+        <p class="what">A 4-step wizard (name -&gt; rhythm + fixed amount -&gt; money-flow mode + creator role -&gt; invite) persisted by one createGroup mutation (app/(app)/groups/new.tsx, api.groups.createGroup -&gt; groupId + inviteCode).</p>
+        <p class="why"><span class="why-label">Why</span> Onboarding whole existing njangis through a champion is the entire acquisition funnel, and a fixed amount + schedule is the locked trust property the engine later enforces.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>Invite code + WhatsApp share</h3></div>
+        <p class="what">A president/treasurer copies the 6-char code or shares an invite message to WhatsApp to recruit members (invite-share.tsx in groups/new.tsx step 4 and group detail).</p>
+        <p class="why"><span class="why-label">Why</span> WhatsApp invite codes are the distribution loop that markets the app inside groups with no web page, borrowing WhatsApp&#x27;s strength instead of fighting it.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>Join group by invite code</h3></div>
+        <p class="what">A user pastes an invite link/message or types a code to join, landing in pending-approval (or active if pre-added by phone) (app/(app)/join-by-code.tsx, api.memberships.joinViaCode).</p>
+        <p class="why"><span class="why-label">Why</span> Njangis are closed trust circles that must not auto-admit, so code + approval is the safe entry path; reusing the same phone reattaches all memberships.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>Group detail / member roster</h3></div>
+        <p class="what">A member views the roster with roles, account/no-app and status badges, plus the group&#x27;s amount, rhythm and collection-mode rules (group detail -&gt; member-list.tsx, api.groups.getGroup + api.memberships.listMembers).</p>
+        <p class="why"><span class="why-label">Why</span> The roster is the shared source of truth for who is in the circle and in what role — the base layer the rotation order and ledger are built on.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>Pending-member approval queue</h3></div>
+        <p class="what">A president/treasurer approves or rejects pending join requests from the group detail screen (member-list.tsx, api.memberships.approveMember / rejectMember, gated by canManage).</p>
+        <p class="why"><span class="why-label">Why</span> Because njangis are closed trust circles, president/treasurer approval is the gate that keeps the group a real trust circle rather than an open chat.</p>
+      </div>
+      <div class="card shipped">
+        <div class="card-head"><h3>Feature-phone member add</h3></div>
+        <p class="what">A president/treasurer adds a smartphone-less member by name + Cameroon phone (auto-normalized to E.164), creating an active membership with no account (add-member.tsx, api.memberships.addFeaturePhoneMember).</p>
+        <p class="why"><span class="why-label">Why</span> A large share of real njangi members (the market/bayam-sellam segment) have no smartphone; logging them keeps the whole group on the app instead of the notebook, and they earn reliability scores normally.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="dot b"></span><h2>Backend ready &mdash; engine built, needs a UI</h2></div>
+    <p class="sec-sub">Committed &amp; deployed to Convex (the Week&nbsp;2 slice), but no screen calls it yet, so members can't use it. This is the trust ledger &mdash; it exists server-side but is invisible until the UI lands.</p>
+    <div class="grid">
+      <div class="card backend">
+        <div class="card-head"><h3>startCycle (cycle lock)</h3></div>
+        <p class="what">President-only mutation that locks rotation order and materializes the cycle — snapshots amount/schedule onto a cycles row and bulk-generates one round per position with computed open/due/grace timestamps (convex/cycles.ts:80). No frontend caller.</p>
+        <p class="why"><span class="why-label">Why</span> The locked, publicly-visible, immutable rotation order is the tamper-evident trust property offline njangis already have but can&#x27;t prove.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>getActiveCycle (public rotation order)</h3></div>
+        <p class="what">Query returning the active cycle&#x27;s locked rotation order — beneficiary names, per-round status, current round id, or null when no cycle runs (convex/cycles.ts:435). No useQuery caller.</p>
+        <p class="why"><span class="why-label">Why</span> Locked-and-public means no silent edits; exposing the order is how the rotation becomes a visible trust artifact rather than a private notebook.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>recordOrderChange (swap / remove)</h3></div>
+        <p class="what">President-only mutation for post-lock edits with a mandatory note — swaps two future beneficiaries, or removes an exited/deceased member&#x27;s round and shifts later rounds one period earlier, writing an immutable orderChanges row (convex/cycles.ts:283). No frontend caller.</p>
+        <p class="why"><span class="why-label">Why</span> Supports the routine &#x27;begging the turn&#x27; swap practice without reverting to the notebook, while keeping every change immutable and attributed.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>Round lifecycle internals (openRound / closeRound)</h3></div>
+        <p class="what">Internal mutations driving scheduled-&gt;open (pre-creates pending contribution + payout PaymentRecords) and grace-&gt;closed (freezes obligation statuses, flags arrears, advances to payout/completed), invoked only by the cron (convex/rounds.ts:482/492).</p>
+        <p class="why"><span class="why-label">Why</span> Pre-creating pending records at round open is what powers the Meeting Mode roll-call and the treasurer-entry kill-signal metric.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>getRound (round detail / pot progress)</h3></div>
+        <p class="what">Query returning a round&#x27;s status, beneficiary, expected vs confirmed vs in-flight pot totals, payout status and frozen obligation statuses (convex/rounds.ts:573). No useQuery caller.</p>
+        <p class="why"><span class="why-label">Why</span> This is the data behind the member&#x27;s round card; without UI reading it, pot progress stays invisible to the group.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>listRoundPayments (roll-call rows)</h3></div>
+        <p class="what">Query returning per-member contribution rows — status chip, confirmed-vs-expected, isSettled, individual records — to power the round card and Meeting Mode roll-call (convex/rounds.ts:653). No frontend caller.</p>
+        <p class="why"><span class="why-label">Why</span> These rows are the roll-call the treasurer ticks through at the reunion; they are the backbone of the killer cash feature.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>PaymentRecord handshake - claim</h3></div>
+        <p class="what">Mutation where payer (j&#x27;ai envoye) or payee (Meeting Mode tick) asserts a payment with idempotency key, method and optional proof; self-records go pending-&gt;confirmed and shortfalls split into a fresh pending record (convex/paymentRecords.ts:443). No caller.</p>
+        <p class="why"><span class="why-label">Why</span> The claim is half of the custody-free core: the app legally cannot touch money, so a payer/payee assertion is the only primitive available.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>PaymentRecord handshake - confirm</h3></div>
+        <p class="what">Mutation where the non-claiming side acknowledges a claim (truth = payee confirmation); president may confirm for an unrepresented counterparty with a mandatory note, advancing payouts and flipping fines to paid (convex/paymentRecords.ts:611). No caller.</p>
+        <p class="why"><span class="why-label">Why</span> Payee confirmation is the only truth — it kills the &#x27;j&#x27;ai paye / tu n&#x27;as pas paye&#x27; palabre that WhatsApp and the notebook can&#x27;t resolve.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>PaymentRecord handshake - dispute</h3></div>
+        <p class="what">Mutation where the counterparty contests a claim (Je n&#x27;ai pas recu) with a mandatory reason, opening a feed-visible litige and a single open disputes row (convex/paymentRecords.ts:720). No caller.</p>
+        <p class="why"><span class="why-label">Why</span> Disputes terminate the handshake instead of letting claims rot, and the dispute rate is itself a kill-signal that the confirmation UX is misdesigned.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>PaymentRecord handshake - cancel (withdraw)</h3></div>
+        <p class="what">Mutation where a claimant withdraws their own claim/declaration (claimed or disputed -&gt; cancelled), re-creating a fresh pending record when the obligation is still unmet (convex/paymentRecords.ts:804). No caller.</p>
+        <p class="why"><span class="why-label">Why</span> A claimant must be able to walk back a mistaken declaration so the ledger records reality rather than a stuck false claim.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>PaymentRecord handshake - resolveDispute</h3></div>
+        <p class="what">Mutation closing a dispute via payee late-confirm, payer withdrawal, or president override (mandatory &gt;=10-char note + immutable presidentOverrides row), moving record and dispute in one transaction (convex/paymentRecords.ts:896). No caller.</p>
+        <p class="why"><span class="why-label">Why</span> The president can always &#x27;Trancher&#x27; via an immutable override, so disputes can always terminate rather than poisoning the group.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>Lifecycle cron tick (15-min)</h3></div>
+        <p class="what">Internal mutation run every 15 minutes that opens/grace/closes rounds at their timestamps and applies claimed-record timers — reminders, auto-confirm, anchored auto-dispute — across the deployment (convex/crons.ts:43, scheduled every 15 min).</p>
+        <p class="why"><span class="why-label">Why</span> Payee-side cash entries auto-confirm on silence and payer claims auto-flag at 72h, so feature-phone entries never rot and the handshake always reaches a terminal state.</p>
+      </div>
+      <div class="card backend">
+        <div class="card-head"><h3>reassignTreasurer</h3></div>
+        <p class="what">President-only mutation that moves the single treasurer role to another active member and demotes the previous treasurer to member (convex/memberships.ts:329). Zero frontend callers, unlike its sibling membership functions.</p>
+        <p class="why"><span class="why-label">Why</span> The treasurer is the buyer and treasurer-churn is a named risk (R2); a president-reassignable role mitigates it without rebuilding the group.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="dot p"></span><h2>Planned &mdash; not built, in build order</h2></div>
+    <p class="sec-sub">Ordered by the MVP plan's sequence. Sizes: <span class="size size-S">S</span> small &middot; <span class="size size-M">M</span> medium &middot; <span class="size size-L">L</span> large.</p>
+    <div class="grid planned">
+      <div class="card planned">
+        <div class="card-head"><h3>Cycle-start UI (rotation-order builder + lock)</h3><span class="size size-M">M</span></div>
+        <p class="what">President screen to drag-order members, set amount/schedule, and lock the rotation to start a cycle. Backend ready (cycles.ts:80 startCycle, recordOrderChange, getActiveCycle); UI absent — group detail only has a Week-2 placeholder comment.</p>
+        <p class="why"><span class="why-label">Why</span> Without it the locked, tamper-evident rotation order — the engine&#x27;s whole trust property — can never be created by a real president.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Round / claim contribution UI</h3><span class="size size-L">L</span></div>
+        <p class="what">The member-facing &#x27;your contribution this round&#x27; card and the claim flow (pick method, mark sent, optional txn ID/screenshot). Backend ready (claim, confirm, getRound, listRoundPayments); no round route exists under app/.</p>
+        <p class="why"><span class="why-label">Why</span> This is the payer half of the custody-free handshake; until it renders, members have no way to assert &#x27;j&#x27;ai envoye&#x27; in-app.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Treasurer confirm inbox</h3><span class="size size-M">M</span></div>
+        <p class="what">The treasurer&#x27;s &#x27;A confirmer&#x27; list of pending confirmations with one-tap confirm. Backend ready (paymentRecords.ts:611 confirm); no inbox route or component exists.</p>
+        <p class="why"><span class="why-label">Why</span> Lets the treasurer capture mid-week MoMo payments from members who never open the app, so those entries land in-app instead of surviving only on paper.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Push notifications + in-app inbox</h3><span class="size size-L">L</span></div>
+        <p class="what">Expo push-token registration, a send pipeline, and an in-app notification inbox. Backend minimal (pushTokens field + notificationPreferences table, zero functions); no push/inbox UI.</p>
+        <p class="why"><span class="why-label">Why</span> Push is the guaranteed channel that drives claim-&gt;confirm to terminal state and makes the payee objection window usable — a core reason for the mobile pivot, and Meeting Mode depends on it.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Meeting Mode (treasurer roll-call)</h3><span class="size size-L">L</span></div>
+        <p class="what">Treasurer-only roll-call that batch-creates claimed records (20 entries in 2 min) with an AsyncStorage offline tap-queue. No batch-claim backend entrypoint and no UI; only the single-record claim exists.</p>
+        <p class="why"><span class="why-label">Why</span> The reunion roll-call is the killer cash feature that beats the notebook at its own job; the tap queue prevents silent loss when Android kills the backgrounded app.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Payout flow UI</h3><span class="size size-M">M</span></div>
+        <p class="what">Treasurer-claims-to-beneficiary / beneficiary-confirms screen (reversed handshake, editable prefilled pot amount, president attests for feature-phone beneficiaries). Backend ready (payout records pre-created, settleRoundAfterPayoutConfirmed, payoutPrefillAmount); no payout route.</p>
+        <p class="why"><span class="why-label">Why</span> The payout is the moment the pot is handed over; recording the cash actually given keeps the ledger honest and matches how real njangis hand over at the meeting.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Activity feed (read/render)</h3><span class="size size-M">M</span></div>
+        <p class="what">A query to read activityEvents and a feed screen showing who claimed/confirmed/paid out. Backend partial (logActivityEvent writes rows throughout, but no read query); no feed component.</p>
+        <p class="why"><span class="why-label">Why</span> The immutable, group-visible who-paid-who-when feed is the core trust artifact and first-line dispute enforcement — exactly what the notebook can&#x27;t make tamper-evident.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>USSD method instruction screens (MoMo *126# / Orange #150#)</h3><span class="size size-M">M</span></div>
+        <p class="what">Method-specific step-by-step USSD screens with prefilled treasurer number, copy button, and &#x27;Composer le code&#x27; tel: deep-link. ussdContent table defined but has zero functions; no UI and no seeded content rows.</p>
+        <p class="why"><span class="why-label">Why</span> The USSD guidance lets members move money on their own accounts — the native win over the old web plan — without the app ever calling a payment API.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Round summary + WhatsApp share</h3><span class="size size-S">S</span></div>
+        <p class="what">Auto-generated FR/EN shareable round summary (text + njangi:// deep link, store-link fallback) with native WhatsApp share. Backend missing (only a feed event logged, summary marked Week 5); no UI beyond the existing group invite.</p>
+        <p class="why"><span class="why-label">Why</span> The summary is the distribution loop that markets the app inside each group and gives feature-phone/non-installer members value, directly mitigating the &#x27;WhatsApp is enough&#x27; risk.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Manual fine entry (M14)</h3><span class="size size-M">M</span></div>
+        <p class="what">Treasurer-draft + president-one-tap-confirm fine form, and a mutation creating a fines row / kind:&#x27;fine&#x27; record. Backend minimal (fines table + validators, zero create/confirm functions); no fine screen.</p>
+        <p class="why"><span class="why-label">Why</span> Fines are socially sensitive, so the president confirms with the assembly&#x27;s authority and never auto-charges; without it the pilot promise that fines are logged in-app fails.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Assistance levy entry (M15)</h3><span class="size size-M">M</span></div>
+        <p class="what">President-launch / treasurer-draft levy form (label, amount-per-member, exclusions) plus a mutation generating kind:&#x27;assistance&#x27; records and recording disbursement. Backend minimal (assistanceLevies table + validators only); no UI.</p>
+        <p class="why"><span class="why-label">Why</span> A bereavement is near-certain across 5 pilot groups; without levy entry treasurers must mislabel a deuil as an amende or revert to the notebook.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Reliability score v1 (M13)</h3><span class="size size-M">M</span></div>
+        <p class="what">Per-member on-time ratio (measured on claimedAt, bucketed Excellent/Fiable/Moyen/A risque) plus a badge display. reliabilityStats table defined but has zero functions; no badge UI.</p>
+        <p class="why"><span class="why-label">Why</span> A portable on-time reputation is the wedge feature offline njangis structurally cannot produce, surfacing the post-payout-default case the ledger exists to expose.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Member exit / deceased handling</h3><span class="size size-M">M</span></div>
+        <p class="what">President mutation + UI to mark a member exited or deceased, freezing the round and dropping/skipping future rounds via a &#x27;remove&#x27; OrderChange and driving the two payout branches. Status values and orderChangeKind &#x27;remove&#x27; exist, but no mutation or caller; no UI.</p>
+        <p class="why"><span class="why-label">Why</span> Real njangis lose members mid-cycle; without this the rotation can&#x27;t be safely repaired and the engine&#x27;s remove path stays unreachable.</p>
+      </div>
+      <div class="card planned">
+        <div class="card-head"><h3>Sign-out / profile screen</h3><span class="size size-S">S</span></div>
+        <p class="what">A profile/settings screen with view/edit profile and a sign-out action. Backend ready (users.ts updateMyName, updateLanguage, current); no profile route and no signOut() call anywhere.</p>
+        <p class="why"><span class="why-label">Why</span> A basic table-stakes account screen — without it a signed-in member cannot edit their profile or log out, blocking real-device testing and re-onboarding.</p>
+      </div>
+    </div>
+    <div class="note"><strong>The critical path:</strong> the first two planned items &mdash; the cycle-start UI and the round/claim flow &mdash; are the bridge that finally connects the built backend engine to real members. Everything in the "backend ready" column becomes usable the moment those ship.</div>
+  </section>
+
+  <footer>Generated from a code + spec audit of <code>convex/</code>, <code>app/</code> and <code>docs/</code>. Status reflects the committed Week&nbsp;2 backend slice; frontend is at end of Week&nbsp;1.</footer>
+</div>
+</body>
+</html>

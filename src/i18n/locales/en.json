@@ -164,6 +164,29 @@
       "requestSentTitle": "Request sent",
       "requestSentBody": "The president or treasurer needs to approve you. You'll be notified.",
       "joined": "You've joined the group ✓"
+    },
+    "cycle": {
+      "title": "Start the cycle",
+      "subtitle": "Arrange the collection order, then lock it. Once locked it's fixed and visible to everyone.",
+      "orderTitle": "Rotation order",
+      "shuffle": "Draw lots",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "startCta": "Start the cycle",
+      "presidentOnly": "Only the president can lock and start the cycle.",
+      "confirmTitle": "Lock the rotation order?",
+      "confirmBody": "The order will be fixed and visible to all members. It can't be re-drafted afterwards — later changes only happen through a turn swap by the president.",
+      "confirmLock": "Lock and start",
+      "locking": "Starting…",
+      "lockedToast": "Cycle started — the order is locked ✓",
+      "setupReady": "Everyone's in? Arrange the rotation order and start the cycle.",
+      "setupWaiting": "The president will start the cycle once everyone has joined.",
+      "noActive": "No active cycle yet.",
+      "cycleN": "Cycle {{n}}",
+      "roundN": "Round {{n}}",
+      "locked": "fixed",
+      "thisRound": "THIS ROUND",
+      "noApp": "no app"
     }
   }
 }

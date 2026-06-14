@@ -164,6 +164,29 @@
       "requestSentTitle": "Demande envoyée",
       "requestSentBody": "Le président ou le trésorier doit vous approuver. Vous serez notifié(e).",
       "joined": "Vous avez rejoint le groupe ✓"
+    },
+    "cycle": {
+      "title": "Démarrer le cycle",
+      "subtitle": "Organisez l'ordre de collecte, puis fixez-le. Une fois fixé, il ne change plus et tout le monde le voit.",
+      "orderTitle": "Ordre de rotation",
+      "shuffle": "Tirage au sort",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "startCta": "Démarrer le cycle",
+      "presidentOnly": "Seul le président peut fixer l'ordre et démarrer le cycle.",
+      "confirmTitle": "Fixer l'ordre de rotation ?",
+      "confirmBody": "L'ordre sera fixé et visible par tous les membres. Il ne pourra plus être réorganisé — toute modification passe ensuite par un échange de tours par le président.",
+      "confirmLock": "Fixer et démarrer",
+      "locking": "Démarrage…",
+      "lockedToast": "Cycle démarré — l'ordre est fixé ✓",
+      "setupReady": "Tout le monde est là ? Organisez l'ordre de rotation et démarrez le cycle.",
+      "setupWaiting": "Le président démarrera le cycle quand tout le monde aura rejoint.",
+      "noActive": "Aucun cycle actif pour l'instant.",
+      "cycleN": "Cycle {{n}}",
+      "roundN": "Tour {{n}}",
+      "locked": "fixé",
+      "thisRound": "CE TOUR",
+      "noApp": "sans appli"
     }
   }
 }

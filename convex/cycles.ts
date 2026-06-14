@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import type { Doc, Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
+import { nextCycleIndex, validateRotationOrder } from './lib/cycleMath';
 import { computeRoundTimes, dayOfWeekOf, parseIsoDate } from './lib/roundMath';
 import { MEMBERSHIP_CAP } from './memberships';
 import { completeCycleIfFinished } from './rounds';
@@ -57,9 +58,101 @@ const orderChangeResultValidator = v.object({
   orderChangeId: v.id('orderChanges'),
 });
 
+const draftOrderResultValidator = v.object({
+  cycleId: v.id('cycles'),
+});
+
+const draftOrderValidator = v.object({
+  cycleId: v.id('cycles'),
+  order: v.array(
+    v.object({
+      membershipId: v.id('memberships'),
+      displayName: v.string(),
+    })
+  ),
+});
+
 // ============================================================================
 // Mutations
 // ============================================================================
+
+/**
+ * Save the DRAFT rotation order (pre-lock) as a `draft` cycle row (02 §a;
+ * the grill's draft-persistence decision). UPSERT — at most one draft per
+ * group, so repeated builder edits never strand rows (the I-7 active-cycle
+ * guard does not catch drafts). Officer-only (president or treasurer — the
+ * creator administers setup regardless of role); the lock itself stays
+ * president-only. The order must already cover every active member exactly
+ * once, so the draft is always lockable. Snapshot fields mirror the group
+ * for display; they are re-read authoritatively at lock, and startDate is
+ * empty until lock sets it.
+ */
+export const saveDraftOrder = mutation({
+  args: {
+    groupId: v.id('groups'),
+    rotationOrder: v.array(v.id('memberships')),
+  },
+  returns: draftOrderResultValidator,
+  handler: async (ctx, args) => {
+    await requireRole(ctx, args.groupId, ['president', 'treasurer']);
+
+    const group = await ctx.db.get(args.groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (group.status !== 'setup' && group.status !== 'between_cycles') {
+      throw new Error(
+        'A draft order can only be arranged before a cycle starts'
+      );
+    }
+
+    const memberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
+      .collect();
+    const activeMembers = memberships.filter((m) => m.status === 'active');
+    const orderCheck = validateRotationOrder(
+      args.rotationOrder,
+      activeMembers.map((m) => m._id)
+    );
+    if (orderCheck.ok === false) {
+      throw new Error(orderCheck.reason);
+    }
+
+    const snapshot = {
+      rotationOrder: args.rotationOrder,
+      contributionAmount: group.contributionAmount,
+      schedule: group.schedule,
+      beneficiaryContributes: group.beneficiaryContributes,
+      collectionMode: group.collectionMode,
+      graceDays: group.graceDays,
+      startDate: '', // set at lock
+    };
+
+    const existingDraft = await ctx.db
+      .query('cycles')
+      .withIndex('by_group_and_status', (q) =>
+        q.eq('groupId', args.groupId).eq('status', 'draft')
+      )
+      .first();
+    if (existingDraft) {
+      await ctx.db.patch(existingDraft._id, snapshot);
+      return { cycleId: existingDraft._id };
+    }
+
+    const allCycles = await ctx.db
+      .query('cycles')
+      .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
+      .collect();
+    const cycleId = await ctx.db.insert('cycles', {
+      groupId: args.groupId,
+      index: nextCycleIndex(allCycles),
+      status: 'draft',
+      ...snapshot,
+    });
+    return { cycleId };
+  },
+});
 
 /**
  * Cycle start = LOCK (02 §a). President-only — the lock is the
@@ -144,26 +237,13 @@ export const startCycle = mutation({
       );
     }
 
-    // Order covers every active member exactly once.
-    const activeIds = new Set(activeMembers.map((m) => m._id));
-    if (args.rotationOrder.length !== activeIds.size) {
-      throw new Error(
-        'Rotation order must contain every active member exactly once'
-      );
-    }
-    const seen = new Set<Id<'memberships'>>();
-    for (const membershipId of args.rotationOrder) {
-      if (!activeIds.has(membershipId)) {
-        throw new Error(
-          'Rotation order contains a non-active or foreign membership'
-        );
-      }
-      if (seen.has(membershipId)) {
-        throw new Error(
-          'Rotation order must contain every active member exactly once'
-        );
-      }
-      seen.add(membershipId);
+    // Order covers every active member exactly once (shared with saveDraftOrder).
+    const orderCheck = validateRotationOrder(
+      args.rotationOrder,
+      activeMembers.map((m) => m._id)
+    );
+    if (orderCheck.ok === false) {
+      throw new Error(orderCheck.reason);
     }
 
     // startDate must be a real date and fall on the meeting day for
@@ -192,16 +272,20 @@ export const startCycle = mutation({
       throw new Error('Start date must be today or in the future');
     }
 
-    const previousCycles = await ctx.db
+    // Index counts only REAL cycles (active/completed/cancelled) — a `draft`
+    // row never advances it (cycleMath.nextCycleIndex). The locked snapshot
+    // is re-read from the group here, never trusted from the draft.
+    const allCycles = await ctx.db
       .query('cycles')
       .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
       .collect();
+    const index = nextCycleIndex(allCycles);
+    const existingDraft = allCycles.find((c) => c.status === 'draft');
 
     const now = Date.now();
-    const cycleId = await ctx.db.insert('cycles', {
-      groupId: args.groupId,
-      index: previousCycles.length + 1,
-      status: 'active',
+    const lockedFields = {
+      index,
+      status: 'active' as const,
       rotationOrder: args.rotationOrder,
       contributionAmount: group.contributionAmount,
       schedule: group.schedule,
@@ -210,7 +294,21 @@ export const startCycle = mutation({
       graceDays: group.graceDays,
       startDate: args.startDate,
       lockedAt: now,
-    });
+    };
+
+    // Lock-and-CONSUME the draft (draft → active in place) so no stranded
+    // draft row survives; fall back to a fresh insert if the order was
+    // passed directly without a saved draft.
+    let cycleId: Id<'cycles'>;
+    if (existingDraft) {
+      await ctx.db.patch(existingDraft._id, lockedFields);
+      cycleId = existingDraft._id;
+    } else {
+      cycleId = await ctx.db.insert('cycles', {
+        groupId: args.groupId,
+        ...lockedFields,
+      });
+    }
 
     // Bulk-generate the whole cycle: one round per rotation position (02 §a).
     for (let i = 0; i < args.rotationOrder.length; i++) {
@@ -252,7 +350,7 @@ export const startCycle = mutation({
       entityId: cycleId,
       toState: 'active',
       actorMembershipId: actor._id,
-      note: `Cycle ${previousCycles.length + 1} — ${args.rotationOrder.length} rounds`,
+      note: `Cycle ${index} — ${args.rotationOrder.length} rounds`,
     });
     await logActivityEvent(ctx, {
       groupId: args.groupId,
@@ -499,6 +597,53 @@ export const getActiveCycle = query({
         scheduledOpenAt: r.scheduledOpenAt,
         dueAt: r.dueAt,
         graceEndAt: r.graceEndAt,
+      })),
+    };
+  },
+});
+
+/**
+ * The group's DRAFT rotation order (pre-lock), with member names, for the
+ * setup-state rotation builder. Returns null when no draft exists yet — the
+ * builder then seeds from membership join order. Separate from
+ * getActiveCycle on purpose: a draft has no materialized rounds, so it must
+ * not pollute the locked active-cycle contract. Visible to any member.
+ */
+export const getDraftOrder = query({
+  args: {
+    groupId: v.id('groups'),
+  },
+  returns: v.union(v.null(), draftOrderValidator),
+  handler: async (ctx, args) => {
+    const auth = await getCurrentUserOrNull(ctx);
+    if (!auth) {
+      return null;
+    }
+    await requireMembership(ctx, args.groupId);
+
+    const draft = await ctx.db
+      .query('cycles')
+      .withIndex('by_group_and_status', (q) =>
+        q.eq('groupId', args.groupId).eq('status', 'draft')
+      )
+      .first();
+    if (!draft) {
+      return null;
+    }
+
+    const memberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
+      .collect();
+    const nameByMembershipId = new Map(
+      memberships.map((m) => [m._id, m.displayName])
+    );
+
+    return {
+      cycleId: draft._id,
+      order: draft.rotationOrder.map((membershipId) => ({
+        membershipId,
+        displayName: nameByMembershipId.get(membershipId) ?? '—',
       })),
     };
   },
