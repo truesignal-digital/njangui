@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import type { Doc, Id } from './_generated/dataModel';
-import { mutation, type MutationCtx } from './_generated/server';
+import { mutation, type MutationCtx, query } from './_generated/server';
 import {
   type Actor,
   counterpartySideOf,
@@ -18,12 +18,16 @@ import {
 import {
   confirmationChannelValidator,
   disputeReasonValidator,
+  disputeStatusValidator,
   overrideOutcomeValidator,
+  paymentKindValidator,
   paymentMethodValidator,
+  paymentSideValidator,
   paymentStateValidator,
+  proofTypeValidator,
 } from './schema';
 import { logActivityEvent } from './utils/activity';
-import { requireMembership } from './utils/auth';
+import { getCurrentUserOrNull, requireMembership } from './utils/auth';
 
 // President-override notes are themselves ledger artifacts (01 §3.1
 // presidentOverrides: mandatory, ≥ 10 chars, mutation-enforced).
@@ -1013,5 +1017,270 @@ export const resolveDispute = mutation({
     }
 
     return { paymentRecordId: record._id, state: args.outcome };
+  },
+});
+
+// ============================================================================
+// Queries — inbox + per-record detail (payment-features-plan Slice 3)
+// ============================================================================
+
+const inboxItemValidator = v.object({
+  paymentRecordId: v.id('paymentRecords'),
+  groupId: v.id('groups'),
+  groupName: v.string(),
+  roundId: v.union(v.id('rounds'), v.null()),
+  roundIndex: v.union(v.number(), v.null()),
+  kind: paymentKindValidator,
+  amount: v.number(),
+  method: v.optional(paymentMethodValidator),
+  momoTxnId: v.optional(v.string()),
+  claimedAt: v.optional(v.number()),
+  claimedBySide: v.optional(paymentSideValidator),
+  counterpartyName: v.string(), // who claimed — the person awaiting MY answer
+  reference: v.string(), // NJG-T<round> — matches the carrier SMS reason field
+});
+
+/**
+ * Claims awaiting the CALLER's confirmation, across all their groups
+ * (docs/03 B5 « À confirmer »): payer-side claims where I am the payee
+ * (treasurer inbox), payee-side claims where I am the payer (objection
+ * window — Meeting Mode ticks / beneficiary receipts). Newest first.
+ */
+export const myInbox = query({
+  args: {},
+  returns: v.array(inboxItemValidator),
+  handler: async (ctx) => {
+    const auth = await getCurrentUserOrNull(ctx);
+    if (!auth) {
+      return [];
+    }
+    const memberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_user', (q) => q.eq('userId', auth.user._id))
+      .collect();
+
+    const items = [];
+    for (const membership of memberships.filter((m) => m.status === 'active')) {
+      const awaitingAsPayee = await ctx.db
+        .query('paymentRecords')
+        .withIndex('by_payee_and_state', (q) =>
+          q.eq('payeeMembershipId', membership._id).eq('state', 'claimed')
+        )
+        .take(100);
+      const awaitingAsPayer = await ctx.db
+        .query('paymentRecords')
+        .withIndex('by_payer_and_state', (q) =>
+          q.eq('payerMembershipId', membership._id).eq('state', 'claimed')
+        )
+        .take(100);
+      const awaiting = [
+        ...awaitingAsPayee.filter((r) => r.claimedBySide === 'payer'),
+        ...awaitingAsPayer.filter((r) => r.claimedBySide === 'payee'),
+      ];
+
+      for (const record of awaiting) {
+        const group = await ctx.db.get(record.groupId);
+        const claimantId =
+          record.claimedBySide === 'payer'
+            ? record.payerMembershipId
+            : record.payeeMembershipId;
+        const claimant = await ctx.db.get(claimantId);
+        const round =
+          record.roundId !== undefined
+            ? await ctx.db.get(record.roundId)
+            : null;
+        items.push({
+          paymentRecordId: record._id,
+          groupId: record.groupId,
+          groupName: group?.name ?? '—',
+          roundId: record.roundId ?? null,
+          roundIndex: round ? round.index : null,
+          kind: record.kind,
+          amount: record.amount,
+          method: record.method,
+          momoTxnId: record.momoTxnId,
+          claimedAt: record.claimedAt,
+          claimedBySide: record.claimedBySide,
+          counterpartyName: claimant?.displayName ?? '—',
+          reference: round ? `NJG-T${round.index}` : '',
+        });
+      }
+    }
+
+    return items.sort((a, b) => (b.claimedAt ?? 0) - (a.claimedAt ?? 0));
+  },
+});
+
+const paymentRecordDetailValidator = v.object({
+  paymentRecordId: v.id('paymentRecords'),
+  groupId: v.id('groups'),
+  groupName: v.string(),
+  roundId: v.union(v.id('rounds'), v.null()),
+  roundIndex: v.union(v.number(), v.null()),
+  roundDueAt: v.union(v.number(), v.null()),
+  kind: paymentKindValidator,
+  state: paymentStateValidator,
+  amount: v.number(),
+  method: v.optional(paymentMethodValidator),
+  proofType: proofTypeValidator,
+  momoTxnId: v.optional(v.string()),
+  isArrears: v.optional(v.boolean()),
+  claimedBySide: v.optional(paymentSideValidator),
+  claimedAt: v.optional(v.number()),
+  confirmedAt: v.optional(v.number()),
+  disputedAt: v.optional(v.number()),
+  cancelledAt: v.optional(v.number()),
+  payerName: v.string(),
+  payeeName: v.string(),
+  reference: v.string(),
+  dispute: v.union(
+    v.null(),
+    v.object({
+      status: disputeStatusValidator,
+      reason: v.optional(disputeReasonValidator),
+      reasonNote: v.optional(v.string()),
+      resolutionNote: v.optional(v.string()),
+      autoOpened: v.boolean(),
+      openedByName: v.union(v.string(), v.null()),
+    })
+  ),
+  // Viewer-relative flags — the SCREEN chooses affordances from these; the
+  // mutations re-validate through the state machine regardless.
+  viewerIsClaimant: v.boolean(),
+  viewerIsCounterparty: v.boolean(),
+  viewerCanConfirm: v.boolean(),
+  viewerCanDispute: v.boolean(),
+  viewerCanCancel: v.boolean(),
+  viewerCanResolveDispute: v.boolean(),
+});
+
+/**
+ * Single-record read backing the inbox row detail and the
+ * `payments/[paymentId]` deep-link target (a push can land on a record no
+ * longer in any inbox — the screen must still render `confirmed`/`disputed`
+ * records plus the dispute thread).
+ */
+export const getPaymentRecord = query({
+  args: {
+    paymentRecordId: v.id('paymentRecords'),
+  },
+  returns: v.union(v.null(), paymentRecordDetailValidator),
+  handler: async (ctx, args) => {
+    const auth = await getCurrentUserOrNull(ctx);
+    if (!auth) {
+      return null;
+    }
+    const record = await ctx.db.get(args.paymentRecordId);
+    if (!record) {
+      return null;
+    }
+    const { membership: viewer } = await requireMembership(ctx, record.groupId);
+
+    const [group, payer, payee, round] = await Promise.all([
+      ctx.db.get(record.groupId),
+      ctx.db.get(record.payerMembershipId),
+      ctx.db.get(record.payeeMembershipId),
+      record.roundId !== undefined
+        ? ctx.db.get(record.roundId)
+        : Promise.resolve(null),
+    ]);
+
+    const disputes = await ctx.db
+      .query('disputes')
+      .withIndex('by_payment_record', (q) =>
+        q.eq('paymentRecordId', record._id)
+      )
+      .collect();
+    const disputeRow =
+      disputes.find((d) => d.status === 'open') ??
+      disputes.sort((a, b) => b._creationTime - a._creationTime)[0] ??
+      null;
+    const openedBy = disputeRow?.openedByMembershipId
+      ? await ctx.db.get(disputeRow.openedByMembershipId)
+      : null;
+
+    const claimantId =
+      record.claimedBySide === 'payer'
+        ? record.payerMembershipId
+        : record.claimedBySide === 'payee'
+          ? record.payeeMembershipId
+          : null;
+    const counterpartyId =
+      record.claimedBySide === 'payer'
+        ? record.payeeMembershipId
+        : record.claimedBySide === 'payee'
+          ? record.payerMembershipId
+          : null;
+    const counterparty = counterpartyId
+      ? ((await ctx.db.get(counterpartyId)) ?? null)
+      : null;
+    const counterpartyNeedsRepresentation =
+      counterparty !== null &&
+      (counterparty.userId === undefined ||
+        counterparty.status === 'exited' ||
+        counterparty.status === 'deceased');
+
+    const viewerIsClaimant = claimantId === viewer._id;
+    const viewerIsCounterparty = counterpartyId === viewer._id;
+    const viewerActive = viewer.status === 'active';
+    const presidentOnBehalf =
+      viewerActive &&
+      viewer.role === 'president' &&
+      counterpartyNeedsRepresentation &&
+      !viewerIsClaimant;
+
+    return {
+      paymentRecordId: record._id,
+      groupId: record.groupId,
+      groupName: group?.name ?? '—',
+      roundId: record.roundId ?? null,
+      roundIndex: round ? round.index : null,
+      roundDueAt: round ? round.dueAt : null,
+      kind: record.kind,
+      state: record.state,
+      amount: record.amount,
+      method: record.method,
+      proofType: record.proofType,
+      momoTxnId: record.momoTxnId,
+      isArrears: record.isArrears,
+      claimedBySide: record.claimedBySide,
+      claimedAt: record.claimedAt,
+      confirmedAt: record.confirmedAt,
+      disputedAt: record.disputedAt,
+      cancelledAt: record.cancelledAt,
+      payerName: payer?.displayName ?? '—',
+      payeeName: payee?.displayName ?? '—',
+      reference: round ? `NJG-T${round.index}` : '',
+      dispute: disputeRow
+        ? {
+            status: disputeRow.status,
+            reason: disputeRow.reason,
+            reasonNote: disputeRow.reasonNote,
+            resolutionNote: disputeRow.resolutionNote,
+            autoOpened: disputeRow.autoOpened,
+            openedByName: openedBy?.displayName ?? null,
+          }
+        : null,
+      viewerIsClaimant,
+      viewerIsCounterparty,
+      viewerCanConfirm:
+        record.state === 'claimed' &&
+        viewerActive &&
+        (viewerIsCounterparty || presidentOnBehalf),
+      viewerCanDispute:
+        record.state === 'claimed' &&
+        viewerActive &&
+        (viewerIsCounterparty || presidentOnBehalf),
+      viewerCanCancel:
+        (record.state === 'claimed' || record.state === 'disputed') &&
+        viewerActive &&
+        viewerIsClaimant,
+      viewerCanResolveDispute:
+        record.state === 'disputed' &&
+        viewerActive &&
+        (viewerIsCounterparty ||
+          viewerIsClaimant ||
+          viewer.role === 'president'),
+    };
   },
 });

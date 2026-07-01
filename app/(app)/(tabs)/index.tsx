@@ -6,12 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { KeyIcon, PlusIcon, UsersIcon } from 'react-native-heroicons/outline';
 
-import { api } from '../../src/lib/convex-api';
-import { useAuth } from '../../src/lib/clerk-client';
-import { useAppTheme } from '../../src/lib/theme';
-import { Skeleton } from '../../src/components/skeleton';
-import { AppButton } from '../../src/components/ui/button';
-import { GroupCard, type GroupListItem } from '../../src/components/groups/group-card';
+import { api } from '../../../src/lib/convex-api';
+import { useAuth } from '../../../src/lib/clerk-client';
+import { useAppTheme } from '../../../src/lib/theme';
+import { Skeleton } from '../../../src/components/skeleton';
+import { AppButton } from '../../../src/components/ui/button';
+import { GroupCard, type GroupListItem } from '../../../src/components/groups/group-card';
 
 /**
  * Home — Week 1 scope: my group list (docs/05 Week 1). The activity-feed /

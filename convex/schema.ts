@@ -323,6 +323,7 @@ export default defineSchema({
     .index('by_payer', ['payerMembershipId'])
     .index('by_payer_and_state', ['payerMembershipId', 'state'])
     .index('by_payee', ['payeeMembershipId'])
+    .index('by_payee_and_state', ['payeeMembershipId', 'state'])
     .index('by_state_and_claimed_at', ['state', 'claimedAt'])
     .index('by_idempotency_key', ['idempotencyKey'])
     .index('by_fine', ['fineId'])

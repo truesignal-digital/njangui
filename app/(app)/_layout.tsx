@@ -4,20 +4,21 @@ import { Stack } from 'expo-router';
 import { DevSeedButton } from '../../src/components/dev/dev-tools';
 
 export const unstable_settings = {
-  initialRouteName: 'index',
+  initialRouteName: '(tabs)',
 };
 
 /**
- * Authed-area stack. Join-by-code and feature-phone add are presented
- * workflows (piol's mobile-presented-workflows pattern, inlined while the
- * app has only two modals).
+ * Authed-area stack: the (tabs) shell is the resting state (docs/03 §A);
+ * everything under groups/ and payments/ pushes above it; the pay flow and
+ * setup workflows present as modals.
  */
 export default function AppLayout() {
   return (
     <Fragment>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" />
+        <Stack.Screen name="payments/[paymentId]" />
         <Stack.Screen name="groups/new" />
         <Stack.Screen name="groups/[groupId]/index" />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/index" />

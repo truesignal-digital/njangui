@@ -241,6 +241,61 @@
     "invalidAmount": "Enter a valid amount in F.",
     "declared": "Payment declared — {{name}} must confirm ✓"
   },
+  "tabs": {
+    "home": "Home",
+    "group": "Group",
+    "inbox": "To confirm",
+    "profile": "Profile"
+  },
+  "inbox": {
+    "title": "To confirm ({{count}})",
+    "empty": "Nothing to confirm. ✓",
+    "claimedByPayer": "{{name}} declares they paid — confirm receipt",
+    "claimedByPayee": "{{name}} recorded your payment — confirm or flag it"
+  },
+  "payment": {
+    "notFound": "Payment not found.",
+    "group": "Group",
+    "payer": "Paid by",
+    "payee": "Received by",
+    "method": "Method",
+    "claimedAt": "Declared on",
+    "confirmedAt": "Confirmed on",
+    "kind": {
+      "contribution": "Contribution",
+      "payout": "Pot handover",
+      "fine": "Fine",
+      "assistance": "Assistance"
+    },
+    "confirmCta": "✓ Received — that's right",
+    "disputeCta": "Not received / Dispute",
+    "cancelCta": "Withdraw my declaration",
+    "confirmGuard": "Are you sure? You confirm you received {{amount}} from {{name}}. A confirmation is final and cannot be undone.",
+    "confirmSure": "Yes, I received it",
+    "confirmed": "Confirmed ✓",
+    "onBehalfNote": "attested by the president for a member without the app",
+    "disputeWhy": "Why are you disputing?",
+    "disputeReason": {
+      "not_received": "I didn't receive it",
+      "wrong_amount": "The amount is wrong",
+      "other": "Other reason"
+    },
+    "disputeNote": "Details (optional)",
+    "disputeNotePlaceholder": "e.g. nothing arrived on my account",
+    "disputeSubmit": "Open the dispute",
+    "disputed": "Dispute opened — the group is notified",
+    "cancelGuard": "Withdraw your declaration? Your contribution goes back to « pending » and must be declared again.",
+    "cancelSure": "Yes, withdraw",
+    "cancelled": "Declaration withdrawn",
+    "withdrawFromDispute": "I withdraw my declaration (closes the dispute)",
+    "disputeTitle": "Dispute",
+    "disputeAuto": "Opened automatically — payment not confirmed in time",
+    "disputeBy": "Opened by {{name}}",
+    "resolution": "Resolution"
+  },
+  "profile": {
+    "signOut": "Sign out"
+  },
   "payments": {
     "state": {
       "pending": "pending",
