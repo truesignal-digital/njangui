@@ -13,6 +13,10 @@ import { useAuth } from '../../../../../../src/lib/clerk-client';
 import { formatCurrencyXAF } from '../../../../../../src/lib/format-currency';
 import { haptics } from '../../../../../../src/lib/haptics';
 import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
+import {
+  buildRoundSummary,
+  shareRoundSummary,
+} from '../../../../../../src/lib/round-summary';
 import { useAppTheme, useShadow } from '../../../../../../src/lib/theme';
 import { TextField } from '../../../../../../src/components/ui/text-field';
 import {
@@ -214,6 +218,27 @@ export default function RoundDetailScreen() {
               ))
             )}
           </SectionCard>
+
+          {/* WhatsApp summary — the distribution loop + feature-phone
+              members' receipt (05 M10) */}
+          {rows && group ? (
+            <AppButton
+              className="mt-lg"
+              variant="outline"
+              label={t('round.share')}
+              testID="share-summary"
+              onPress={() =>
+                void shareRoundSummary(
+                  buildRoundSummary(
+                    i18n.language === 'en' ? 'en' : 'fr',
+                    group.name,
+                    round,
+                    rows
+                  )
+                )
+              }
+            />
+          ) : null}
         </>
       )}
     </ScrollView>

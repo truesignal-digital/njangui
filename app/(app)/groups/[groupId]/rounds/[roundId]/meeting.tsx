@@ -18,6 +18,10 @@ import {
   enqueueTap,
   loadQueue,
 } from '../../../../../../src/lib/meeting-queue';
+import {
+  buildRoundSummary,
+  shareRoundSummary,
+} from '../../../../../../src/lib/round-summary';
 import { useAppTheme } from '../../../../../../src/lib/theme';
 import { AppButton } from '../../../../../../src/components/ui/button';
 import { Badge } from '../../../../../../src/components/ui/badge';
@@ -39,7 +43,7 @@ type PaymentRow = FunctionReturnType<
  */
 export default function MeetingModeScreen() {
   useKeepAwake();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const { groupId, roundId } = useLocalSearchParams<{
@@ -54,6 +58,12 @@ export default function MeetingModeScreen() {
       : ('skip' as const);
   const round = useQuery(api.rounds.getRound, queryArgs);
   const rows = useQuery(api.rounds.listRoundPayments, queryArgs);
+  const group = useQuery(
+    api.groups.getGroup,
+    isAuthenticated && groupId
+      ? { groupId: groupId as Id<'groups'> }
+      : ('skip' as const)
+  );
   const claim = useMutation(api.paymentRecords.claim);
   const confirm = useMutation(api.paymentRecords.confirm);
   const cancel = useMutation(api.paymentRecords.cancel);
@@ -319,12 +329,32 @@ export default function MeetingModeScreen() {
           <Text className="font-body text-body-sm text-muted">
             {t('meeting.readOutNote')}
           </Text>
+          {round && rows && group ? (
+            <AppButton
+              label={t('meeting.share')}
+              testID="meeting-share"
+              onPress={() =>
+                void shareRoundSummary(
+                  buildRoundSummary(
+                    i18n.language === 'en' ? 'en' : 'fr',
+                    group.name,
+                    round,
+                    rows
+                  )
+                )
+              }
+            />
+          ) : null}
           <AppButton
             label={t('meeting.backToRollCall')}
             variant="outline"
             onPress={() => setFinishing(false)}
           />
-          <AppButton label={t('common.close')} onPress={() => router.back()} />
+          <AppButton
+            variant="ghost"
+            label={t('common.close')}
+            onPress={() => router.back()}
+          />
         </View>
       ) : (
         <>

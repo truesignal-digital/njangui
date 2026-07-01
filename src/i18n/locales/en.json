@@ -208,7 +208,8 @@
     "settled": "Contribution settled ✓",
     "claimCta": "I contribute",
     "claimSuccess": "Contribution declared — awaiting confirmation ✓",
-    "claimSelfSuccess": "Contribution recorded — auto (same person) ✓"
+    "claimSelfSuccess": "Contribution recorded — auto (same person) ✓",
+    "share": "Share the summary (WhatsApp)"
   },
   "pay": {
     "title": "Contribute · Round {{n}} · {{amount}}",
@@ -324,7 +325,41 @@
     "summaryTitle": "Meeting summary",
     "summaryCounts": "{{settled}} / {{total}} contributions settled",
     "readOutNote": "Read the entries aloud for members without the app — that is their receipt.",
-    "backToRollCall": "Back to roll call"
+    "backToRollCall": "Back to roll call",
+    "share": "Share the summary (WhatsApp)"
+  },
+  "feed": {
+    "title": "Activity",
+    "empty": "All quiet. The first contribution will start the activity.",
+    "loadMore": "See more",
+    "system": "System",
+    "kind": {
+      "generic": "{{actor}} · {{kind}}",
+      "group_created": "Group created by {{actor}}",
+      "cycle_started": "{{actor}} started the cycle — {{note}}",
+      "cycle_completed": "🎉 Cycle completed",
+      "group_status_changed": "Group status updated",
+      "round_opened": "Round opened — beneficiary: {{note}}",
+      "round_closed": "Round closed",
+      "round_completed": "🎉 Round completed — pot handed over",
+      "round_payout_pending": "Contributions closed — pot handover pending",
+      "round_cancelled": "Round cancelled — {{note}}",
+      "payment_claimed_by_payer": "{{actor}} declares they contributed",
+      "payment_claimed_by_payee": "{{actor}} recorded a received contribution",
+      "payment_confirmed": "{{actor}} confirmed receipt ✓",
+      "payment_confirmed_on_behalf": "{{note}}",
+      "payment_auto_confirmed": "Confirmed automatically (window elapsed) ✓",
+      "payment_self_confirmed": "{{actor}} — contribution recorded (auto, same person)",
+      "payment_disputed": "⚠ {{actor}} opened a dispute",
+      "payment_claim_withdrawn": "{{actor}} withdrew their declaration",
+      "dispute_resolved_confirmed": "Dispute resolved — confirmed ✓",
+      "dispute_resolved_cancelled": "Dispute resolved — declaration withdrawn",
+      "president_override": "President's decision — {{note}}",
+      "member_linked": "{{note}}",
+      "order_change": "Order changed by {{actor}} — {{note}}",
+      "member_approved": "{{actor}} approved a member",
+      "role_reassigned": "Role reassigned — {{note}}"
+    }
   },
   "payments": {
     "state": {

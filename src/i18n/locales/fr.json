@@ -206,6 +206,7 @@
     "membersTitle": "Cotisations des membres",
     "arrears": "arriéré",
     "settled": "Cotisation réglée ✓",
+    "share": "Partager le résumé (WhatsApp)",
     "claimCta": "Je cotise",
     "claimSuccess": "Cotisation déclarée — en attente de confirmation ✓",
     "claimSelfSuccess": "Cotisation enregistrée — auto (même personne) ✓"
@@ -324,7 +325,41 @@
     "summaryTitle": "Résumé de la réunion",
     "summaryCounts": "{{settled}} / {{total}} cotisations réglées",
     "readOutNote": "Lisez à voix haute les saisies pour les membres sans l'appli — c'est leur reçu.",
+    "share": "Partager le résumé (WhatsApp)",
     "backToRollCall": "Reprendre l'appel"
+  },
+  "feed": {
+    "title": "Activité",
+    "empty": "Tout est calme. La première cotisation lancera l'activité.",
+    "loadMore": "Voir plus",
+    "system": "Système",
+    "kind": {
+      "generic": "{{actor}} · {{kind}}",
+      "group_created": "Groupe créé par {{actor}}",
+      "cycle_started": "{{actor}} a démarré le cycle — {{note}}",
+      "cycle_completed": "🎉 Cycle terminé",
+      "group_status_changed": "Statut du groupe mis à jour",
+      "round_opened": "Tour ouvert — bénéficiaire : {{note}}",
+      "round_closed": "Tour clôturé",
+      "round_completed": "🎉 Tour terminé — pot remis",
+      "round_payout_pending": "Cotisations closes — remise du pot en attente",
+      "round_cancelled": "Tour annulé — {{note}}",
+      "payment_claimed_by_payer": "{{actor}} déclare avoir cotisé",
+      "payment_claimed_by_payee": "{{actor}} a enregistré une cotisation reçue",
+      "payment_confirmed": "{{actor}} a confirmé la réception ✓",
+      "payment_confirmed_on_behalf": "{{note}}",
+      "payment_auto_confirmed": "Confirmé automatiquement (délai écoulé) ✓",
+      "payment_self_confirmed": "{{actor}} — cotisation enregistrée (auto, même personne)",
+      "payment_disputed": "⚠ {{actor}} a ouvert un litige",
+      "payment_claim_withdrawn": "{{actor}} a retiré sa déclaration",
+      "dispute_resolved_confirmed": "Litige résolu — confirmé ✓",
+      "dispute_resolved_cancelled": "Litige résolu — déclaration retirée",
+      "president_override": "Décision du président — {{note}}",
+      "member_linked": "{{note}}",
+      "order_change": "Ordre modifié par {{actor}} — {{note}}",
+      "member_approved": "{{actor}} a approuvé un membre",
+      "role_reassigned": "Rôle réattribué — {{note}}"
+    }
   },
   "payments": {
     "state": {
