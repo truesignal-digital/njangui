@@ -13,6 +13,7 @@ import { useAppTheme, useShadow } from '../../../../src/lib/theme';
 import { Badge, GROUP_STATUS_TONE } from '../../../../src/components/ui/badge';
 import { AppButton } from '../../../../src/components/ui/button';
 import { Skeleton } from '../../../../src/components/skeleton';
+import { ActivityFeed } from '../../../../src/components/groups/activity-feed';
 import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
 import { RotationSection } from '../../../../src/components/groups/rotation-section';
@@ -191,6 +192,11 @@ export default function GroupHomeScreen() {
           viewerRole={group.viewerRole}
           activeMemberCount={activeMembers.length}
         />
+      </SectionCard>
+
+      {/* Activity feed — immutable who-paid-who-when (decision 6) */}
+      <SectionCard title={t('feed.title')}>
+        <ActivityFeed groupId={group._id} />
       </SectionCard>
 
       {/* Group rules */}
