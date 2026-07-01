@@ -50,3 +50,26 @@ export const GROUP_STATUS_TONE: Record<string, BadgeTone> = {
   between_cycles: 'outline',
   archived: 'outline',
 };
+
+export type PaymentState =
+  | 'pending'
+  | 'claimed'
+  | 'confirmed'
+  | 'disputed'
+  | 'cancelled';
+
+/**
+ * Payment-state chips (03 §G): ALWAYS icon+word+color, never color alone —
+ * the chip label is `${icon} ${t(`payments.state.${state}`)}`. Locked FR
+ * terms: ○ en attente · ⏳ déclaré · ✓ confirmé · ⚠ contesté · ✕ annulé.
+ */
+export const PAYMENT_STATE_TONE: Record<
+  PaymentState,
+  { icon: string; tone: BadgeTone }
+> = {
+  pending: { icon: '○', tone: 'neutral' },
+  claimed: { icon: '⏳', tone: 'accent' },
+  confirmed: { icon: '✓', tone: 'success' },
+  disputed: { icon: '⚠', tone: 'warning' },
+  cancelled: { icon: '✕', tone: 'outline' },
+};

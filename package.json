@@ -24,6 +24,7 @@
     "eas:run:ios": "npx eas-cli@latest build:run -p ios --latest",
     "eas:run:android": "npx eas-cli@latest build:run -p android --latest",
     "typecheck": "tsc --noEmit",
+    "lint:design": "bun scripts/lint-design-system.ts",
     "doctor": "npx expo-doctor"
   },
   "dependencies": {
@@ -39,6 +40,7 @@
     "expo-build-properties": "~56.0.14",
     "expo-clipboard": "~56.0.3",
     "expo-constants": "~56.0.15",
+    "expo-crypto": "~56.0.4",
     "expo-dev-client": "~56.0.15",
     "expo-font": "~56.0.5",
     "expo-haptics": "~56.0.3",

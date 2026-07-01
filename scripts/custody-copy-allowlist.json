@@ -1,0 +1,36 @@
+{
+  "$comment": "Custody / terminology gate (docs/04 rules 3+7, docs/03 §F). bannedTerms are scanned case-insensitively over locale VALUES in src/i18n/locales/*.json. exceptions are exact locale key paths allowed to contain a banned term (justify each). custodyKeyPattern keys must name a money holder (custodyMarkers).",
+  "fr": {
+    "bannedTerms": [
+      "solde",
+      "portefeuille",
+      "déposer des fonds",
+      "retirer des fonds",
+      "recharger",
+      "envoyez de l'argent",
+      "envoyer de l'argent via",
+      "payez dans l'application",
+      "payout",
+      "versement"
+    ],
+    "exceptions": {}
+  },
+  "en": {
+    "bannedTerms": [
+      "send money",
+      "wallet",
+      "balance",
+      "payment processing",
+      "collect payments",
+      "deposit funds",
+      "withdraw funds",
+      "top up"
+    ],
+    "exceptions": {}
+  },
+  "custodyKeyPattern": "(^|\\.)pot(\\.|$)|potCustody",
+  "custodyMarkers": {
+    "fr": ["chez", "reçu par", "remis à", "tenu par"],
+    "en": ["held by", "received by", "with the", "kept by"]
+  }
+}
