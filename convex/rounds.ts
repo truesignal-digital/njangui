@@ -515,6 +515,7 @@ const roundDetailValidator = v.object({
   roundId: v.id('rounds'),
   cycleId: v.id('cycles'),
   groupId: v.id('groups'),
+  viewerMembershipId: v.id('memberships'), // "my row" lookup without a second query
   index: v.number(),
   status: roundStatusValidator,
   collectionMode: collectionModeValidator,
@@ -584,7 +585,7 @@ export const getRound = query({
     if (!round) {
       return null;
     }
-    await requireMembership(ctx, round.groupId);
+    const { membership: viewer } = await requireMembership(ctx, round.groupId);
 
     const cycle = await ctx.db.get(round.cycleId);
     if (!cycle) {
@@ -618,6 +619,7 @@ export const getRound = query({
       roundId: round._id,
       cycleId: round.cycleId,
       groupId: round.groupId,
+      viewerMembershipId: viewer._id,
       index: round.index,
       status: round.status,
       collectionMode: cycle.collectionMode,
