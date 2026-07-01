@@ -515,11 +515,13 @@ const roundDetailValidator = v.object({
   roundId: v.id('rounds'),
   cycleId: v.id('cycles'),
   groupId: v.id('groups'),
+  viewerMembershipId: v.id('memberships'), // "my row" lookup without a second query
   index: v.number(),
   status: roundStatusValidator,
   collectionMode: collectionModeValidator,
   beneficiaryMembershipId: v.id('memberships'),
   beneficiaryName: v.string(),
+  custodianName: v.string(), // who receives contributions — custody framing (00 red line)
   scheduledOpenAt: v.number(),
   dueAt: v.number(),
   graceEndAt: v.number(),
@@ -584,13 +586,27 @@ export const getRound = query({
     if (!round) {
       return null;
     }
-    await requireMembership(ctx, round.groupId);
+    const { membership: viewer } = await requireMembership(ctx, round.groupId);
 
     const cycle = await ctx.db.get(round.cycleId);
     if (!cycle) {
       return null;
     }
     const beneficiary = await ctx.db.get(round.beneficiaryMembershipId);
+
+    // Custody framing (00 red line): every pot figure names its holder —
+    // the treasurer in via_treasurer mode, the beneficiary in direct mode.
+    let custodianName = beneficiary?.displayName ?? '—';
+    if (cycle.collectionMode === 'via_treasurer') {
+      const memberships = await ctx.db
+        .query('memberships')
+        .withIndex('by_group', (q) => q.eq('groupId', round.groupId))
+        .collect();
+      const treasurer = memberships.find(
+        (m) => m.role === 'treasurer' && m.status === 'active'
+      );
+      custodianName = treasurer?.displayName ?? custodianName;
+    }
 
     const records = await ctx.db
       .query('paymentRecords')
@@ -618,11 +634,13 @@ export const getRound = query({
       roundId: round._id,
       cycleId: round.cycleId,
       groupId: round.groupId,
+      viewerMembershipId: viewer._id,
       index: round.index,
       status: round.status,
       collectionMode: cycle.collectionMode,
       beneficiaryMembershipId: round.beneficiaryMembershipId,
       beneficiaryName: beneficiary?.displayName ?? '—',
+      custodianName,
       scheduledOpenAt: round.scheduledOpenAt,
       dueAt: round.dueAt,
       graceEndAt: round.graceEndAt,

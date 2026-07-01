@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import type { Doc, Id } from './_generated/dataModel';
-import { mutation, query } from './_generated/server';
+import { mutation, type MutationCtx, query } from './_generated/server';
 import { nextCycleIndex, validateRotationOrder } from './lib/cycleMath';
 import { computeRoundTimes, dayOfWeekOf, parseIsoDate } from './lib/roundMath';
 import { MEMBERSHIP_CAP } from './memberships';
@@ -181,7 +181,25 @@ export const startCycle = mutation({
     const { membership: actor } = await requireRole(ctx, args.groupId, [
       'president',
     ]);
+    return await performStartCycle(ctx, actor, args);
+  },
+});
 
+/**
+ * The lock itself, extracted so convex/dev.ts can drive the SAME guards and
+ * generation path (never a parallel implementation). Caller has already
+ * verified the actor is the group's president.
+ */
+export async function performStartCycle(
+  ctx: MutationCtx,
+  actor: Doc<'memberships'>,
+  args: {
+    groupId: Id<'groups'>;
+    rotationOrder: Id<'memberships'>[];
+    startDate: string;
+  }
+): Promise<{ cycleId: Id<'cycles'>; roundCount: number }> {
+  {
     const group = await ctx.db.get(args.groupId);
     if (!group) {
       throw new Error('Group not found');
@@ -363,8 +381,8 @@ export const startCycle = mutation({
     });
 
     return { cycleId, roundCount: args.rotationOrder.length };
-  },
-});
+  }
+}
 
 /**
  * Post-lock order change (02 §a) — president-only, mandatory note,

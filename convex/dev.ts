@@ -1,8 +1,10 @@
 import { v } from 'convex/values';
 import { mutation } from './_generated/server';
+import { performStartCycle } from './cycles';
 import { generateUniqueInviteCode } from './groups';
+import { openRoundForTick } from './rounds';
 import { logActivityEvent } from './utils/activity';
-import { getCurrentUser } from './utils/auth';
+import { getCurrentUser, requireRole } from './utils/auth';
 
 // ============================================================================
 // DEV-ONLY seed helpers — for driving VERIFY (running the app hands-free)
@@ -19,6 +21,18 @@ function assertDevSeedEnabled() {
     );
   }
 }
+
+// Clerk dev-instance test phones (reserved 555-01XX block, fixed OTP 424242,
+// no SMS). Slot 0 is the DevAuthButton default (président); slots 1–2 are
+// seeded onto the treasurer / first member memberships so signing in as them
+// links those memberships via the production linkMembershipsByPhone path —
+// the two-sided claim→confirm handshake becomes drivable with real
+// identities and zero backend special-casing.
+export const DEV_TEST_PHONES = {
+  president: '+12015550100',
+  treasurer: '+12015550101',
+  member: '+12015550102',
+} as const;
 
 const SEED_NAMES = [
   'Awa Ndip',
@@ -84,12 +98,31 @@ export const devSeed = mutation({
       joinedAt: now,
     });
 
-    // Feature-phone members; the first is the treasurer so startCycle's
-    // treasurer guard passes.
+    // The first member is the treasurer so startCycle's treasurer guard
+    // passes. Treasurer + first ordinary member carry Clerk dev test-phone
+    // numbers: if that dev user already exists we attach their userId now;
+    // otherwise their first dev sign-in links the membership by phone
+    // (linkMembershipsByPhone). Everyone else stays feature-phone.
     for (let i = 0; i < count; i++) {
+      const phone =
+        i === 0
+          ? DEV_TEST_PHONES.treasurer
+          : i === 1
+            ? DEV_TEST_PHONES.member
+            : `+2376770${String(10000 + i).slice(-5)}`;
+      const linkedUser =
+        i <= 1
+          ? await ctx.db
+              .query('users')
+              .withIndex('by_phone', (q) => q.eq('phone', phone))
+              .first()
+          : null;
       await ctx.db.insert('memberships', {
         groupId,
-        phone: `+2376770${String(10000 + i).slice(-5)}`,
+        ...(linkedUser && linkedUser._id !== user._id
+          ? { userId: linkedUser._id }
+          : {}),
+        phone,
         displayName: SEED_NAMES[i % SEED_NAMES.length],
         role: i === 0 ? 'treasurer' : 'member',
         status: 'active',
@@ -107,5 +140,84 @@ export const devSeed = mutation({
     });
 
     return { groupId };
+  },
+});
+
+/**
+ * DEV-only: start the cycle (if not already active) and force-open the
+ * first scheduled round, so the claim/confirm loop is drivable in the sim
+ * without waiting for the 15-min cron. Goes through the REAL paths —
+ * performStartCycle (same guards as the UI lock) and openRoundForTick
+ * (same record pre-creation as the cron) — never a parallel implementation.
+ */
+export const devStartAndOpenRound = mutation({
+  args: {
+    groupId: v.id('groups'),
+  },
+  returns: v.object({
+    roundId: v.union(v.id('rounds'), v.null()),
+    opened: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    const { membership: actor } = await requireRole(ctx, args.groupId, [
+      'president',
+    ]);
+
+    const group = await ctx.db.get(args.groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    // Start the cycle when none is active. startDate = tomorrow so the
+    // future-dueAt guard passes (monthly schedule ⇒ no meeting-day check).
+    if (group.status === 'setup' || group.status === 'between_cycles') {
+      const memberships = await ctx.db
+        .query('memberships')
+        .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
+        .collect();
+      const rotationOrder = memberships
+        .filter((m) => m.status === 'active')
+        .sort((a, b) => a.joinedAt - b.joinedAt)
+        .map((m) => m._id);
+      const startDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+      await performStartCycle(ctx, actor, {
+        groupId: args.groupId,
+        rotationOrder,
+        startDate,
+      });
+    }
+
+    const cycle = await ctx.db
+      .query('cycles')
+      .withIndex('by_group_and_status', (q) =>
+        q.eq('groupId', args.groupId).eq('status', 'active')
+      )
+      .first();
+    if (!cycle) {
+      throw new Error('No active cycle to open a round in');
+    }
+
+    const rounds = await ctx.db
+      .query('rounds')
+      .withIndex('by_cycle', (q) => q.eq('cycleId', cycle._id))
+      .collect();
+    const alreadyRunning = rounds
+      .filter((r) => r.status === 'open' || r.status === 'grace')
+      .sort((a, b) => a.index - b.index)[0];
+    if (alreadyRunning) {
+      return { roundId: alreadyRunning._id, opened: false }; // idempotent
+    }
+    const nextScheduled = rounds
+      .filter((r) => r.status === 'scheduled')
+      .sort((a, b) => a.index - b.index)[0];
+    if (!nextScheduled) {
+      return { roundId: null, opened: false };
+    }
+
+    const opened = await openRoundForTick(ctx, nextScheduled._id);
+    return { roundId: nextScheduled._id, opened };
   },
 });

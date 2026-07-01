@@ -9,6 +9,7 @@
         "@expo-google-fonts/jetbrains-mono": "^0.4.1",
         "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
         "@gorhom/bottom-sheet": "^5.2.9",
+        "@react-native-async-storage/async-storage": "2.2.0",
         "@shopify/flash-list": "2.0.2",
         "buffer": "^6.0.3",
         "connect": "^3.7.0",
@@ -17,6 +18,7 @@
         "expo-build-properties": "~56.0.14",
         "expo-clipboard": "~56.0.3",
         "expo-constants": "~56.0.15",
+        "expo-crypto": "~56.0.4",
         "expo-dev-client": "~56.0.15",
         "expo-font": "~56.0.5",
         "expo-haptics": "~56.0.3",
@@ -430,7 +432,7 @@
 
     "@radix-ui/react-use-layout-effect": ["@radix-ui/react-use-layout-effect@1.1.2", "", { "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-jrBWOxZITuGcnjRCM2t2U5ZPkCLxD+Ym6DjfssS5haTj2iiak/DOb64JeN6OdLfLgptb6/e2kKR+ZuTrGoZTPA=="],
 
-    "@react-native-async-storage/async-storage": ["@react-native-async-storage/async-storage@1.24.0", "", { "dependencies": { "merge-options": "^3.0.4" }, "peerDependencies": { "react-native": "^0.0.0-0 || >=0.60 <1.0" } }, "sha512-W4/vbwUOYOjco0x3toB8QCr7EjIP6nE9G7o8PMguvvjYT5Awg09lyV4enACRx4s++PPulBiBSjL0KTFx2u0Z/g=="],
+    "@react-native-async-storage/async-storage": ["@react-native-async-storage/async-storage@2.2.0", "", { "dependencies": { "merge-options": "^3.0.4" }, "peerDependencies": { "react-native": "^0.0.0-0 || >=0.65 <1.0" } }, "sha512-gvRvjR5JAaUZF8tv2Kcq/Gbt3JHwbKFYfmb445rhOj6NUMx3qPLixmDx5pZAyb9at1bYvJ4/eTUipU5aki45xw=="],
 
     "@react-native-masked-view/masked-view": ["@react-native-masked-view/masked-view@0.3.2", "", { "peerDependencies": { "react": ">=16", "react-native": ">=0.57" } }, "sha512-XwuQoW7/GEgWRMovOQtX3A4PrXhyaZm0lVUiY8qJDvdngjLms9Cpdck6SmGAUNqQwcj2EadHC1HwL0bEyoa/SQ=="],
 
@@ -935,6 +937,8 @@
     "expo-clipboard": ["expo-clipboard@56.0.4", "", { "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-qb4DYlkiowHYHaUYVT2FN9nk/nI1xShXOUYsI7J9dVpQCOHcGFjCBPX1VAvEW4Ye4/Aagd6IuhOVAq/+scBOiA=="],
 
     "expo-constants": ["expo-constants@56.0.18", "", { "dependencies": { "@expo/env": "~2.3.0" }, "peerDependencies": { "expo": "*", "react-native": "*" } }, "sha512-8AMtbDGl/WVPnWlmbpGmvcdnNCy9E4PFnwdVwj600vljkMDPSxcAcjw8GVXEPk3PpZ+ngTqsrkltWyj0UKYAxw=="],
+
+    "expo-crypto": ["expo-crypto@56.0.4", "", { "peerDependencies": { "expo": "*" } }, "sha512-fRNEhoXRXgAWBpe3/hq5X+KXTit3OZqdiAGts1YvNEUHQb+H5591mpPac0Yw+sZg9pXcrjRnzo5AxvZaENpc7g=="],
 
     "expo-dev-client": ["expo-dev-client@56.0.20", "", { "dependencies": { "expo-dev-launcher": "~56.0.20", "expo-dev-menu": "~56.0.17", "expo-dev-menu-interface": "~56.0.0", "expo-manifests": "~56.0.4", "expo-updates-interface": "~56.0.1" }, "peerDependencies": { "expo": "*" } }, "sha512-KebW4r8HhIiRrPzs6ZqVhp/so8buyglAO1h4No0Ibr5C2XRnlIoGWCN4zC6rW7IsI3iKUXcofLAQV9OjoxjiwQ=="],
 
@@ -1815,6 +1819,10 @@
     "@scure/bip32/@noble/hashes": ["@noble/hashes@1.8.0", "", {}, "sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A=="],
 
     "@scure/bip39/@noble/hashes": ["@noble/hashes@1.8.0", "", {}, "sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A=="],
+
+    "@solana-mobile/wallet-adapter-mobile/@react-native-async-storage/async-storage": ["@react-native-async-storage/async-storage@1.24.0", "", { "dependencies": { "merge-options": "^3.0.4" }, "peerDependencies": { "react-native": "^0.0.0-0 || >=0.60 <1.0" } }, "sha512-W4/vbwUOYOjco0x3toB8QCr7EjIP6nE9G7o8PMguvvjYT5Awg09lyV4enACRx4s++PPulBiBSjL0KTFx2u0Z/g=="],
+
+    "@solana-mobile/wallet-standard-mobile/@react-native-async-storage/async-storage": ["@react-native-async-storage/async-storage@1.24.0", "", { "dependencies": { "merge-options": "^3.0.4" }, "peerDependencies": { "react-native": "^0.0.0-0 || >=0.60 <1.0" } }, "sha512-W4/vbwUOYOjco0x3toB8QCr7EjIP6nE9G7o8PMguvvjYT5Awg09lyV4enACRx4s++PPulBiBSjL0KTFx2u0Z/g=="],
 
     "@solana/accounts/@solana/codecs-core": ["@solana/codecs-core@6.9.0", "", { "dependencies": { "@solana/errors": "6.9.0" }, "peerDependencies": { "typescript": ">=5.4.0" }, "optionalPeers": ["typescript"] }, "sha512-F2BmLecG/1nTtnjyD509NsEc254pxJKa2bpvotymv1lL1WfEn3zchcZ9SMIiLyL4G6J8b9F3OKIq2YSZho2AOQ=="],
 

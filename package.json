@@ -24,6 +24,7 @@
     "eas:run:ios": "npx eas-cli@latest build:run -p ios --latest",
     "eas:run:android": "npx eas-cli@latest build:run -p android --latest",
     "typecheck": "tsc --noEmit",
+    "lint:design": "bun scripts/lint-design-system.ts",
     "doctor": "npx expo-doctor"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@gorhom/bottom-sheet": "^5.2.9",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@shopify/flash-list": "2.0.2",
     "buffer": "^6.0.3",
     "connect": "^3.7.0",
@@ -39,6 +41,7 @@
     "expo-build-properties": "~56.0.14",
     "expo-clipboard": "~56.0.3",
     "expo-constants": "~56.0.15",
+    "expo-crypto": "~56.0.4",
     "expo-dev-client": "~56.0.15",
     "expo-font": "~56.0.5",
     "expo-haptics": "~56.0.3",

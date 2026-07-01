@@ -188,5 +188,72 @@
       "thisRound": "THIS ROUND",
       "noApp": "no app"
     }
+  },
+  "round": {
+    "title": "Round {{n}}",
+    "beneficiary": "Beneficiary: {{name}}",
+    "dueDate": "meeting on {{date}}",
+    "notFound": "Round not found.",
+    "notOpenTitle": "Round not open yet",
+    "notOpenBody": "Contributions for this round open at the start of the period. You will be notified.",
+    "potTitle": "Round pot",
+    "pot": {
+      "custody": "Pot: {{confirmed}} / {{expected}} · received by {{name}}"
+    },
+    "inFlight": "{{amount}} declared, awaiting confirmation",
+    "myRowTitle": "My contribution",
+    "noObligation": "No contribution expected from you this round.",
+    "membersTitle": "Members' contributions",
+    "arrears": "arrears",
+    "settled": "Contribution settled ✓",
+    "claimCta": "I contribute",
+    "claimSuccess": "Contribution declared — awaiting confirmation ✓",
+    "claimSelfSuccess": "Contribution recorded — auto (same person) ✓"
+  },
+  "pay": {
+    "title": "Contribute · Round {{n}} · {{amount}}",
+    "titleBare": "Contribute",
+    "pickMethod": "How are you paying?",
+    "cash": "Cash, at the meeting",
+    "cashBody": "Bring {{amount}} to the next meeting. {{name}} will tick your name in Meeting Mode.",
+    "cashClaimCta": "I already handed over the cash → Declare",
+    "custodyNote": "The money goes directly from your account to {{name}}'s. The app never touches your money.",
+    "banner": "⚠ The *126# / #150# menus can change. Verify each step against what your phone shows.",
+    "payeeNumber": "{{name}}'s number",
+    "amountLabel": "Amount",
+    "reference": "Reference (reason)",
+    "dial": "📞 Dial {{code}}",
+    "copyCode": "Copy the code {{code}}",
+    "sent": "I've sent it → Declare",
+    "claimTitle": "Declare my payment",
+    "claimContext": "{{method}} · to {{name}} · Round {{n}}",
+    "amountSent": "Amount sent",
+    "amountPrefilled": "Prefilled: remaining to contribute. Declare what you actually sent.",
+    "txnId": "Transaction ID",
+    "txnIdHint": "(in the {{carrier}} SMS)",
+    "txnPlaceholder": "e.g. 8512345678",
+    "paste": "Paste from clipboard",
+    "proofNote": "ℹ {{name}}'s confirmation is what makes the payment official — not the proof.",
+    "declareCta": "Declare the payment",
+    "declareNoProof": "Declare without proof",
+    "partialWarning": "{{amount}} will remain to contribute.",
+    "overWarning": "Amount above what remains expected — declare what you actually sent.",
+    "invalidAmount": "Enter a valid amount in F.",
+    "declared": "Payment declared — {{name}} must confirm ✓"
+  },
+  "payments": {
+    "state": {
+      "pending": "pending",
+      "claimed": "declared",
+      "confirmed": "confirmed",
+      "disputed": "disputed",
+      "cancelled": "cancelled"
+    },
+    "method": {
+      "cash": "cash",
+      "momo_mtn": "MTN MoMo",
+      "orange_money": "Orange Money",
+      "bank": "bank"
+    }
   }
 }
