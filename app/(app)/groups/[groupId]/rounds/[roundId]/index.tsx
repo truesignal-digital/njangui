@@ -1,18 +1,15 @@
-import { useRef, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { useConvexAuth, useMutation, useQuery } from 'convex/react';
+import { useConvexAuth, useQuery } from 'convex/react';
 import type { FunctionReturnType } from 'convex/server';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { toast } from 'sonner-native';
 import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 
 import { api, type Id } from '../../../../../../src/lib/convex-api';
 import { useAuth } from '../../../../../../src/lib/clerk-client';
 import { formatCurrencyXAF } from '../../../../../../src/lib/format-currency';
-import { haptics } from '../../../../../../src/lib/haptics';
-import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
 import { useAppTheme, useShadow } from '../../../../../../src/lib/theme';
 import {
   Badge,
@@ -146,7 +143,8 @@ export default function RoundDetailScreen() {
             ) : myRow ? (
               <MyContributionBlock
                 row={myRow}
-                custodianName={round.custodianName}
+                groupId={round.groupId}
+                roundId={round.roundId}
               />
             ) : (
               <Text className="font-body text-body-sm text-muted">
@@ -244,57 +242,21 @@ function PaymentStateChip({ state }: { state: PaymentState }) {
 }
 
 /**
- * The viewer's own records + the cash claim CTA on their pending record.
- * Claim is two-step inline confirm (no accidental one-tap), and the
- * idempotency key is generated ONCE per logical tap and reused on retry
- * (I-11) — never regenerated per render.
+ * The viewer's own records + the « Je cotise » CTA on their pending record,
+ * which opens the kind-aware pay flow (method picker → USSD → claim; cash
+ * claims directly from the picker).
  */
 function MyContributionBlock({
   row,
-  custodianName,
+  groupId,
+  roundId,
 }: {
   row: PaymentRow;
-  custodianName: string;
+  groupId: string;
+  roundId: string;
 }) {
   const { t } = useTranslation();
-  const claim = useMutation(api.paymentRecords.claim);
-  const [confirming, setConfirming] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const keysRef = useRef(new Map<string, string>());
-
   const pendingRecord = row.records.find((r) => r.state === 'pending');
-
-  const handleClaim = async () => {
-    if (!pendingRecord) return;
-    setBusy(true);
-    try {
-      const recordId = pendingRecord.paymentRecordId;
-      let key = keysRef.current.get(recordId);
-      if (!key) {
-        key = newIdempotencyKey();
-        keysRef.current.set(recordId, key);
-      }
-      const result = await claim({
-        paymentRecordId: recordId as Id<'paymentRecords'>,
-        idempotencyKey: key,
-        method: 'cash',
-      });
-      haptics.success();
-      // Read the RETURNED state: a self-record (payer = payee) confirms in
-      // one tap; everyone else lands in « déclaré » awaiting confirmation.
-      toast.success(
-        result.state === 'confirmed'
-          ? t('round.claimSelfSuccess')
-          : t('round.claimSuccess')
-      );
-      setConfirming(false);
-    } catch (err) {
-      haptics.error();
-      toast.error(err instanceof Error ? err.message : t('common.error'));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <View className="gap-sm">
@@ -327,38 +289,20 @@ function MyContributionBlock({
       ) : null}
 
       {pendingRecord ? (
-        confirming ? (
-          <View className="gap-sm">
-            <Text className="font-body text-body-sm text-foreground">
-              {t('round.claimConfirmBody', {
-                amount: formatCurrencyXAF(pendingRecord.amount),
-                name: custodianName,
-              })}
-            </Text>
-            <View className="flex-row gap-sm">
-              <AppButton
-                label={t('round.claimConfirmCta')}
-                loading={busy}
-                disabled={busy}
-                className="flex-1"
-                onPress={() => void handleClaim()}
-                testID="claim-confirm"
-              />
-              <AppButton
-                variant="ghost"
-                label={t('common.cancel')}
-                disabled={busy}
-                onPress={() => setConfirming(false)}
-              />
-            </View>
-          </View>
-        ) : (
-          <AppButton
-            label={t('round.claimCta')}
-            onPress={() => setConfirming(true)}
-            testID="claim-cash"
-          />
-        )
+        <AppButton
+          label={t('round.claimCta')}
+          testID="open-pay-flow"
+          onPress={() =>
+            router.push({
+              pathname: '/groups/[groupId]/rounds/[roundId]/pay',
+              params: {
+                groupId,
+                roundId,
+                record: pendingRecord.paymentRecordId,
+              },
+            })
+          }
+        />
       ) : null}
     </View>
   );

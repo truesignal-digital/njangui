@@ -20,6 +20,7 @@ import type * as memberships from "../memberships.js";
 import type * as paymentRecords from "../paymentRecords.js";
 import type * as rounds from "../rounds.js";
 import type * as users from "../users.js";
+import type * as ussdContent from "../ussdContent.js";
 import type * as utils_activity from "../utils/activity.js";
 import type * as utils_auth from "../utils/auth.js";
 import type * as utils_phone from "../utils/phone.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   paymentRecords: typeof paymentRecords;
   rounds: typeof rounds;
   users: typeof users;
+  ussdContent: typeof ussdContent;
   "utils/activity": typeof utils_activity;
   "utils/auth": typeof utils_auth;
   "utils/phone": typeof utils_phone;

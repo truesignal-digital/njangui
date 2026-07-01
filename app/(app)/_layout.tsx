@@ -22,6 +22,18 @@ export default function AppLayout() {
         <Stack.Screen name="groups/[groupId]/index" />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/index" />
         <Stack.Screen
+          name="groups/[groupId]/rounds/[roundId]/pay/index"
+          options={{ presentation: 'modal', gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="groups/[groupId]/rounds/[roundId]/pay/ussd"
+          options={{ presentation: 'modal', gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="groups/[groupId]/rounds/[roundId]/pay/claim"
+          options={{ presentation: 'modal', gestureEnabled: true }}
+        />
+        <Stack.Screen
           name="groups/[groupId]/start-cycle"
           options={{ presentation: 'modal', gestureEnabled: true }}
         />
