@@ -296,6 +296,19 @@
   "profile": {
     "signOut": "Se déconnecter"
   },
+  "payout": {
+    "title": "Remise du pot",
+    "markCta": "Marquer le pot remis",
+    "receivedCta": "J'ai reçu le pot",
+    "amountLabel": "Montant remis à {{name}}",
+    "amountHint": "Prérempli avec le total confirmé — enregistrez ce qui a réellement été remis.",
+    "claimCta": "Confirmer la remise",
+    "claimed": "Remise déclarée — l'autre partie doit confirmer ✓",
+    "selfDone": "Pot remis et confirmé (même personne) ✓",
+    "done": "🎉 Pot de {{amount}} remis à {{name}} — confirmé",
+    "view": "Voir la remise",
+    "waiting": "Le pot sera remis à {{name}} par le trésorier / la trésorière."
+  },
   "meeting": {
     "openCta": "Mode réunion",
     "title": "Mode réunion",

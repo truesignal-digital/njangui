@@ -296,6 +296,19 @@
   "profile": {
     "signOut": "Sign out"
   },
+  "payout": {
+    "title": "Pot handover",
+    "markCta": "Mark the pot handed over",
+    "receivedCta": "I received the pot",
+    "amountLabel": "Amount handed to {{name}}",
+    "amountHint": "Prefilled with the confirmed total — record what was actually handed over.",
+    "claimCta": "Confirm the handover",
+    "claimed": "Handover declared — the other party must confirm ✓",
+    "selfDone": "Pot handed over and confirmed (same person) ✓",
+    "done": "🎉 Pot of {{amount}} handed to {{name}} — confirmed",
+    "view": "View the handover",
+    "waiting": "The pot will be handed to {{name}} by the treasurer."
+  },
   "meeting": {
     "openCta": "Meeting Mode",
     "title": "Meeting Mode",
