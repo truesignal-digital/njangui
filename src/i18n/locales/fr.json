@@ -241,6 +241,61 @@
     "invalidAmount": "Entrez un montant valide en F.",
     "declared": "Paiement déclaré — {{name}} doit confirmer ✓"
   },
+  "tabs": {
+    "home": "Accueil",
+    "group": "Groupe",
+    "inbox": "À confirmer",
+    "profile": "Profil"
+  },
+  "inbox": {
+    "title": "À confirmer ({{count}})",
+    "empty": "Rien à confirmer. ✓",
+    "claimedByPayer": "{{name}} déclare avoir payé — confirmez la réception",
+    "claimedByPayee": "{{name}} a enregistré votre paiement — confirmez ou signalez"
+  },
+  "payment": {
+    "notFound": "Paiement introuvable.",
+    "group": "Groupe",
+    "payer": "Payé par",
+    "payee": "Reçu par",
+    "method": "Moyen",
+    "claimedAt": "Déclaré le",
+    "confirmedAt": "Confirmé le",
+    "kind": {
+      "contribution": "Cotisation",
+      "payout": "Remise du pot",
+      "fine": "Amende",
+      "assistance": "Assistance"
+    },
+    "confirmCta": "✓ Reçu — c'est exact",
+    "disputeCta": "Pas reçu / Contester",
+    "cancelCta": "Retirer ma déclaration",
+    "confirmGuard": "Êtes-vous sûr(e) ? Vous confirmez avoir reçu {{amount}} de {{name}}. Une confirmation est définitive et ne peut pas être annulée.",
+    "confirmSure": "Oui, j'ai reçu",
+    "confirmed": "Confirmé ✓",
+    "onBehalfNote": "attesté par le président pour un membre sans compte",
+    "disputeWhy": "Pourquoi contestez-vous ?",
+    "disputeReason": {
+      "not_received": "Je n'ai pas reçu",
+      "wrong_amount": "Le montant est faux",
+      "other": "Autre raison"
+    },
+    "disputeNote": "Précision (facultatif)",
+    "disputeNotePlaceholder": "ex. rien reçu sur mon compte",
+    "disputeSubmit": "Ouvrir le litige",
+    "disputed": "Litige ouvert — le groupe est notifié",
+    "cancelGuard": "Retirer votre déclaration ? Votre cotisation redeviendra « en attente » et devra être déclarée à nouveau.",
+    "cancelSure": "Oui, retirer",
+    "cancelled": "Déclaration retirée",
+    "withdrawFromDispute": "Je retire ma déclaration (clôt le litige)",
+    "disputeTitle": "Litige",
+    "disputeAuto": "Ouvert automatiquement — paiement non confirmé dans les délais",
+    "disputeBy": "Ouvert par {{name}}",
+    "resolution": "Résolution"
+  },
+  "profile": {
+    "signOut": "Se déconnecter"
+  },
   "payments": {
     "state": {
       "pending": "en attente",
