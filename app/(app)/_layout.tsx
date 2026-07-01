@@ -38,6 +38,10 @@ export default function AppLayout() {
           options={{ presentation: 'modal', gestureEnabled: true }}
         />
         <Stack.Screen
+          name="groups/[groupId]/rounds/[roundId]/meeting"
+          options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
+        />
+        <Stack.Screen
           name="groups/[groupId]/start-cycle"
           options={{ presentation: 'modal', gestureEnabled: true }}
         />

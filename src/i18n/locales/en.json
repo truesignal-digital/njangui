@@ -296,6 +296,23 @@
   "profile": {
     "signOut": "Sign out"
   },
+  "meeting": {
+    "openCta": "Meeting Mode",
+    "title": "Meeting Mode",
+    "custodyHeader": "Cash with {{name}}",
+    "pendingSync_one": "{{count}} awaiting sync",
+    "pendingSync_other": "{{count}} awaiting sync",
+    "tapToConfirm": "declared — tap to confirm",
+    "collision": "This member already declared — tap again to confirm their declaration.",
+    "undone": "Entry withdrawn for {{name}}",
+    "editAmount": "Amount received from {{name}}",
+    "recordAmount": "Record",
+    "finish": "End the meeting",
+    "summaryTitle": "Meeting summary",
+    "summaryCounts": "{{settled}} / {{total}} contributions settled",
+    "readOutNote": "Read the entries aloud for members without the app — that is their receipt.",
+    "backToRollCall": "Back to roll call"
+  },
   "payments": {
     "state": {
       "pending": "pending",

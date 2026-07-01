@@ -296,6 +296,23 @@
   "profile": {
     "signOut": "Se déconnecter"
   },
+  "meeting": {
+    "openCta": "Mode réunion",
+    "title": "Mode réunion",
+    "custodyHeader": "Espèces chez {{name}}",
+    "pendingSync_one": "{{count}} en attente de synchro",
+    "pendingSync_other": "{{count}} en attente de synchro",
+    "tapToConfirm": "a déclaré — touchez pour confirmer",
+    "collision": "Ce membre a déjà déclaré — touchez à nouveau pour confirmer sa déclaration.",
+    "undone": "Saisie retirée pour {{name}}",
+    "editAmount": "Montant reçu de {{name}}",
+    "recordAmount": "Enregistrer",
+    "finish": "Terminer la réunion",
+    "summaryTitle": "Résumé de la réunion",
+    "summaryCounts": "{{settled}} / {{total}} cotisations réglées",
+    "readOutNote": "Lisez à voix haute les saisies pour les membres sans l'appli — c'est leur reçu.",
+    "backToRollCall": "Reprendre l'appel"
+  },
   "payments": {
     "state": {
       "pending": "en attente",

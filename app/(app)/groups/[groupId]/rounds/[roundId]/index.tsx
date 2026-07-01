@@ -29,7 +29,7 @@ export default function RoundDetailScreen() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
-  const { roundId } = useLocalSearchParams<{
+  const { groupId, roundId } = useLocalSearchParams<{
     groupId: string;
     roundId: string;
   }>();
@@ -42,6 +42,12 @@ export default function RoundDetailScreen() {
       : ('skip' as const);
   const round = useQuery(api.rounds.getRound, queryArgs);
   const rows = useQuery(api.rounds.listRoundPayments, queryArgs);
+  const group = useQuery(
+    api.groups.getGroup,
+    isAuthenticated && groupId
+      ? { groupId: groupId as Id<'groups'> }
+      : ('skip' as const)
+  );
 
   if (isLoaded && !isSignedIn) {
     return <Redirect href="/sign-in" />;
@@ -126,6 +132,22 @@ export default function RoundDetailScreen() {
         </SectionCard>
       ) : (
         <>
+          {/* Meeting Mode — treasurer's roll-call entry (03 B6) */}
+          {group?.viewerRole === 'treasurer' &&
+          (round.status === 'open' || round.status === 'grace') ? (
+            <AppButton
+              className="mt-lg"
+              label={t('meeting.openCta')}
+              testID="open-meeting-mode"
+              onPress={() =>
+                router.push({
+                  pathname: '/groups/[groupId]/rounds/[roundId]/meeting',
+                  params: { groupId: round.groupId, roundId: round.roundId },
+                })
+              }
+            />
+          ) : null}
+
           {/* Pot — custody-captioned, never a bare balance (00 red line) */}
           <SectionCard title={t('round.potTitle')}>
             <PotProgress
