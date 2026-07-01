@@ -27,7 +27,15 @@ import {
   proofTypeValidator,
 } from './schema';
 import { logActivityEvent } from './utils/activity';
+import { notifyMemberships } from './push';
 import { getCurrentUserOrNull, requireMembership } from './utils/auth';
+
+/** `10 000 F` — push copy uses the same paper-ledger format as the UI. */
+function formatXAF(amount: number): string {
+  return `${Math.abs(Math.round(amount))
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} F`;
+}
 
 // President-override notes are themselves ledger artifacts (01 §3.1
 // presidentOverrides: mandatory, ≥ 10 chars, mutation-enforced).
@@ -564,7 +572,7 @@ export const claim = mutation({
         note: 'auto — même personne',
       });
     } else if (result.edge === 'claim_payer') {
-      // Row 2 copy: push to payee "{payer} déclare avoir payé {amount} —
+      // Row 2: push to payee "{payer} déclare avoir payé {amount} —
       // confirmez"; feed entry « déclaré ». Timers (reminders + anchored
       // auto-dispute) are evaluated by the cron from claimedAt.
       await logActivityEvent(ctx, {
@@ -576,9 +584,16 @@ export const claim = mutation({
         toState: 'claimed',
         actorMembershipId: membership._id,
       });
+      await notifyMemberships(ctx, [record.payeeMembershipId], {
+        titleFr: 'Paiement déclaré',
+        titleEn: 'Payment declared',
+        bodyFr: `${membership.displayName} déclare avoir payé ${formatXAF(amount)} — confirmez la réception`,
+        bodyEn: `${membership.displayName} declares they paid ${formatXAF(amount)} — confirm receipt`,
+        url: `/payments/${record._id}`,
+      });
     } else {
-      // Row 3 copy: push to payer "Le trésorier a enregistré {amount} reçu
-      // de vous — confirmez ou signalez". Starts the T_AUTO_CONFIRM window.
+      // Row 3: push to payer "…a enregistré {amount} reçu de vous —
+      // confirmez ou signalez". Starts the T_AUTO_CONFIRM objection window.
       await logActivityEvent(ctx, {
         groupId: record.groupId,
         kind: 'payment_claimed_by_payee',
@@ -587,6 +602,13 @@ export const claim = mutation({
         fromState: 'pending',
         toState: 'claimed',
         actorMembershipId: membership._id,
+      });
+      await notifyMemberships(ctx, [record.payerMembershipId], {
+        titleFr: 'Paiement enregistré',
+        titleEn: 'Payment recorded',
+        bodyFr: `${membership.displayName} a enregistré ${formatXAF(amount)} reçu de vous — confirmez ou signalez`,
+        bodyEn: `${membership.displayName} recorded ${formatXAF(amount)} received from you — confirm or flag it`,
+        url: `/payments/${record._id}`,
       });
     }
 
@@ -708,6 +730,17 @@ export const confirm = mutation({
         actorMembershipId: membership._id,
       });
     }
+    const claimantMembershipId =
+      record.claimedBySide === 'payer'
+        ? record.payerMembershipId
+        : record.payeeMembershipId;
+    await notifyMemberships(ctx, [claimantMembershipId], {
+      titleFr: 'Confirmé ✓',
+      titleEn: 'Confirmed ✓',
+      bodyFr: `${membership.displayName} a confirmé ${formatXAF(record.amount)}`,
+      bodyEn: `${membership.displayName} confirmed ${formatXAF(record.amount)}`,
+      url: `/payments/${record._id}`,
+    });
 
     await afterConfirmed(ctx, record);
     return { paymentRecordId: record._id, state: 'confirmed' as const };
@@ -789,6 +822,31 @@ export const dispute = mutation({
       actorMembershipId: membership._id,
       note,
     });
+    {
+      const officers = await ctx.db
+        .query('memberships')
+        .withIndex('by_group', (q) => q.eq('groupId', record.groupId))
+        .collect();
+      const recipientIds = new Set<Id<'memberships'>>([
+        record.payerMembershipId,
+        record.payeeMembershipId,
+        ...officers
+          .filter(
+            (m) =>
+              m.status === 'active' &&
+              (m.role === 'president' || m.role === 'treasurer')
+          )
+          .map((m) => m._id),
+      ]);
+      recipientIds.delete(membership._id); // not the person who just tapped
+      await notifyMemberships(ctx, [...recipientIds], {
+        titleFr: 'Litige ouvert',
+        titleEn: 'Dispute opened',
+        bodyFr: `Litige ouvert sur ${formatXAF(record.amount)} par ${membership.displayName}`,
+        bodyEn: `Dispute opened on ${formatXAF(record.amount)} by ${membership.displayName}`,
+        url: `/payments/${record._id}`,
+      });
+    }
 
     // A post-close dispute marks the provisionally-frozen status 'disputed'
     // (02 §b closing rule 1 — scored at resolution).

@@ -18,6 +18,7 @@ import type * as lib_paymentStateMachine from "../lib/paymentStateMachine.js";
 import type * as lib_roundMath from "../lib/roundMath.js";
 import type * as memberships from "../memberships.js";
 import type * as paymentRecords from "../paymentRecords.js";
+import type * as push from "../push.js";
 import type * as rounds from "../rounds.js";
 import type * as users from "../users.js";
 import type * as ussdContent from "../ussdContent.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "lib/roundMath": typeof lib_roundMath;
   memberships: typeof memberships;
   paymentRecords: typeof paymentRecords;
+  push: typeof push;
   rounds: typeof rounds;
   users: typeof users;
   ussdContent: typeof ussdContent;

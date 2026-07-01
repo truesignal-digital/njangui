@@ -10,6 +10,7 @@ import {
   T_CONFIRM_REMIND_2,
 } from './lib/paymentStateMachine';
 import { applyAutoConfirm, applyAutoDispute } from './paymentRecords';
+import { notifyMemberships } from './push';
 import {
   closeRoundForTick,
   loadActiveRoundContext,
@@ -158,6 +159,15 @@ export const tick = internalMutation({
               entityId: record._id,
               note: 'T_CONFIRM_REMIND_1',
             });
+            // Objection-window reminder → the PAYER (row 14): silence
+            // auto-confirms at T_AUTO_CONFIRM.
+            await notifyMemberships(ctx, [record.payerMembershipId], {
+              titleFr: 'Rappel — confirmez',
+              titleEn: 'Reminder — confirm',
+              bodyFr: 'Un paiement enregistré pour vous attend votre confirmation',
+              bodyEn: 'A payment recorded for you is awaiting your confirmation',
+              url: `/payments/${record._id}`,
+            });
           }
           continue;
         }
@@ -185,6 +195,13 @@ export const tick = internalMutation({
             entityId: record._id,
             note: 'T_CONFIRM_REMIND_2',
           });
+          await notifyMemberships(ctx, [record.payeeMembershipId], {
+            titleFr: 'Rappel — confirmez',
+            titleEn: 'Reminder — confirm',
+            bodyFr: 'Un paiement déclaré attend toujours votre confirmation',
+            bodyEn: 'A declared payment is still awaiting your confirmation',
+            url: `/payments/${record._id}`,
+          });
         } else if (record.reminder1SentAt === undefined) {
           await ctx.db.patch(record._id, { reminder1SentAt: now });
           await logActivityEvent(ctx, {
@@ -193,6 +210,13 @@ export const tick = internalMutation({
             entityTable: 'paymentRecords',
             entityId: record._id,
             note: 'T_CONFIRM_REMIND_1',
+          });
+          await notifyMemberships(ctx, [record.payeeMembershipId], {
+            titleFr: 'Rappel — confirmez',
+            titleEn: 'Reminder — confirm',
+            bodyFr: 'Un paiement déclaré attend votre confirmation',
+            bodyEn: 'A declared payment is awaiting your confirmation',
+            url: `/payments/${record._id}`,
           });
         }
       }

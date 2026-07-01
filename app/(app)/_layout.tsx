@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import { Stack } from 'expo-router';
 
 import { DevSeedButton } from '../../src/components/dev/dev-tools';
+import { usePushNotifications } from '../../src/hooks/use-push-notifications';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -13,6 +14,8 @@ export const unstable_settings = {
  * setup workflows present as modals.
  */
 export default function AppLayout() {
+  usePushNotifications();
+
   return (
     <Fragment>
       <Stack screenOptions={{ headerShown: false }}>
