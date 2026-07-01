@@ -188,5 +188,43 @@
       "thisRound": "CE TOUR",
       "noApp": "sans appli"
     }
+  },
+  "round": {
+    "title": "Tour {{n}}",
+    "beneficiary": "Bénéficiaire : {{name}}",
+    "dueDate": "réunion le {{date}}",
+    "notFound": "Tour introuvable.",
+    "notOpenTitle": "Tour pas encore ouvert",
+    "notOpenBody": "Les cotisations de ce tour s'ouvriront au début de la période. Vous serez notifié(e).",
+    "potTitle": "Pot du tour",
+    "pot": {
+      "custody": "Pot : {{confirmed}} / {{expected}} · reçu par {{name}}"
+    },
+    "inFlight": "{{amount}} déclaré, en attente de confirmation",
+    "myRowTitle": "Ma cotisation",
+    "noObligation": "Pas de cotisation attendue de vous ce tour.",
+    "membersTitle": "Cotisations des membres",
+    "arrears": "arriéré",
+    "settled": "Cotisation réglée ✓",
+    "claimCta": "J'ai cotisé (espèces)",
+    "claimConfirmBody": "Vous déclarez avoir remis {{amount}} en espèces à {{name}}. Cette personne devra confirmer la réception.",
+    "claimConfirmCta": "Oui, j'ai cotisé",
+    "claimSuccess": "Cotisation déclarée — en attente de confirmation ✓",
+    "claimSelfSuccess": "Cotisation enregistrée — auto (même personne) ✓"
+  },
+  "payments": {
+    "state": {
+      "pending": "en attente",
+      "claimed": "déclaré",
+      "confirmed": "confirmé",
+      "disputed": "contesté",
+      "cancelled": "annulé"
+    },
+    "method": {
+      "cash": "espèces",
+      "momo_mtn": "MTN MoMo",
+      "orange_money": "Orange Money",
+      "bank": "banque"
+    }
   }
 }

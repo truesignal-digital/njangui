@@ -1,9 +1,10 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import {
   CheckCircleIcon,
+  ChevronRightIcon,
   ClockIcon,
   LockClosedIcon,
   PlayIcon,
@@ -112,9 +113,9 @@ export function RotationSection({
         </View>
       </View>
 
-      {/* Current round pot card */}
+      {/* Current round pot card — taps through to the round detail screen */}
       {currentRound ? (
-        <CurrentRoundCard roundId={currentRound.roundId} />
+        <CurrentRoundCard groupId={groupId} roundId={currentRound.roundId} />
       ) : null}
 
       {/* Rotation list */}
@@ -169,8 +170,18 @@ export function RotationSection({
   );
 }
 
-/** Pot progress for the current round (api.rounds.getRound). */
-function CurrentRoundCard({ roundId }: { roundId: Id<'rounds'> }) {
+/**
+ * Pot progress for the current round (api.rounds.getRound). The pot figure
+ * is custody-captioned — it names who holds the money, never a bare balance
+ * (00 red line). Tapping opens the round detail screen (Slice 1 entry).
+ */
+function CurrentRoundCard({
+  groupId,
+  roundId,
+}: {
+  groupId: Id<'groups'>;
+  roundId: Id<'rounds'>;
+}) {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const round = useQuery(api.rounds.getRound, { roundId });
@@ -189,23 +200,37 @@ function CurrentRoundCard({ roundId }: { roundId: Id<'rounds'> }) {
       : 0;
 
   return (
-    <View className="gap-xs rounded-lg border border-border-subtle bg-surface p-md">
+    <Pressable
+      accessibilityRole="button"
+      testID="open-round-detail"
+      onPress={() =>
+        router.push({
+          pathname: '/groups/[groupId]/rounds/[roundId]',
+          params: { groupId, roundId },
+        })
+      }
+      className="gap-xs rounded-lg border border-border-subtle bg-surface p-md active:bg-surface-muted"
+    >
       <View className="flex-row items-center justify-between">
         <Text className="font-body-medium text-body-sm text-muted">
           {t('groups.cycle.roundN', { n: round.index })} ·{' '}
           {round.beneficiaryName}
         </Text>
-        <Text className="font-body-semi text-body-sm text-foreground">
-          {formatCurrencyXAF(round.confirmedTotal)} /{' '}
-          {formatCurrencyXAF(round.expectedTotal)}
-        </Text>
+        <ChevronRightIcon size={16} color={theme.textMuted} />
       </View>
+      <Text className="font-body-semi text-body-sm text-foreground">
+        {t('round.pot.custody', {
+          confirmed: formatCurrencyXAF(round.confirmedTotal),
+          expected: formatCurrencyXAF(round.expectedTotal),
+          name: round.custodianName,
+        })}
+      </Text>
       <View className="h-[8px] overflow-hidden rounded-pill bg-surface-muted">
         <View
           className="h-full rounded-pill bg-accent"
           style={{ width: `${pct}%`, backgroundColor: theme.accent }}
         />
       </View>
-    </View>
+    </Pressable>
   );
 }

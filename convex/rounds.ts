@@ -521,6 +521,7 @@ const roundDetailValidator = v.object({
   collectionMode: collectionModeValidator,
   beneficiaryMembershipId: v.id('memberships'),
   beneficiaryName: v.string(),
+  custodianName: v.string(), // who receives contributions — custody framing (00 red line)
   scheduledOpenAt: v.number(),
   dueAt: v.number(),
   graceEndAt: v.number(),
@@ -593,6 +594,20 @@ export const getRound = query({
     }
     const beneficiary = await ctx.db.get(round.beneficiaryMembershipId);
 
+    // Custody framing (00 red line): every pot figure names its holder —
+    // the treasurer in via_treasurer mode, the beneficiary in direct mode.
+    let custodianName = beneficiary?.displayName ?? '—';
+    if (cycle.collectionMode === 'via_treasurer') {
+      const memberships = await ctx.db
+        .query('memberships')
+        .withIndex('by_group', (q) => q.eq('groupId', round.groupId))
+        .collect();
+      const treasurer = memberships.find(
+        (m) => m.role === 'treasurer' && m.status === 'active'
+      );
+      custodianName = treasurer?.displayName ?? custodianName;
+    }
+
     const records = await ctx.db
       .query('paymentRecords')
       .withIndex('by_round', (q) => q.eq('roundId', round._id))
@@ -625,6 +640,7 @@ export const getRound = query({
       collectionMode: cycle.collectionMode,
       beneficiaryMembershipId: round.beneficiaryMembershipId,
       beneficiaryName: beneficiary?.displayName ?? '—',
+      custodianName,
       scheduledOpenAt: round.scheduledOpenAt,
       dueAt: round.dueAt,
       graceEndAt: round.graceEndAt,
