@@ -61,13 +61,13 @@ proposer rebuts with evidence; judges re-evaluate. Up to 3 rounds. Outcome:
 | # | Feature | Size | Status | Branch |
 |---|---------|------|--------|--------|
 | 1 | Cycle-start UI (rotation builder + lock) + live rotation | M | ✅ shipped | `feat/cycle-start-ui` (merged) |
-| 2 | Round / claim contribution UI (+ USSD method screens) | L | queued | `feat/round-claim-ui` |
-| 3 | Treasurer confirmation inbox | M | queued | `feat/treasurer-inbox` |
-| 4 | Push notifications + in-app inbox | L | queued | `feat/push-inbox` |
-| 5 | Meeting Mode (treasurer roll-call + offline queue) | L | queued | `feat/meeting-mode` |
-| 6 | Payout flow UI | M | queued | `feat/payout-ui` |
-| 7 | Activity feed (read/render) | M | queued | `feat/activity-feed` |
-| 8 | Round summary + WhatsApp share | S | queued | `feat/round-summary` |
+| 2 | Round / claim contribution UI (+ USSD method screens) | L | ✅ shipped (2026-07-01, sim-verified) | `feat/round-claim-ui` (merged) |
+| 3 | Treasurer confirmation inbox | M | ✅ shipped (tabs shell + per-payment screen included) | `feat/treasurer-inbox` (merged) |
+| 4 | Push notifications + in-app inbox | L | ✅ shipped (device push untested — needs EAS projectId + physical device) | `feat/push-inbox` (merged) |
+| 5 | Meeting Mode (treasurer roll-call + offline queue) | L | ✅ shipped (app-kill replay test pending on device) | `feat/meeting-mode` (merged) |
+| 6 | Payout flow UI | M | ✅ shipped (claim leg sim-verified; confirm leg rides the verified confirm path) | `feat/payout-ui` (merged) |
+| 7 | Activity feed (read/render) | M | ✅ shipped | `feat/activity-feed` (merged) |
+| 8 | Round summary + WhatsApp share | S | ✅ shipped (share-sheet fallback verified; wa.me needs device with WhatsApp) | (with `feat/activity-feed`) |
 | 9 | Manual fine entry (M14) | M | queued | `feat/fines` |
 | 10 | Assistance levy entry (M15) | M | queued | `feat/assistance-levy` |
 | 11 | Reliability score v1 (M13) | M | queued | `feat/reliability-score` |
