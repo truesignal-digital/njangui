@@ -6,7 +6,7 @@ import {
   type MutationCtx,
   query,
 } from './_generated/server';
-import { appLanguageValidator } from './schema';
+import { appLanguageValidator, pushPlatformValidator } from './schema';
 import { logActivityEvent } from './utils/activity';
 import { getCurrentUserOrNull } from './utils/auth';
 import { normalizePhone } from './utils/phone';
@@ -310,6 +310,38 @@ export const updateMyName = mutation({
     }
 
     await ctx.db.patch(user._id, { name });
+    return null;
+  },
+});
+
+/**
+ * Register/refresh this device's Expo push token (05 M12; schema
+ * users.pushTokens). Deduped by token; capped so an unbounded reinstall
+ * loop can't grow the array forever (oldest dropped first).
+ */
+export const savePushToken = mutation({
+  args: {
+    token: v.string(),
+    platform: pushPlatformValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const result = await getCurrentUserOrNull(ctx);
+    if (!result) {
+      throw new Error('Not authenticated');
+    }
+    const { user } = result;
+    const token = args.token.trim();
+    if (!token) {
+      throw new Error('token is required');
+    }
+    const now = Date.now();
+    const others = (user.pushTokens ?? []).filter((t) => t.token !== token);
+    const pushTokens = [
+      ...others.slice(-4), // keep at most 5 device tokens per user
+      { token, platform: args.platform, updatedAt: now },
+    ];
+    await ctx.db.patch(user._id, { pushTokens });
     return null;
   },
 });
