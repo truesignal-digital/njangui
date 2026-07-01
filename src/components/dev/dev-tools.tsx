@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router, useGlobalSearchParams } from 'expo-router';
 import { useSignIn, useSignUp } from '@clerk/expo/legacy';
 import { useConvexAuth, useMutation } from 'convex/react';
+import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../lib/convex-api';
 import { useClerk } from '../../lib/clerk-client';
@@ -62,9 +63,13 @@ export function DevAuthButton() {
         }
         throw new Error(`sign-in status ${res.status}`);
       } catch {
-        // Fresh test user → sign up instead.
+        // Fresh test user → sign up instead. The Clerk dev instance
+        // requires a password on sign-up; fixed throwaway for test users.
         setStatus('signing up…');
-        await signUp.create({ phoneNumber: phone });
+        await signUp.create({
+          phoneNumber: phone,
+          password: `dev-Njangi-${TEST_CODE}`,
+        });
         await signUp.preparePhoneNumberVerification({ strategy: 'phone_code' });
         const res = await signUp.attemptPhoneNumberVerification({
           code: TEST_CODE,
@@ -73,7 +78,9 @@ export function DevAuthButton() {
           await setActiveSignUp({ session: res.createdSessionId });
           return;
         }
-        throw new Error(`sign-up status ${res.status}`);
+        throw new Error(
+          `sign-up status ${res.status} — missing: ${JSON.stringify(res.missingFields)} unverified: ${JSON.stringify(res.unverifiedFields)}`
+        );
       }
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'dev auth failed');
@@ -134,6 +141,8 @@ export function DevSeedButton() {
         pathname: '/groups/[groupId]',
         params: { groupId },
       });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'devSeed failed');
     } finally {
       setBusy(null);
     }
@@ -143,9 +152,12 @@ export function DevSeedButton() {
     if (!params.groupId) return;
     setBusy('round');
     try {
-      await devStartAndOpenRound({
+      const result = await devStartAndOpenRound({
         groupId: params.groupId as Id<'groups'>,
       });
+      toast.success(`round ${result.opened ? 'opened' : 'already open'}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'open round failed');
     } finally {
       setBusy(null);
     }
