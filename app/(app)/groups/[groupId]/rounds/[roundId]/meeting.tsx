@@ -169,6 +169,12 @@ export default function MeetingModeScreen() {
           ...(amountOverride !== undefined && { amount: amountOverride }),
         });
         await dequeueTap(roundId, key);
+        // Server row is authoritative now — a stale optimistic 'claimed'
+        // must not mask a self-record that confirmed in one mutation.
+        setOptimistic((o) => {
+          const { [row.membershipId]: _drop, ...rest } = o;
+          return rest;
+        });
       } catch (err) {
         if (err instanceof Error && /already/i.test(err.message)) {
           // Meeting-Mode collision (the member claimed payer-side while we
