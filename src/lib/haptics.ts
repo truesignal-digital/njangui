@@ -1,10 +1,13 @@
 import * as Haptics from 'expo-haptics';
 
-const isIOS = process.env.EXPO_OS === 'ios';
+// iOS AND Android: expo-haptics maps to UIFeedbackGenerator / Vibrator —
+// the primary (Android) user base must get tactile feedback too.
+const canVibrate = process.env.EXPO_OS !== 'web';
 
 function safe(fn: () => Promise<void>) {
-  if (!isIOS) return;
-  void fn();
+  if (!canVibrate) return;
+  // Never let a haptic failure (old Android, disabled vibrator) surface.
+  void fn().catch(() => {});
 }
 
 export const haptics = {

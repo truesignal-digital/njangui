@@ -1,4 +1,4 @@
-import { ScrollView, Text } from 'react-native';
+import { RefreshControl, ScrollView, Text } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../../src/lib/clerk-client';
 import { useAppTheme } from '../../../src/lib/theme';
 import { CalendarAgenda } from '../../../src/components/calendar-agenda';
+import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
 
 /**
  * Calendrier (docs/03): the cross-njangi planning surface — every round
@@ -17,6 +18,7 @@ export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
+  const { refreshing, onRefresh } = usePullRefresh();
 
   if (isLoaded && !isSignedIn) {
     return <Redirect href="/sign-in" />;
@@ -31,6 +33,9 @@ export default function CalendarScreen() {
         paddingHorizontal: theme.spacing.lg,
       }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <Text className="pb-lg font-heading text-headline text-foreground">
         {t('calendar.title')}

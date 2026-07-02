@@ -339,9 +339,10 @@
   },
   "inbox": {
     "title": "To confirm ({{count}})",
-    "empty": "Nothing to confirm. ✓",
+    "empty": "Nothing to confirm",
     "claimedByPayer": "{{name}} declares they paid — confirm receipt",
-    "claimedByPayee": "{{name}} recorded your payment — confirm or flag it"
+    "claimedByPayee": "{{name}} recorded your payment — confirm or flag it",
+    "emptyHint": "When a member declares a payment that involves you, it shows up here."
   },
   "payment": {
     "notFound": "Payment not found.",

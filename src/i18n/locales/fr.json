@@ -339,9 +339,10 @@
   },
   "inbox": {
     "title": "À confirmer ({{count}})",
-    "empty": "Rien à confirmer. ✓",
+    "empty": "Rien à confirmer",
     "claimedByPayer": "{{name}} déclare avoir payé — confirmez la réception",
-    "claimedByPayee": "{{name}} a enregistré votre paiement — confirmez ou signalez"
+    "claimedByPayee": "{{name}} a enregistré votre paiement — confirmez ou signalez",
+    "emptyHint": "Quand un membre déclare un paiement qui vous concerne, il apparaît ici."
   },
   "payment": {
     "notFound": "Paiement introuvable.",

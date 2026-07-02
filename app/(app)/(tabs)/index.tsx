@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { RefreshControl, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { useAppTheme } from '../../../src/lib/theme';
 import { Skeleton } from '../../../src/components/skeleton';
 import { AppButton } from '../../../src/components/ui/button';
 import { GroupCard, type GroupListItem } from '../../../src/components/groups/group-card';
+import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
 
 /**
  * Home — Week 1 scope: my group list (docs/05 Week 1). The activity-feed /
@@ -25,6 +26,7 @@ export default function HomeScreen() {
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const { isAuthenticated } = useConvexAuth();
   const myGroups = useQuery(api.groups.listMyGroups, isAuthenticated ? {} : 'skip');
+  const { refreshing, onRefresh } = usePullRefresh();
 
   if (isLoaded && !isSignedIn) {
     return <Redirect href="/sign-in" />;
@@ -70,6 +72,9 @@ export default function HomeScreen() {
         ListHeaderComponent={<HomeHeader />}
         ListFooterComponent={<HomeFooter />}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </View>
   );
