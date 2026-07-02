@@ -252,7 +252,10 @@
       "roundN": "Round {{n}}",
       "locked": "fixed",
       "thisRound": "THIS ROUND",
-      "noApp": "no app"
+      "noApp": "no app",
+      "addHand": "Add a hand (two names)",
+      "removeHand": "Remove this hand",
+      "handBadge": "hand {{n}}"
     },
     "readiness": {
       "title": "Ready to start?",

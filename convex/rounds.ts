@@ -3,9 +3,9 @@ import type { Doc, Id } from './_generated/dataModel';
 import { internalMutation, type MutationCtx, query } from './_generated/server';
 import {
   computePotProgress,
+  expectedContributionAmount,
   freezeObligationStatus,
-  obligatedContributorIds,
-  payoutPrefillAmount,
+  handsByMembership,
 } from './lib/roundMath';
 import {
   collectionModeValidator,
@@ -31,6 +31,26 @@ import { getCurrentUserOrNull, requireMembership } from './utils/auth';
  * groups and cancelled cycles are never cron-visible (02 §a: paused freezes
  * round timers; record-level timers keep running elsewhere).
  */
+/**
+ * A member's expected contribution for one round, hands-aware (02 §b
+ * « deux mains ») — the single source every freeze/summary/remainder
+ * computation must use. Derived from the immutable cycle snapshot
+ * (rotationOrder + contributionAmount + beneficiaryContributes), so it is
+ * stable for the round's whole life.
+ */
+export function expectedForMember(
+  cycle: Doc<'cycles'>,
+  round: Doc<'rounds'>,
+  membershipId: Id<'memberships'>
+): number {
+  return expectedContributionAmount({
+    hands: handsByMembership(cycle.rotationOrder).get(membershipId) ?? 0,
+    isBeneficiary: membershipId === round.beneficiaryMembershipId,
+    beneficiaryContributes: cycle.beneficiaryContributes,
+    contributionAmount: cycle.contributionAmount,
+  });
+}
+
 export async function loadActiveRoundContext(
   ctx: MutationCtx,
   round: Doc<'rounds'>
@@ -196,24 +216,34 @@ export async function openRoundForTick(
     .take(1);
 
   if (existing.length === 0) {
-    const obligatedIds = obligatedContributorIds(
-      activeMembers.filter((m) => m.joinedMidCycle !== true).map((m) => m._id),
-      round.beneficiaryMembershipId,
-      cycle.beneficiaryContributes
-    );
+    // Per-member obligation = base amount × hands held in the locked
+    // rotation (02 §b « deux mains »); the beneficiary's benefiting hand
+    // rests when the cycle says so. 0 ⇒ no record (single-hand beneficiary
+    // sitting out — exactly the old exclusion).
+    const hands = handsByMembership(cycle.rotationOrder);
     const contributionPayeeId =
       cycle.collectionMode === 'via_treasurer'
         ? (treasurer as Doc<'memberships'>)._id
         : round.beneficiaryMembershipId;
 
-    for (const memberId of obligatedIds) {
+    let potPrefill = 0;
+    for (const member of activeMembers) {
+      if (member.joinedMidCycle === true) continue;
+      const amount = expectedContributionAmount({
+        hands: hands.get(member._id) ?? 0,
+        isBeneficiary: member._id === round.beneficiaryMembershipId,
+        beneficiaryContributes: cycle.beneficiaryContributes,
+        contributionAmount: cycle.contributionAmount,
+      });
+      if (amount <= 0) continue;
+      potPrefill += amount;
       await ctx.db.insert('paymentRecords', {
         groupId: round.groupId,
         roundId: round._id,
         kind: 'contribution',
         state: 'pending',
-        amount: cycle.contributionAmount,
-        payerMembershipId: memberId,
+        amount,
+        payerMembershipId: member._id,
         payeeMembershipId: contributionPayeeId,
         proofType: 'none', // method absent until claimed (02 §b pre-creation)
       });
@@ -225,10 +255,7 @@ export async function openRoundForTick(
         roundId: round._id,
         kind: 'payout',
         state: 'pending',
-        amount: payoutPrefillAmount(
-          obligatedIds.length,
-          cycle.contributionAmount
-        ),
+        amount: potPrefill, // Σ of the hands-adjusted obligations just minted
         payerMembershipId: (treasurer as Doc<'memberships'>)._id,
         payeeMembershipId: round.beneficiaryMembershipId,
         proofType: 'none',
@@ -322,7 +349,7 @@ export async function closeRoundForTick(
           amount: r.amount,
           claimedAt: r.claimedAt,
         })),
-        round.expectedAmountPerMember,
+        expectedForMember(cycle, round, membershipId),
         round.dueAt
       ),
     });
@@ -442,13 +469,16 @@ export async function refreezeObligationStatus(
     // matching the at-close rule for fully-cancelled obligations.
     obligationStatuses.splice(entryIndex, 1);
   } else {
+    const cycle = await ctx.db.get(round.cycleId);
     const next = freezeObligationStatus(
       atCloseRecords.map((r) => ({
         state: r.state,
         amount: r.amount,
         claimedAt: r.claimedAt,
       })),
-      round.expectedAmountPerMember,
+      cycle
+        ? expectedForMember(cycle, round, record.payerMembershipId)
+        : round.expectedAmountPerMember,
       round.dueAt
     );
     if (next === current) {
@@ -622,9 +652,14 @@ export const getRound = query({
         claimedAt: r.claimedAt,
       }))
     );
-    const obligatedCount = new Set(
-      contributions.map((r) => r.payerMembershipId)
-    ).size;
+    // Σ per-payer expected (hands-aware) — never payers × base amount.
+    const obligatedPayerIds = [
+      ...new Set(contributions.map((r) => r.payerMembershipId)),
+    ];
+    const expectedTotal = obligatedPayerIds.reduce(
+      (sum, id) => sum + expectedForMember(cycle, round, id),
+      0
+    );
 
     const payout = records.find(
       (r) => r.kind === 'payout' && r.state !== 'cancelled'
@@ -645,7 +680,7 @@ export const getRound = query({
       dueAt: round.dueAt,
       graceEndAt: round.graceEndAt,
       expectedAmountPerMember: round.expectedAmountPerMember,
-      expectedTotal: obligatedCount * round.expectedAmountPerMember,
+      expectedTotal,
       confirmedTotal: pot.confirmedAmount,
       inFlightTotal: pot.inFlightAmount,
       payout: payout
@@ -683,6 +718,10 @@ export const listRoundPayments = query({
       return [];
     }
     await requireMembership(ctx, round.groupId);
+    const cycle = await ctx.db.get(round.cycleId);
+    if (!cycle) {
+      return [];
+    }
 
     const contributions = await ctx.db
       .query('paymentRecords')
@@ -718,14 +757,15 @@ export const listRoundPayments = query({
           claimedAt: r.claimedAt,
         }))
       );
+      const expectedAmount = expectedForMember(cycle, round, membershipId);
       rows.push({
         membershipId,
         displayName: nameByMembershipId.get(membershipId) ?? '—',
-        expectedAmount: round.expectedAmountPerMember,
+        expectedAmount,
         confirmedAmount: pot.confirmedAmount,
         inFlightAmount: pot.inFlightAmount,
         hasOpenDispute: memberRecords.some((r) => r.state === 'disputed'),
-        isSettled: pot.confirmedAmount >= round.expectedAmountPerMember,
+        isSettled: pot.confirmedAmount >= expectedAmount,
         records: memberRecords
           .sort((a, b) => a._creationTime - b._creationTime)
           .map((r) => ({

@@ -252,7 +252,10 @@
       "roundN": "Tour {{n}}",
       "locked": "fixé",
       "thisRound": "CE TOUR",
-      "noApp": "sans appli"
+      "noApp": "sans appli",
+      "addHand": "Ajouter une main (deux noms)",
+      "removeHand": "Retirer cette main",
+      "handBadge": "main {{n}}"
     },
     "readiness": {
       "title": "Prêt à démarrer ?",

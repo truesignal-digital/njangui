@@ -10,6 +10,8 @@ import {
   addMonthsClamped,
   computePotProgress,
   computeRoundTimes,
+  expectedContributionAmount,
+  handsByMembership,
   dayOfWeekOf,
   daysInMonth,
   doualaTimestamp,
@@ -324,5 +326,67 @@ describe('freezeObligationStatus', () => {
         DUE_AT
       )
     ).toBe('on_time');
+  });
+});
+
+// ── deux mains (02 §b): hands & per-round expected amounts ────
+
+describe('handsByMembership', () => {
+  test('counts occurrences per membership', () => {
+    const hands = handsByMembership(['a', 'b', 'a', 'c', 'a']);
+    expect(hands.get('a')).toBe(3);
+    expect(hands.get('b')).toBe(1);
+    expect(hands.get('c')).toBe(1);
+    expect(hands.get('x')).toBeUndefined();
+  });
+});
+
+describe('expectedContributionAmount', () => {
+  const base = { beneficiaryContributes: true, contributionAmount: 10_000 };
+
+  test('one hand, not beneficiary → base amount', () => {
+    expect(
+      expectedContributionAmount({ ...base, hands: 1, isBeneficiary: false })
+    ).toBe(10_000);
+  });
+
+  test('two hands → double', () => {
+    expect(
+      expectedContributionAmount({ ...base, hands: 2, isBeneficiary: false })
+    ).toBe(20_000);
+  });
+
+  test('single-hand beneficiary sits out when the cycle says so (old exclusion)', () => {
+    expect(
+      expectedContributionAmount({
+        hands: 1,
+        isBeneficiary: true,
+        beneficiaryContributes: false,
+        contributionAmount: 10_000,
+      })
+    ).toBe(0);
+  });
+
+  test('two-hand beneficiary sitting out still owes the other hand', () => {
+    expect(
+      expectedContributionAmount({
+        hands: 2,
+        isBeneficiary: true,
+        beneficiaryContributes: false,
+        contributionAmount: 10_000,
+      })
+    ).toBe(10_000);
+  });
+
+  test('beneficiary who contributes pays all hands', () => {
+    expect(
+      expectedContributionAmount({ ...base, hands: 2, isBeneficiary: true })
+    ).toBe(20_000);
+  });
+
+  test('zero hands (post-lock joiner) → no obligation', () => {
+    expect(
+      expectedContributionAmount({ ...base, hands: 0, isBeneficiary: false })
+    ).toBe(0);
   });
 });

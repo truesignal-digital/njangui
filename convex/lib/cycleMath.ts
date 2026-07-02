@@ -22,23 +22,18 @@ export function nextCycleIndex(cycles: readonly { status: string }[]): number {
 export type RotationValidation = { ok: true } | { ok: false; reason: string };
 
 /**
- * A rotation order is valid iff it lists every active membership EXACTLY
- * once (02 §a lock guard; multi-hand deferred per 01 §5). Shared by
- * `saveDraftOrder` (so a draft is always lockable) and `startCycle` (the
- * authoritative check at lock). Ids are plain strings — no Convex types.
+ * A rotation order is valid iff it lists every active membership AT LEAST
+ * once and nothing else (02 §a lock guard + §b « deux mains » : a
+ * membership may appear N times — N positions, N beneficiary rounds, N×
+ * contribution per round). Shared by `saveDraftOrder` (so a draft is
+ * always lockable) and `startCycle` (the authoritative check at lock).
+ * Ids are plain strings — no Convex types.
  */
 export function validateRotationOrder(
   order: readonly string[],
   activeMemberIds: readonly string[]
 ): RotationValidation {
   const activeSet = new Set(activeMemberIds);
-  if (order.length !== activeSet.size) {
-    return {
-      ok: false,
-      reason: 'Rotation order must contain every active member exactly once',
-    };
-  }
-  const seen = new Set<string>();
   for (const id of order) {
     if (!activeSet.has(id)) {
       return {
@@ -46,13 +41,15 @@ export function validateRotationOrder(
         reason: 'Rotation order contains a non-active or foreign membership',
       };
     }
-    if (seen.has(id)) {
+  }
+  const positioned = new Set(order);
+  for (const id of activeSet) {
+    if (!positioned.has(id)) {
       return {
         ok: false,
-        reason: 'Rotation order must contain every active member exactly once',
+        reason: 'Rotation order must contain every active member at least once',
       };
     }
-    seen.add(id);
   }
   return { ok: true };
 }

@@ -9,6 +9,8 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   LockClosedIcon,
+  MinusIcon,
+  PlusIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
 import { toast } from 'sonner-native';
@@ -134,6 +136,38 @@ export default function StartCycleScreen() {
     persist(next);
   };
 
+  // « Deux mains » (02 §b): a member may hold several positions — extra
+  // hands mean N beneficiary rounds and N× the contribution each round.
+  const addHand = (index: number) => {
+    if (!order) return;
+    const next = order.slice();
+    next.splice(index + 1, 0, { ...order[index] });
+    haptics.light();
+    setOrder(next);
+    persist(next);
+  };
+
+  const removeHand = (index: number) => {
+    if (!order) return;
+    const id = order[index].membershipId;
+    if (order.filter((r) => r.membershipId === id).length < 2) return;
+    const next = order.slice();
+    next.splice(index, 1);
+    haptics.light();
+    setOrder(next);
+    persist(next);
+  };
+
+  /** 1-based hand number of this position among the member's positions. */
+  const handNumber = (index: number): number => {
+    if (!order) return 1;
+    let n = 0;
+    for (let i = 0; i <= index; i++) {
+      if (order[i].membershipId === order[index].membershipId) n++;
+    }
+    return n;
+  };
+
   const shuffle = () => {
     if (!order) return;
     const next = shuffled(order);
@@ -232,7 +266,7 @@ export default function StartCycleScreen() {
             <View className="gap-xs" style={shadow('card')}>
               {(order ?? []).map((row, index) => (
                 <View
-                  key={row.membershipId}
+                  key={`${row.membershipId}:${index}`}
                   className="flex-row items-center gap-sm rounded-lg border border-border-subtle bg-surface p-sm"
                 >
                   <View className="h-[28px] w-[28px] items-center justify-center rounded-full bg-accent-faint">
@@ -240,12 +274,40 @@ export default function StartCycleScreen() {
                       {index + 1}
                     </Text>
                   </View>
-                  <Text
-                    numberOfLines={1}
-                    className="min-w-0 flex-1 font-body-medium text-body text-foreground"
-                  >
-                    {row.displayName}
-                  </Text>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      numberOfLines={1}
+                      className="font-body-medium text-body text-foreground"
+                    >
+                      {row.displayName}
+                    </Text>
+                    {handNumber(index) > 1 ? (
+                      <Text className="font-body text-caption text-muted">
+                        {t('groups.cycle.handBadge', { n: handNumber(index) })}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {handNumber(index) === 1 ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t('groups.cycle.addHand')}
+                      onPress={() => addHand(index)}
+                      className="h-[34px] w-[34px] items-center justify-center rounded-md active:bg-surface-muted"
+                      testID={`add-hand-${index}`}
+                    >
+                      <PlusIcon size={18} color={theme.accent} />
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t('groups.cycle.removeHand')}
+                      onPress={() => removeHand(index)}
+                      className="h-[34px] w-[34px] items-center justify-center rounded-md active:bg-surface-muted"
+                      testID={`remove-hand-${index}`}
+                    >
+                      <MinusIcon size={18} color={theme.textMuted} />
+                    </Pressable>
+                  )}
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={t('groups.cycle.moveUp')}

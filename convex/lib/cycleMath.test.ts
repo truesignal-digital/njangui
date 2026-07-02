@@ -37,7 +37,8 @@ describe('nextCycleIndex', () => {
   });
 });
 
-// ── validateRotationOrder — exactly once over active members ──
+// ── validateRotationOrder — at least once over active members
+//    (02 §b « deux mains » : repeats = multiple hands) ──
 
 describe('validateRotationOrder', () => {
   const active = ['a', 'b', 'c'];
@@ -51,12 +52,19 @@ describe('validateRotationOrder', () => {
   test('missing a member → rejected', () => {
     const r = validateRotationOrder(['a', 'b'], active);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toContain('exactly once');
+    if (!r.ok) expect(r.reason).toContain('at least once');
   });
 
-  test('extra / too many entries → rejected', () => {
-    const r = validateRotationOrder(['a', 'b', 'c', 'a'], active);
-    expect(r.ok).toBe(false);
+  test('deux mains — a repeated member → ok', () => {
+    expect(validateRotationOrder(['a', 'b', 'c', 'a'], active)).toEqual({
+      ok: true,
+    });
+  });
+
+  test('three hands, interleaved positions → ok', () => {
+    expect(validateRotationOrder(['a', 'b', 'a', 'c', 'a'], active)).toEqual({
+      ok: true,
+    });
   });
 
   test('a foreign / non-active id → rejected with the foreign message', () => {
@@ -65,11 +73,11 @@ describe('validateRotationOrder', () => {
     if (!r.ok) expect(r.reason).toContain('non-active or foreign');
   });
 
-  test('duplicate of a real member (same length) → rejected', () => {
-    // length matches activeSet.size (3), but 'a' twice and 'c' missing.
+  test('duplicate hands never excuse a missing member', () => {
+    // 'a' twice but 'c' absent — matching activeSet.size is not enough.
     const r = validateRotationOrder(['a', 'a', 'b'], active);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toContain('exactly once');
+    if (!r.ok) expect(r.reason).toContain('at least once');
   });
 
   test('empty group order → ok only when no active members', () => {

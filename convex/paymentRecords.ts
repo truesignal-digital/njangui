@@ -12,6 +12,7 @@ import {
 } from './lib/paymentStateMachine';
 import { payoutPrefillAmount } from './lib/roundMath';
 import {
+  expectedForMember,
   refreezeObligationStatus,
   settleRoundAfterPayoutConfirmed,
 } from './rounds';
@@ -154,7 +155,13 @@ async function expectedObligationAmount(
 ): Promise<number | null> {
   if (record.kind === 'contribution' && record.roundId !== undefined) {
     const round = await ctx.db.get(record.roundId);
-    return round ? round.expectedAmountPerMember : null;
+    if (!round) return null;
+    // Hands-aware (02 §b « deux mains ») — a 2-hand member claiming 1×
+    // must leave a 1× remainder, not a silently-satisfied obligation.
+    const cycle = await ctx.db.get(round.cycleId);
+    return cycle
+      ? expectedForMember(cycle, round, record.payerMembershipId)
+      : round.expectedAmountPerMember;
   }
   if (record.kind === 'fine' && record.fineId !== undefined) {
     const fine = await ctx.db.get(record.fineId);
@@ -260,15 +267,21 @@ async function ensureObligationRemainder(
         .filter((r) => r.state !== 'cancelled')
         .map((r) => r.payerMembershipId)
     );
+    // Σ per-payer expected (hands-aware, 02 §b) — payers × base amount
+    // undercounts multi-hand members.
+    const cycle = await ctx.db.get(round.cycleId);
+    const prefill = cycle
+      ? [...obligatedPayerIds].reduce(
+          (sum, id) => sum + expectedForMember(cycle, round, id),
+          0
+        )
+      : payoutPrefillAmount(obligatedPayerIds.size, round.expectedAmountPerMember);
     await ctx.db.insert('paymentRecords', {
       groupId: record.groupId,
       roundId,
       kind: 'payout',
       state: 'pending',
-      amount: payoutPrefillAmount(
-        obligatedPayerIds.size,
-        round.expectedAmountPerMember
-      ),
+      amount: prefill,
       payerMembershipId: record.payerMembershipId,
       payeeMembershipId: record.payeeMembershipId,
       proofType: 'none',
