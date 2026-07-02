@@ -100,6 +100,98 @@ export default function GroupHomeScreen() {
   const canAssignPresident =
     members !== undefined && !hasPresident && group.viewerRole === 'treasurer';
 
+  const cycleRunning = group.status === 'active' || group.status === 'paused';
+
+  const membersSection = (
+    <SectionCard
+      title={
+        members
+          ? `${t('groups.detail.membersTitle')} · ${t('groups.memberCount', {
+              count: activeMembers.length,
+            })}`
+          : t('groups.detail.membersTitle')
+      }
+    >
+      {members === undefined ? (
+        <View className="gap-sm">
+          <Skeleton className="h-[48px] rounded-md" />
+          <Skeleton className="h-[48px] rounded-md" />
+          <Skeleton className="h-[48px] rounded-md" />
+        </View>
+      ) : (
+        <MemberList
+          members={activeMembers}
+          canManage={canManage}
+          canAssignPresident={canAssignPresident}
+          groupId={group._id}
+        />
+      )}
+      {canManage ? (
+        <AppButton
+          variant="outline"
+          label={t('groups.detail.addMember')}
+          icon={<PlusIcon size={18} color={theme.accent} />}
+          className="mt-sm"
+          onPress={() =>
+            router.push({
+              pathname: '/groups/[groupId]/add-member',
+              params: { groupId: group._id },
+            })
+          }
+        />
+      ) : null}
+    </SectionCard>
+  );
+
+  const inviteSection = canManage ? (
+    <SectionCard title={t('groups.invite.title')}>
+      <InviteShare inviteCode={group.inviteCode} groupName={group.name} />
+    </SectionCard>
+  ) : null;
+
+  const rotationSection = (
+    <SectionCard title={t('groups.detail.rotationTitle')}>
+      <RotationSection
+        groupId={group._id}
+        groupStatus={group.status}
+        viewerRole={group.viewerRole}
+        activeMemberCount={activeMembers.length}
+      />
+      <AppButton
+        variant="ghost"
+        size="sm"
+        label={t('calendar.seeCalendar')}
+        onPress={() =>
+          router.push({
+            pathname: '/groups/[groupId]/calendar',
+            params: { groupId: group._id },
+          })
+        }
+        testID="see-group-calendar"
+      />
+    </SectionCard>
+  );
+
+  // 5-item preview; the full immutable ledger lives on its own paginated
+  // page (decision 6: the history IS the product).
+  const activitySection = (
+    <SectionCard title={t('feed.title')}>
+      <ActivityFeed groupId={group._id} compact />
+      <AppButton
+        variant="ghost"
+        size="sm"
+        label={t('feed.seeAll')}
+        onPress={() =>
+          router.push({
+            pathname: '/groups/[groupId]/activity',
+            params: { groupId: group._id },
+          })
+        }
+        testID="see-all-activity"
+      />
+    </SectionCard>
+  );
+
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -160,92 +252,25 @@ export default function GroupHomeScreen() {
         </SectionCard>
       ) : null}
 
-      {/* Member roster */}
-      <SectionCard
-        title={
-          members
-            ? `${t('groups.detail.membersTitle')} · ${t('groups.memberCount', {
-                count: activeMembers.length,
-              })}`
-            : t('groups.detail.membersTitle')
-        }
-      >
-        {members === undefined ? (
-          <View className="gap-sm">
-            <Skeleton className="h-[48px] rounded-md" />
-            <Skeleton className="h-[48px] rounded-md" />
-            <Skeleton className="h-[48px] rounded-md" />
-          </View>
-        ) : (
-          <MemberList
-            members={activeMembers}
-            canManage={canManage}
-            canAssignPresident={canAssignPresident}
-            groupId={group._id}
-          />
-        )}
-        {canManage ? (
-          <AppButton
-            variant="outline"
-            label={t('groups.detail.addMember')}
-            icon={<PlusIcon size={18} color={theme.accent} />}
-            className="mt-sm"
-            onPress={() =>
-              router.push({
-                pathname: '/groups/[groupId]/add-member',
-                params: { groupId: group._id },
-              })
-            }
-          />
-        ) : null}
-      </SectionCard>
-
-      {/* Invite (president/treasurer) */}
-      {canManage ? (
-        <SectionCard title={t('groups.invite.title')}>
-          <InviteShare inviteCode={group.inviteCode} groupName={group.name} />
-        </SectionCard>
-      ) : null}
-
-      {/* Rotation / rounds — state-driven (setup → start CTA, active → live order) */}
-      <SectionCard title={t('groups.detail.rotationTitle')}>
-        <RotationSection
-          groupId={group._id}
-          groupStatus={group.status}
-          viewerRole={group.viewerRole}
-          activeMemberCount={activeMembers.length}
-        />
-        <AppButton
-          variant="ghost"
-          size="sm"
-          label={t('calendar.seeCalendar')}
-          onPress={() =>
-            router.push({
-              pathname: '/groups/[groupId]/calendar',
-              params: { groupId: group._id },
-            })
-          }
-          testID="see-group-calendar"
-        />
-      </SectionCard>
-
-      {/* Activity feed — 5-item preview; the full immutable ledger lives on
-          its own paginated page (decision 6: the history IS the product) */}
-      <SectionCard title={t('feed.title')}>
-        <ActivityFeed groupId={group._id} compact />
-        <AppButton
-          variant="ghost"
-          size="sm"
-          label={t('feed.seeAll')}
-          onPress={() =>
-            router.push({
-              pathname: '/groups/[groupId]/activity',
-              params: { groupId: group._id },
-            })
-          }
-          testID="see-all-activity"
-        />
-      </SectionCard>
+      {/* Section order answers the user's actual question. Cycle running →
+          « what happens next » (rotation/round, then the feed) leads;
+          setup/between-cycles → roster and invite lead (building the group
+          IS the task). */}
+      {cycleRunning ? (
+        <>
+          {rotationSection}
+          {activitySection}
+          {membersSection}
+          {inviteSection}
+        </>
+      ) : (
+        <>
+          {membersSection}
+          {inviteSection}
+          {rotationSection}
+          {activitySection}
+        </>
+      )}
 
       {/* Group rules */}
       <SectionCard title={t('groups.detail.rulesTitle')}>
