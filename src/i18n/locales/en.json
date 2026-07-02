@@ -202,7 +202,9 @@
       "usernameNotFound": "No account with this username.",
       "makePresident": "Make president",
       "presidentAssignedToast": "{{name}} is now the president ✓",
-      "noPresidentBanner": "This group has no president yet — name one below to be able to start the cycle."
+      "noPresidentBanner": "This group has no president yet — name one below to be able to start the cycle.",
+      "alreadyMember": "Already a member",
+      "alreadyMemberError": "This person is already a member of this group."
     },
     "invite": {
       "title": "Invite members",

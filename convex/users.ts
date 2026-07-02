@@ -282,13 +282,19 @@ export const setVerifiedPhone = internalMutation({
  * cheap lookup, and the cap keeps directory scraping unattractive.
  */
 export const searchByUsername = query({
-  args: { prefix: v.string() },
+  args: {
+    prefix: v.string(),
+    // When adding to a group, suggestions that are ALREADY members come back
+    // flagged so the row can say "D\u00e9j\u00e0 membre" instead of failing on Add.
+    groupId: v.optional(v.id('groups')),
+  },
   returns: v.array(
     v.object({
       userId: v.id('users'),
       username: v.string(),
       name: v.string(),
       avatarUrl: v.optional(v.string()),
+      alreadyMember: v.optional(v.boolean()),
     })
   ),
   handler: async (ctx, args) => {
@@ -302,14 +308,28 @@ export const searchByUsername = query({
         q.gte('username', prefix).lt('username', `${prefix}\uffff`)
       )
       .take(5);
-    return rows
-      .filter((u) => !u.isDeactivated && u.username !== undefined)
-      .map((u) => ({
+    const cards = [];
+    for (const u of rows) {
+      if (u.isDeactivated || u.username === undefined) continue;
+      let alreadyMember: boolean | undefined;
+      if (args.groupId !== undefined) {
+        const membership = await ctx.db
+          .query('memberships')
+          .withIndex('by_group_and_user', (q) =>
+            q.eq('groupId', args.groupId!).eq('userId', u._id)
+          )
+          .unique();
+        alreadyMember = membership !== null && membership.status !== 'rejected';
+      }
+      cards.push({
         userId: u._id,
-        username: u.username as string,
+        username: u.username,
         name: u.name,
         avatarUrl: u.avatarUrl,
-      }));
+        alreadyMember,
+      });
+    }
+    return cards;
   },
 });
 

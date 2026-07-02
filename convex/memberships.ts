@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
 import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { mutation, type MutationCtx, query } from './_generated/server';
@@ -373,7 +373,8 @@ export const addMemberByUsername = mutation({
       )
       .unique();
     if (existingMembership) {
-      throw new Error('This person already has a membership in this group');
+      // ConvexError so the client can show a real message, not a generic one.
+      throw new ConvexError({ code: 'already_member' });
     }
     // A feature-phone row seeded with this user's phone would collide once
     // they were linked — same guard as the phone-based add.
@@ -383,7 +384,7 @@ export const addMemberByUsername = mutation({
         .withIndex('by_phone', (q) => q.eq('phone', user.phone))
         .collect();
       if (samePhone.some((m) => m.groupId === args.groupId)) {
-        throw new Error('This phone number already has a membership in this group');
+        throw new ConvexError({ code: 'already_member' });
       }
     }
 

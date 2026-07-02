@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { ConvexError } from 'convex/values';
 import { useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,9 +49,13 @@ export default function AddMemberModal() {
   const lookup = username.trim().toLowerCase();
   const suggestions = useQuery(
     api.users.searchByUsername,
-    lookup.length >= 2 ? { prefix: lookup } : 'skip'
+    lookup.length >= 2 && groupId
+      ? { prefix: lookup, groupId: groupId as Id<'groups'> }
+      : 'skip'
   );
-  const found = (suggestions ?? []).find((s) => s.username === lookup) ?? null;
+  const found =
+    (suggestions ?? []).find((s) => s.username === lookup && !s.alreadyMember) ??
+    null;
 
   const canSubmitPhone = name.trim().length > 0 && phone.trim().length >= 9 && !busy;
 
@@ -70,9 +75,17 @@ export default function AddMemberModal() {
       haptics.success();
       toast.success(t('groups.detail.memberAddedToast', { name: found.name || found.username }));
       close();
-    } catch {
+    } catch (err) {
       haptics.error();
-      toast.error(t('common.error'));
+      const code =
+        err instanceof ConvexError
+          ? (err.data as { code?: string })?.code
+          : undefined;
+      toast.error(
+        code === 'already_member'
+          ? t('groups.detail.alreadyMemberError')
+          : t('common.error')
+      );
       setBusy(false);
     }
   };
@@ -174,11 +187,12 @@ export default function AddMemberModal() {
             suggestions.length > 0 ? (
               <View className="rounded-xl border border-border-subtle bg-surface">
                 {suggestions.map((s, index) => {
-                  const selected = s.username === lookup;
+                  const selected = s.username === lookup && !s.alreadyMember;
                   return (
                     <Pressable
                       key={s.userId}
                       accessibilityRole="button"
+                      disabled={s.alreadyMember === true}
                       onPress={() => setUsername(s.username)}
                       className={
                         index > 0
@@ -193,14 +207,26 @@ export default function AddMemberModal() {
                         </Text>
                       </View>
                       <View className="min-w-0 flex-1">
-                        <Text className="font-body-semi text-body text-foreground">
+                        <Text
+                          className={
+                            s.alreadyMember
+                              ? 'font-body-semi text-body text-muted'
+                              : 'font-body-semi text-body text-foreground'
+                          }
+                        >
                           {s.name || s.username}
                         </Text>
                         <Text className="font-body text-body-sm text-muted">
                           @{s.username}
                         </Text>
                       </View>
-                      {selected ? (
+                      {s.alreadyMember ? (
+                        <View className="rounded-pill bg-surface-muted px-md py-xs">
+                          <Text className="font-body-medium text-caption text-muted">
+                            {t('groups.detail.alreadyMember')}
+                          </Text>
+                        </View>
+                      ) : selected ? (
                         <Text className="font-body-semi text-body-sm text-accent">✓</Text>
                       ) : null}
                     </Pressable>
