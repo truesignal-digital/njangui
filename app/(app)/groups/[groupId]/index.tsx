@@ -214,9 +214,22 @@ export default function GroupHomeScreen() {
         />
       </SectionCard>
 
-      {/* Activity feed — immutable who-paid-who-when (decision 6) */}
+      {/* Activity feed — 5-item preview; the full immutable ledger lives on
+          its own paginated page (decision 6: the history IS the product) */}
       <SectionCard title={t('feed.title')}>
-        <ActivityFeed groupId={group._id} />
+        <ActivityFeed groupId={group._id} compact />
+        <AppButton
+          variant="ghost"
+          size="sm"
+          label={t('feed.seeAll')}
+          onPress={() =>
+            router.push({
+              pathname: '/groups/[groupId]/activity',
+              params: { groupId: group._id },
+            })
+          }
+          testID="see-all-activity"
+        />
       </SectionCard>
 
       {/* Group rules */}

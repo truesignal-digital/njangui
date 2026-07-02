@@ -435,7 +435,9 @@
       "order_change": "Order changed by {{actor}} — {{note}}",
       "member_approved": "{{actor}} approved a member",
       "role_reassigned": "Role reassigned — {{note}}"
-    }
+    },
+    "seeAll": "See all activity",
+    "fullTitle": "Group activity"
   },
   "payments": {
     "state": {
