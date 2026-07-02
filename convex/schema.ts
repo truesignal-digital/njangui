@@ -441,6 +441,57 @@ export default defineSchema({
     reminderLeadDays: v.number(), // default 2 — days before round.dueAt
   }).index('by_user', ['userId']),
 
+  // ── Auth (WhatsApp OTP + device-bind; docs/auth-whatsapp-otp-devicebind-spec.md) ──
+
+  otpChallenges: defineTable({
+    phone: v.string(), // E.164, normalizePhone() before insert/lookup
+    purpose: v.union(
+      v.literal('login'),
+      v.literal('device_register'),
+      v.literal('phone_change')
+    ),
+    // 'dev' generates/stores the code locally (hash below); 'twilio' delegates
+    // code custody to Twilio Verify and keeps only the verification SID.
+    provider: v.union(v.literal('twilio'), v.literal('dev')),
+    codeHash: v.optional(v.string()), // SHA-256(salt + code) — dev provider only; plaintext NEVER stored
+    salt: v.optional(v.string()),
+    providerRef: v.optional(v.string()), // Twilio verification SID
+    attemptsRemaining: v.number(), // starts 5, burned at 0
+    sendCount: v.number(), // resends within the current UTC day
+    lastSentAt: v.number(), // drives the 60s per-phone cooldown
+    expiresAt: v.number(), // lastSentAt + 5 min
+    consumedAt: v.optional(v.number()), // set on success — THE fresh-possession proof
+    requestDeviceId: v.optional(v.string()), // client-supplied, per-device throttle
+  })
+    .index('by_phone_and_purpose', ['phone', 'purpose'])
+    .index('by_expires_at', ['expiresAt']),
+
+  devices: defineTable({
+    userId: v.id('users'),
+    clerkUserId: v.string(), // captured at registration so deviceLogin needs no JWT
+    phone: v.string(), // denormalized E.164 at bind time → revoke-all-for-phone
+    deviceId: v.string(), // opaque UUID from secure-store
+    secretHash: v.string(), // SHA-256(salt + 256-bit secret). SAFETY: salted SHA-256 is
+    // sufficient ONLY because the secret is high-entropy random — NEVER a user PIN.
+    salt: v.string(),
+    platform: pushPlatformValidator,
+    label: v.optional(v.string()),
+    createdAt: v.number(),
+    lastSeenAt: v.number(),
+    revokedAt: v.optional(v.number()), // SIM-swap / lost-phone kill switch
+    failedAttempts: v.optional(v.number()), // deviceLogin rate limit
+    lockedUntil: v.optional(v.number()),
+  })
+    .index('by_user', ['userId'])
+    .index('by_device_id', ['deviceId'])
+    .index('by_phone', ['phone']),
+
+  // Global daily counters (OTP send budget circuit-breaker, T-07).
+  dailyCounters: defineTable({
+    key: v.string(), // e.g. 'otp-send-2026-07-01'
+    count: v.number(),
+  }).index('by_key', ['key']),
+
   ussdContent: defineTable({
     method: paymentMethodValidator, // momo_mtn / orange_money
     language: appLanguageValidator,

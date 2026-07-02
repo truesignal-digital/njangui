@@ -68,11 +68,12 @@ http.route({
     const eventType = normalizeWebhookEventType(eventData.type);
     const userData = eventData.data;
 
-    // Njangi users table (docs/01-domain-model.md): clerkId, name, phone
-    // (E.164), language ('fr' default), avatarUrl. Identity is phone-first.
+    // 🔒 linkGuard: the webhook forwards name/avatar ONLY. The Clerk phone
+    // is NOT possession-verified by anything Clerk did once OTP delivery
+    // moved to WhatsApp — users.phone is set exclusively by
+    // internal.users.setVerifiedPhone after a fresh OTP proof.
     const name =
       [userData?.first_name, userData?.last_name].filter(Boolean).join(' ') || undefined;
-    const phone = userData?.phone_numbers?.[0]?.phone_number || undefined;
     const avatarUrl = userData?.image_url || undefined;
 
     console.log(
@@ -84,8 +85,7 @@ http.route({
         case 'user.created':
           await ctx.runMutation(internal.users.createUserFromClerk, {
             clerkId: userData.id,
-            name: name ?? phone ?? '',
-            phone,
+            name: name ?? '',
             avatarUrl,
           });
           break;
@@ -94,7 +94,6 @@ http.route({
           await ctx.runMutation(internal.users.updateUserFromClerk, {
             clerkId: userData.id,
             name,
-            phone,
             avatarUrl,
           });
           break;

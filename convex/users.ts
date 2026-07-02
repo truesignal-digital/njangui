@@ -33,6 +33,11 @@ const currentUserValidator = v.object({
  * Link feature-phone memberships (no userId) to a freshly known user by
  * E.164 phone match (02 §a: "If that phone number later signs up via Clerk,
  * the account is linked to the existing Membership and its full history").
+ *
+ * 🔒 linkGuard: this grants a pre-existing membership + full ledger history
+ * + payout position. Its ONLY caller is setVerifiedPhone, which requires a
+ * freshly-consumed OTP possession proof — never a webhook phone, never a
+ * JWT claim, never a client arg (threat review T-03/T-11/T-12).
  */
 async function linkMembershipsByPhone(ctx: MutationCtx, userId: Id<'users'>, phone: string) {
   const matches = await ctx.db
@@ -85,11 +90,15 @@ async function phoneIfAvailable(
 // Internal mutations — Clerk webhook sync (convex/http.ts)
 // ============================================================================
 
+/**
+ * 🔒 linkGuard: the webhook phone is NOT possession-verified once OTP
+ * delivery leaves Clerk — users are created phone-less here; only
+ * setVerifiedPhone (fresh OTP proof) sets users.phone / links memberships.
+ */
 export const createUserFromClerk = internalMutation({
   args: {
     clerkId: v.string(),
     name: v.string(),
-    phone: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
   },
   returns: v.id('users'),
@@ -103,29 +112,23 @@ export const createUserFromClerk = internalMutation({
       return existingUser._id;
     }
 
-    const phone = await phoneIfAvailable(ctx, args.phone);
-
-    const userId = await ctx.db.insert('users', {
+    return await ctx.db.insert('users', {
       clerkId: args.clerkId,
-      name: args.name || phone || '',
-      phone,
+      name: args.name || '',
       language: 'fr',
       avatarUrl: args.avatarUrl,
     });
-
-    if (phone) {
-      await linkMembershipsByPhone(ctx, userId, phone);
-    }
-
-    return userId;
   },
 });
 
+/**
+ * 🔒 linkGuard: syncs name/avatar ONLY — the webhook phone is ignored for
+ * setting/linking (T-12); setVerifiedPhone owns the phone.
+ */
 export const updateUserFromClerk = internalMutation({
   args: {
     clerkId: v.string(),
     name: v.optional(v.string()),
-    phone: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
   },
   returns: v.union(v.null(), v.id('users')),
@@ -140,18 +143,92 @@ export const updateUserFromClerk = internalMutation({
       return null;
     }
 
-    const phone = await phoneIfAvailable(ctx, args.phone, user._id);
-
     await ctx.db.patch(user._id, {
       ...(args.name !== undefined && { name: args.name }),
-      ...(phone !== undefined && { phone }),
       ...(args.avatarUrl !== undefined && { avatarUrl: args.avatarUrl }),
     });
 
-    if (phone && phone !== user.phone) {
-      await linkMembershipsByPhone(ctx, user._id, phone);
+    return user._id;
+  },
+});
+
+// setVerifiedPhone accepts a consumed challenge only within this window —
+// long enough for the verifyOtp action's Clerk round-trips, far too short
+// to replay later.
+const PHONE_PROOF_GRACE_MS = 60_000;
+
+/**
+ * 🔒 THE linkGuard chokepoint — the ONLY writer of users.phone and the ONLY
+ * caller of linkMembershipsByPhone. Trusts nothing from the client: it
+ * re-validates server-side that an otpChallenges row for this EXACT
+ * normalized phone was consumed within the last seconds (the fresh
+ * possession proof), then applies the uniqueness guard, sets the phone,
+ * and fires the membership link. Sole invoker: internal.otp/verifyOtp.
+ * Creates the users row when the Clerk webhook hasn't landed yet.
+ */
+export const setVerifiedPhone = internalMutation({
+  args: {
+    clerkId: v.string(),
+    phone: v.string(),
+    name: v.optional(v.string()), // seed for a webhook-race insert only
+  },
+  returns: v.id('users'),
+  handler: async (ctx, args) => {
+    const phone = normalizePhone(args.phone);
+
+    // Re-validate the possession proof — never a client-passed boolean.
+    const challenges = await ctx.db
+      .query('otpChallenges')
+      .withIndex('by_phone_and_purpose', (q) => q.eq('phone', phone))
+      .collect();
+    const now = Date.now();
+    const fresh = challenges.find(
+      (c) =>
+        c.consumedAt !== undefined &&
+        now - c.consumedAt <= PHONE_PROOF_GRACE_MS &&
+        (c.purpose === 'login' || c.purpose === 'phone_change')
+    );
+    if (!fresh) {
+      throw new Error(
+        'No fresh possession proof for this phone — refusing to set/link'
+      );
     }
 
+    let user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))
+      .unique();
+    if (!user) {
+      const userId = await ctx.db.insert('users', {
+        clerkId: args.clerkId,
+        name: args.name ?? '',
+        language: 'fr',
+      });
+      user = await ctx.db.get(userId);
+    }
+    if (!user) {
+      throw new Error('User row could not be resolved');
+    }
+
+    if (user.phone === phone) {
+      // Idempotent re-verify on the same device/phone — still (re)link any
+      // memberships added by phone since the last login.
+      await linkMembershipsByPhone(ctx, user._id, phone);
+      return user._id;
+    }
+
+    const available = await phoneIfAvailable(ctx, phone, user._id);
+    if (!available) {
+      // Another ACCOUNT holds this verified phone. Possession was proven,
+      // so this is the phone-change/collision surface — out of MVP scope
+      // (spec open gap); refuse loudly rather than silently re-home money.
+      throw new Error(
+        'This phone is already attached to another account — contact support'
+      );
+    }
+
+    await ctx.db.patch(user._id, { phone });
+    await linkMembershipsByPhone(ctx, user._id, phone);
     return user._id;
   },
 });
@@ -240,29 +317,22 @@ export const getOrCreateCurrentUser = mutation({
       };
     }
 
-    // Identity is phone-first (Clerk SMS OTP, 05 Week 1).
-    const phone = await phoneIfAvailable(
-      ctx,
-      typeof identity.phoneNumber === 'string' ? identity.phoneNumber : undefined
-    );
+    // 🔒 linkGuard: identity.phoneNumber (a bare JWT claim) is NEVER read —
+    // it was the most dangerous self-assertion path (T-11): any session
+    // whose JWT carried a phone claim would self-link memberships. Only
+    // setVerifiedPhone (fresh OTP proof) sets users.phone.
     const name =
       (typeof identity.name === 'string' && identity.name) ||
       [identity.givenName, identity.familyName].filter(Boolean).join(' ') ||
-      phone ||
       '';
     const avatarUrl = typeof identity.pictureUrl === 'string' ? identity.pictureUrl : undefined;
 
     const userId = await ctx.db.insert('users', {
       clerkId,
       name,
-      phone,
       language: 'fr',
       avatarUrl,
     });
-
-    if (phone) {
-      await linkMembershipsByPhone(ctx, userId, phone);
-    }
 
     const newUser = await ctx.db.get(userId);
     if (!newUser) {
