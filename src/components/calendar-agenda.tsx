@@ -30,6 +30,7 @@ type AgendaEvent = {
   beneficiaryName: string | null;
   isMyPayout: boolean;
   hands: number;
+  myHandNumber: number | null;
   estimated: boolean;
 };
 
@@ -41,6 +42,7 @@ type SessionRow = {
   contribution: number; // 0 ⇒ resting beneficiary round
   hands: number;
   myPayout: number; // 0 ⇒ not my turn
+  myHandNumber: number | null; // which of my hands collects this round
   beneficiaryName: string | null; // group mode only
   estimated: boolean;
 };
@@ -73,6 +75,7 @@ function toSessions(events: AgendaEvent[], upcomingOnly: boolean): SessionRow[] 
         contribution: 0,
         hands: event.hands,
         myPayout: 0,
+        myHandNumber: null,
         beneficiaryName: event.beneficiaryName,
         estimated: event.estimated,
       };
@@ -82,6 +85,7 @@ function toSessions(events: AgendaEvent[], upcomingOnly: boolean): SessionRow[] 
       row.contribution = event.amount;
     } else if (event.isMyPayout) {
       row.myPayout = event.amount;
+      row.myHandNumber = event.myHandNumber;
     }
   }
   return [...sessions.values()].sort((a, b) => a.date - b.date);
@@ -140,10 +144,16 @@ function SessionLine({
     );
   }
   if (row.myPayout > 0) {
+    const receive = t('calendar.youReceiveShort', {
+      amount: formatCurrencyXAF(row.myPayout),
+    });
     parts.push(
-      t('calendar.youReceiveShort', {
-        amount: formatCurrencyXAF(row.myPayout),
-      })
+      row.myHandNumber !== null
+        ? `${receive} (${t('calendar.handOf', {
+            n: row.myHandNumber,
+            total: row.hands,
+          })})`
+        : receive
     );
   }
   if (mode === 'group' && row.myPayout === 0 && row.beneficiaryName) {

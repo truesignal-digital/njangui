@@ -493,6 +493,7 @@
     "empty": "Aucune échéance — les dates apparaissent dès qu'un cycle démarre (ou en estimation pendant la préparation).",
     "roundLabel": "Tour {{n}}",
     "youReceiveShort": "vous recevez {{amount}}",
-    "receivesShort": "{{name}} reçoit"
+    "receivesShort": "{{name}} reçoit",
+    "handOf": "main {{n}}/{{total}}"
   }
 }

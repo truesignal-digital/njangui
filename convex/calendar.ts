@@ -23,6 +23,7 @@ const calendarEventValidator = v.object({
   beneficiaryName: v.union(v.string(), v.null()), // null ⇒ rotation not locked yet
   isMyPayout: v.boolean(),
   hands: v.number(), // my hands in the cycle — UI shows « (2 mains) » when > 1
+  myHandNumber: v.union(v.number(), v.null()), // which of my hands this payout is (1-based); null unless my multi-hand payout
   estimated: v.boolean(),
 });
 
@@ -35,10 +36,11 @@ async function groupEvents(
 ): Promise<CalendarEvent[]> {
   const events: CalendarEvent[] = [];
 
-  if (group.status === 'setup') {
+  if (group.status === 'setup' || group.status === 'between_cycles') {
     // Projection identical to the readiness card: one round per active
     // member, first on the next meeting day. No beneficiary — the order
-    // does not exist until the president locks it.
+    // does not exist until the president locks it (between cycles the
+    // NEXT order doesn't exist yet either).
     const active = (
       await ctx.db
         .query('memberships')
@@ -60,6 +62,7 @@ async function groupEvents(
         beneficiaryName: null,
         isMyPayout: false,
         hands: 1,
+        myHandNumber: null,
         estimated: true,
       });
     }
@@ -98,6 +101,7 @@ async function groupEvents(
       (sum, id) => sum + expectedForMember(cycle, round, id),
       0
     );
+    const isMyPayout = round.beneficiaryMembershipId === myMembership._id;
     events.push({
       date: round.dueAt,
       groupId: group._id,
@@ -106,8 +110,16 @@ async function groupEvents(
       kind: 'payout',
       amount: pot,
       beneficiaryName: nameOf.get(round.beneficiaryMembershipId) ?? '—',
-      isMyPayout: round.beneficiaryMembershipId === myMembership._id,
+      isMyPayout,
       hands: myHands,
+      // « deux mains » clarity: round.index is 1-based over rotation
+      // positions, so counting my occurrences up to it names THIS hand.
+      myHandNumber:
+        isMyPayout && myHands > 1
+          ? cycle.rotationOrder
+              .slice(0, round.index)
+              .filter((id) => id === myMembership._id).length
+          : null,
       estimated: false,
     });
     const myDue = expectedForMember(cycle, round, myMembership._id);
@@ -122,6 +134,7 @@ async function groupEvents(
         beneficiaryName: nameOf.get(round.beneficiaryMembershipId) ?? '—',
         isMyPayout: false,
         hands: myHands,
+        myHandNumber: null,
         estimated: false,
       });
     }

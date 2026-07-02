@@ -493,6 +493,7 @@
     "empty": "No dates yet — they appear as soon as a cycle starts (or as estimates during setup).",
     "roundLabel": "Round {{n}}",
     "youReceiveShort": "you receive {{amount}}",
-    "receivesShort": "{{name}} receives"
+    "receivesShort": "{{name}} receives",
+    "handOf": "hand {{n}}/{{total}}"
   }
 }
