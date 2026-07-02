@@ -1,6 +1,7 @@
 import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { XMarkIcon } from 'react-native-heroicons/outline';
 
 /**
  * Full-screen viewer for proof photos. Pinch-to-zoom comes from ScrollView's
@@ -48,10 +49,11 @@ export function ImagePreviewModal({
           accessibilityLabel={t('common.close')}
           onPress={onClose}
           style={{ position: 'absolute', top: insets.top + 8, right: 16 }}
-          className="rounded-pill bg-black/60 px-md py-xs"
+          className="flex-row items-center gap-xs rounded-pill bg-black/60 px-md py-xs"
         >
+          <XMarkIcon size={16} color="#FFFFFF" />
           <Text className="font-body-medium text-body text-white">
-            ✕ {t('common.close')}
+            {t('common.close')}
           </Text>
         </Pressable>
       </View>

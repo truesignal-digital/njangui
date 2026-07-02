@@ -12,6 +12,7 @@ import { toast } from 'sonner-native';
 import {
   CameraIcon,
   ChevronLeftIcon,
+  InformationCircleIcon,
   PhotoIcon,
 } from 'react-native-heroicons/outline';
 
@@ -277,9 +278,12 @@ export default function PayClaimScreen() {
             </Text>
           </View>
 
-          <Text className="font-body text-body-sm text-muted">
-            {t('pay.proofNote', { name: flow.payee?.displayName ?? '—' })}
-          </Text>
+          <View className="flex-row items-start gap-xs">
+            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Text className="flex-1 font-body text-body-sm text-muted">
+              {t('pay.proofNote', { name: flow.payee?.displayName ?? '—' })}
+            </Text>
+          </View>
 
           <AppButton
             label={t('pay.declareCta')}

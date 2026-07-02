@@ -1,6 +1,15 @@
+import type { ComponentType, ReactNode } from 'react';
 import { Text, View } from 'react-native';
+import {
+  ClockIcon,
+  ExclamationTriangleIcon,
+  PaperAirplaneIcon,
+  XCircleIcon,
+} from 'react-native-heroicons/outline';
+import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
 import { cn } from '../../lib/cn';
+import { useAppTheme } from '../../lib/theme';
 
 export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'outline';
 
@@ -24,19 +33,22 @@ export function Badge({
   label,
   tone = 'neutral',
   className,
+  icon,
 }: {
   label: string;
   tone?: BadgeTone;
   className?: string;
+  icon?: ReactNode;
 }) {
   return (
     <View
       className={cn(
-        'self-start rounded-pill px-xs py-[3px]',
+        'flex-row items-center gap-[3px] self-start rounded-pill px-xs py-[3px]',
         CONTAINER_TONES[tone],
         className
       )}
     >
+      {icon}
       <Text className={cn('font-body-medium text-caption', LABEL_TONES[tone])}>{label}</Text>
     </View>
   );
@@ -59,17 +71,55 @@ export type PaymentState =
   | 'cancelled';
 
 /**
- * Payment-state chips (03 §G): ALWAYS icon+word+color, never color alone —
- * the chip label is `${icon} ${t(`payments.state.${state}`)}`. Locked FR
- * terms: ○ en attente · ⏳ déclaré · ✓ confirmé · ⚠ contesté · ✕ annulé.
+ * Payment-state chips (03 §G): ALWAYS icon+word+color, never color alone.
+ * Heroicons per state: ClockIcon en attente · PaperAirplaneIcon déclaré ·
+ * CheckCircleIcon confirmé · ExclamationTriangleIcon contesté · XCircleIcon
+ * annulé.
  */
-export const PAYMENT_STATE_TONE: Record<
-  PaymentState,
-  { icon: string; tone: BadgeTone }
-> = {
-  pending: { icon: '○', tone: 'neutral' },
-  claimed: { icon: '⏳', tone: 'accent' },
-  confirmed: { icon: '✓', tone: 'success' },
-  disputed: { icon: '⚠', tone: 'warning' },
-  cancelled: { icon: '✕', tone: 'outline' },
+export const PAYMENT_STATE_TONE: Record<PaymentState, { tone: BadgeTone }> = {
+  pending: { tone: 'neutral' },
+  claimed: { tone: 'accent' },
+  confirmed: { tone: 'success' },
+  disputed: { tone: 'warning' },
+  cancelled: { tone: 'outline' },
 };
+
+const PAYMENT_STATE_ICON: Record<
+  PaymentState,
+  ComponentType<{ size?: number; color?: string }>
+> = {
+  pending: ClockIcon,
+  claimed: PaperAirplaneIcon,
+  confirmed: CheckCircleIcon,
+  disputed: ExclamationTriangleIcon,
+  cancelled: XCircleIcon,
+};
+
+export function PaymentStateBadge({
+  state,
+  label,
+  className,
+}: {
+  state: PaymentState;
+  label: string;
+  className?: string;
+}) {
+  const theme = useAppTheme();
+  const { tone } = PAYMENT_STATE_TONE[state];
+  const iconColor: Record<BadgeTone, string> = {
+    neutral: theme.textMuted,
+    accent: theme.text,
+    success: theme.successDark,
+    warning: theme.warningDark,
+    outline: theme.textMuted,
+  };
+  const Icon = PAYMENT_STATE_ICON[state];
+  return (
+    <Badge
+      tone={tone}
+      label={label}
+      className={className}
+      icon={<Icon size={12} color={iconColor[tone]} />}
+    />
+  );
+}

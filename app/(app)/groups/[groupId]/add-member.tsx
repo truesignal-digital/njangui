@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { XMarkIcon } from 'react-native-heroicons/outline';
+import { CheckCircleIcon } from 'react-native-heroicons/solid';
 import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../../../src/lib/convex-api';
@@ -227,7 +228,7 @@ export default function AddMemberModal() {
                           </Text>
                         </View>
                       ) : selected ? (
-                        <Text className="font-body-semi text-body-sm text-accent">✓</Text>
+                        <CheckCircleIcon size={18} color={theme.accent} />
                       ) : null}
                     </Pressable>
                   );

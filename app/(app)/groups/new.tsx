@@ -5,7 +5,11 @@ import { useMutation } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { CheckIcon, ChevronLeftIcon } from 'react-native-heroicons/outline';
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  InformationCircleIcon,
+} from 'react-native-heroicons/outline';
 import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../../src/lib/convex-api';
@@ -340,9 +344,10 @@ export default function GroupCreationWizard() {
           </View>
 
           {/* Custody-free red line (docs/00) — trust feature, not fine print */}
-          <View className="rounded-lg bg-surface-muted p-sm">
-            <Text className="font-body text-body-sm text-muted">
-              ℹ {t('groups.wizard.modeCustodyNote')}
+          <View className="flex-row items-start gap-xs rounded-lg bg-surface-muted p-sm">
+            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Text className="flex-1 font-body text-body-sm text-muted">
+              {t('groups.wizard.modeCustodyNote')}
             </Text>
           </View>
 

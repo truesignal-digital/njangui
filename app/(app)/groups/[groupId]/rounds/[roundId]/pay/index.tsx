@@ -9,6 +9,7 @@ import {
   BanknotesIcon,
   ChevronRightIcon,
   DevicePhoneMobileIcon,
+  InformationCircleIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
 
@@ -164,12 +165,14 @@ export default function PayMethodScreen() {
             </View>
           ) : null}
 
-          <Text className="mt-sm font-body text-body-sm text-muted">
-            ℹ{' '}
-            {t('pay.custodyNote', {
-              name: flow.payee?.displayName ?? '—',
-            })}
-          </Text>
+          <View className="mt-sm flex-row items-start gap-xs">
+            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Text className="flex-1 font-body text-body-sm text-muted">
+              {t('pay.custodyNote', {
+                name: flow.payee?.displayName ?? '—',
+              })}
+            </Text>
+          </View>
         </View>
       )}
     </ScrollView>

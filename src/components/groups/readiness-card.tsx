@@ -1,5 +1,8 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { CheckCircleIcon } from 'react-native-heroicons/solid';
+
+import { useAppTheme } from '../../lib/theme';
 
 /**
  * Setup readiness checklist (docs 02 §a lock guards, made visible): who's
@@ -42,17 +45,14 @@ function CheckLine({
   label: string;
   hint?: string;
 }) {
+  const theme = useAppTheme();
   return (
     <View className="flex-row items-center gap-sm">
-      <Text
-        className={
-          ok
-            ? 'font-body-semi text-body-sm text-success-dark'
-            : 'font-body-semi text-body-sm text-placeholder'
-        }
-      >
-        {ok ? '✓' : '○'}
-      </Text>
+      {ok ? (
+        <CheckCircleIcon size={18} color={theme.successDark} />
+      ) : (
+        <View className="h-[16px] w-[16px] rounded-full border-2 border-placeholder" />
+      )}
       <Text className="flex-1 font-body text-body-sm text-foreground">
         {label}
         {!ok && hint ? (
