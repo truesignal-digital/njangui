@@ -193,23 +193,62 @@ async function clerkResolveUserByPhone(phone: string): Promise<string | null> {
   return users[0]?.id ?? null;
 }
 
-async function clerkCreateUserWithPhone(phone: string): Promise<string> {
+async function clerkResolveUserByUsername(
+  username: string
+): Promise<string | null> {
+  const response = await fetch(
+    `https://api.clerk.com/v1/users?username=${encodeURIComponent(username)}`,
+    { headers: clerkHeaders() }
+  );
+  if (!response.ok) {
+    throw new Error(`Clerk username lookup failed: ${response.status}`);
+  }
+  const users = (await response.json()) as { id: string }[];
+  return users[0]?.id ?? null;
+}
+
+/**
+ * Clerk REJECTS Cameroonian phone identifiers outright
+ * (`unsupported_country_code`, alpha2 CM) — the primary market cannot exist
+ * in Clerk as phone users. So the phone identifier NEVER goes to Clerk:
+ * new users are created with a deterministic synthetic username derived
+ * from the E.164 phone, Convex users.phone (linkGuard) is the phone
+ * authority, and Clerk only issues sessions. The deterministic username
+ * also makes a half-failed signup retryable — a second create 422s
+ * (username taken) and resolves to the same user.
+ *
+ * ⚠️ Requires Clerk dashboard config: username identifier ENABLED, phone
+ * identifier disabled/optional — else create 422s `form_data_missing`.
+ * The password is a discarded 256-bit random: with phone off, password is
+ * the instance's only auth factor and Clerk refuses
+ * `skip_password_requirement`, but sessions here only ever come from
+ * sign-in tickets — nobody holds this credential.
+ */
+async function clerkCreateUserForPhone(phone: string): Promise<string> {
+  const username = `phone_${phone.replace('+', '')}`;
   const response = await fetch('https://api.clerk.com/v1/users', {
     method: 'POST',
     headers: clerkHeaders(),
     body: JSON.stringify({
-      phone_number: [phone],
-      skip_password_requirement: true,
+      username,
+      password: randomHex(32),
     }),
   });
   if (response.status === 422) {
-    // Clerk already owns this phone (race) — treat as existing.
-    const existing = await clerkResolveUserByPhone(phone);
+    // Username already taken = an earlier verify created the Clerk user but
+    // died before the ticket — resolve to that same identity.
+    const existing = await clerkResolveUserByUsername(username);
     if (existing) return existing;
-    throw new Error(`Clerk user create 422 and lookup empty for phone`);
+    const body = await response.text();
+    const code = /"code":"([^"]+)"/.exec(body)?.[1] ?? 'unknown';
+    throw new Error(
+      `Clerk user create 422 (${code}) — check instance identifier config (username enabled, phone optional)`
+    );
   }
   if (!response.ok) {
-    throw new Error(`Clerk user create failed: ${response.status}`);
+    const body = await response.text();
+    const code = /"code":"([^"]+)"/.exec(body)?.[1] ?? 'unknown';
+    throw new Error(`Clerk user create failed: ${response.status} (${code})`);
   }
   const data = (await response.json()) as { id: string };
   return data.id;
@@ -631,11 +670,19 @@ export const verifyOtp = action({
       };
     }
 
-    // Possession proven. Resolve the Clerk user (existing) or create one
-    // (new signup — Clerk marks the phone verified on Backend-API create).
-    let clerkUserId = await clerkResolveUserByPhone(phone);
+    // Possession proven. Resolve the identity: OUR ledger first (Convex
+    // users.phone is the phone authority — Clerk can't hold +237
+    // identifiers), then Clerk by phone (legacy pre-cutover users whose
+    // phone still lives in Clerk), then create (new signup).
+    let clerkUserId: string | null = await ctx.runQuery(
+      internal.users.getClerkIdByPhone,
+      { phone }
+    );
     if (!clerkUserId) {
-      clerkUserId = await clerkCreateUserWithPhone(phone);
+      clerkUserId = await clerkResolveUserByPhone(phone);
+    }
+    if (!clerkUserId) {
+      clerkUserId = await clerkCreateUserForPhone(phone);
     }
 
     // linkGuard chokepoint — the ONLY path that sets users.phone / links.

@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import {
   internalMutation,
+  internalQuery,
   mutation,
   type MutationCtx,
   query,
@@ -231,6 +232,26 @@ export const setVerifiedPhone = internalMutation({
     await ctx.db.patch(user._id, { phone });
     await linkMembershipsByPhone(ctx, user._id, phone);
     return user._id;
+  },
+});
+
+/**
+ * Phone → Clerk identity, resolved from OUR ledger. Clerk cannot hold
+ * Cameroonian phone identifiers at all (`unsupported_country_code` on
+ * +237), so post-cutover users.phone — written only by setVerifiedPhone —
+ * is the phone authority, and Clerk just issues sessions for the clerkId
+ * this returns. Deactivated users still resolve: the Clerk user is deleted
+ * with the account, so a dead identity fails at ticket mint, loudly.
+ */
+export const getClerkIdByPhone = internalQuery({
+  args: { phone: v.string() },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_phone', (q) => q.eq('phone', normalizePhone(args.phone)))
+      .unique();
+    return user?.clerkId ?? null;
   },
 });
 
