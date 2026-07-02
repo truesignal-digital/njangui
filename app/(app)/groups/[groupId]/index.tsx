@@ -208,6 +208,18 @@ export default function GroupHomeScreen() {
           viewerRole={group.viewerRole}
           activeMemberCount={activeMembers.length}
         />
+        <AppButton
+          variant="ghost"
+          size="sm"
+          label={t('calendar.seeCalendar')}
+          onPress={() =>
+            router.push({
+              pathname: '/groups/[groupId]/calendar',
+              params: { groupId: group._id },
+            })
+          }
+          testID="see-group-calendar"
+        />
       </SectionCard>
 
       {/* Activity feed — 5-item preview; the full immutable ledger lives on

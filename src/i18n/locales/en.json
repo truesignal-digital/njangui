@@ -330,7 +330,8 @@
     "home": "Home",
     "group": "Group",
     "inbox": "To confirm",
-    "profile": "Profile"
+    "profile": "Profile",
+    "calendar": "Calendar"
   },
   "inbox": {
     "title": "To confirm ({{count}})",
@@ -478,5 +479,17 @@
       "orange_money": "Orange Money",
       "bank": "bank"
     }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "seeCalendar": "See the calendar",
+    "youReceive": "Round {{n}} — you receive {{amount}}",
+    "receives": "Round {{n}} — {{name}} receives",
+    "contribution": "Contribution {{amount}}",
+    "hands": "({{count}} hands)",
+    "estimated": "(estimate)",
+    "monthSummaryBoth": "you contribute {{contrib}} · you receive {{receive}}",
+    "monthSummaryContrib": "you contribute {{contrib}}",
+    "empty": "No dates yet — they appear as soon as a cycle starts (or as estimates during setup)."
   }
 }
