@@ -378,7 +378,9 @@
     "disputeBy": "Ouvert par {{name}}",
     "resolution": "Résolution",
     "proofImage": "Preuve jointe",
-    "proofImageNote": "La preuve aide à vérifier — c'est la confirmation qui rend le paiement officiel."
+    "proofImageNote": "La preuve aide à vérifier — c'est la confirmation qui rend le paiement officiel.",
+    "proofImageOpen": "Agrandir la preuve",
+    "proofImageTapHint": "Touchez pour agrandir et zoomer"
   },
   "profile": {
     "signOut": "Se déconnecter",

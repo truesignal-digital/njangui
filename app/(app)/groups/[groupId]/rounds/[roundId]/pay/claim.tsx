@@ -24,6 +24,7 @@ import { usePayFlow } from '../../../../../../../src/hooks/use-pay-flow';
 import { AppButton } from '../../../../../../../src/components/ui/button';
 import { TextField } from '../../../../../../../src/components/ui/text-field';
 import { Skeleton } from '../../../../../../../src/components/skeleton';
+import { ImagePreviewModal } from '../../../../../../../src/components/image-preview-modal';
 
 /**
  * Pay flow step 3 — claim (docs/03 B4): amount prefilled with the remaining
@@ -56,6 +57,7 @@ export default function PayClaimScreen() {
     uri: string;
     mimeType: string;
   } | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const keyRef = useRef<string | null>(null);
 
@@ -216,17 +218,23 @@ export default function PayClaimScreen() {
             </Text>
             {proof ? (
               <View className="gap-xs">
-                <Image
-                  source={{ uri: proof.uri }}
-                  resizeMode="cover"
-                  style={{
-                    height: 180,
-                    width: '100%',
-                    borderRadius: theme.radius.lg,
-                    backgroundColor: theme.surfaceMuted,
-                  }}
-                  accessibilityLabel={t('pay.proofPhotoLabel')}
-                />
+                <Pressable
+                  accessibilityRole="imagebutton"
+                  accessibilityLabel={t('payment.proofImageOpen')}
+                  onPress={() => setPreviewOpen(true)}
+                >
+                  <Image
+                    source={{ uri: proof.uri }}
+                    resizeMode="cover"
+                    style={{
+                      height: 180,
+                      width: '100%',
+                      borderRadius: theme.radius.lg,
+                      backgroundColor: theme.surfaceMuted,
+                    }}
+                    accessibilityLabel={t('pay.proofPhotoLabel')}
+                  />
+                </Pressable>
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => setProof(null)}
@@ -293,6 +301,11 @@ export default function PayClaimScreen() {
           </Pressable>
         </View>
       )}
+
+      <ImagePreviewModal
+        uri={previewOpen && proof ? proof.uri : null}
+        onClose={() => setPreviewOpen(false)}
+      />
     </ScrollView>
   );
 }

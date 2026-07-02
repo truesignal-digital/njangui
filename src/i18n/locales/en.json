@@ -378,7 +378,9 @@
     "disputeBy": "Opened by {{name}}",
     "resolution": "Resolution",
     "proofImage": "Attached proof",
-    "proofImageNote": "Proof helps verify — confirmation is what makes the payment official."
+    "proofImageNote": "Proof helps verify — confirmation is what makes the payment official.",
+    "proofImageOpen": "Enlarge proof",
+    "proofImageTapHint": "Tap to enlarge and zoom"
   },
   "profile": {
     "signOut": "Sign out",

@@ -21,6 +21,7 @@ import {
 import { AppButton } from '../../../src/components/ui/button';
 import { TextField } from '../../../src/components/ui/text-field';
 import { Skeleton } from '../../../src/components/skeleton';
+import { ImagePreviewModal } from '../../../src/components/image-preview-modal';
 
 type DisputeReason = 'not_received' | 'wrong_amount' | 'other';
 
@@ -39,6 +40,7 @@ export default function PaymentDetailScreen() {
   const { paymentId } = useLocalSearchParams<{ paymentId: string }>();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const { isAuthenticated } = useConvexAuth();
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
 
   const record = useQuery(
     api.paymentRecords.getPaymentRecord,
@@ -153,22 +155,34 @@ export default function PaymentDetailScreen() {
           <Text className="pb-xs font-body-semi text-body text-foreground">
             {t('payment.proofImage')}
           </Text>
-          <Image
-            source={{ uri: record.screenshotUrl }}
-            resizeMode="contain"
-            style={{
-              height: 320,
-              width: '100%',
-              borderRadius: theme.radius.lg,
-              backgroundColor: theme.surfaceMuted,
-            }}
-            accessibilityLabel={t('payment.proofImage')}
-          />
+          <Pressable
+            accessibilityRole="imagebutton"
+            accessibilityLabel={t('payment.proofImageOpen')}
+            onPress={() => setPreviewUri(record.screenshotUrl)}
+          >
+            <Image
+              source={{ uri: record.screenshotUrl }}
+              resizeMode="contain"
+              style={{
+                height: 320,
+                width: '100%',
+                borderRadius: theme.radius.lg,
+                backgroundColor: theme.surfaceMuted,
+              }}
+              accessibilityLabel={t('payment.proofImage')}
+            />
+          </Pressable>
           <Text className="pt-xs font-body text-caption text-muted">
+            {t('payment.proofImageTapHint')} ·{' '}
             {t('payment.proofImageNote')}
           </Text>
         </Card>
       ) : null}
+
+      <ImagePreviewModal
+        uri={previewUri}
+        onClose={() => setPreviewUri(null)}
+      />
 
       {/* Dispute thread */}
       {record.dispute ? (
