@@ -75,6 +75,15 @@ http.route({
     const name =
       [userData?.first_name, userData?.last_name].filter(Boolean).join(' ') || undefined;
     const avatarUrl = userData?.image_url || undefined;
+    // Clerk-owned identifiers mirrored for member search / email notify —
+    // NOT the phone (linkGuard): username/email carry no membership grant.
+    const username = userData?.username || undefined;
+    const email =
+      userData?.email_addresses?.find(
+        (e: { id: string }) => e.id === userData?.primary_email_address_id
+      )?.email_address ??
+      userData?.email_addresses?.[0]?.email_address ??
+      undefined;
 
     console.log(
       `Received Clerk webhook: raw=${JSON.stringify(rawEventType)} normalized=${JSON.stringify(eventType)}`
@@ -87,6 +96,8 @@ http.route({
             clerkId: userData.id,
             name: name ?? '',
             avatarUrl,
+            username,
+            email,
           });
           break;
 
@@ -95,6 +106,8 @@ http.route({
             clerkId: userData.id,
             name,
             avatarUrl,
+            username,
+            email,
           });
           break;
 

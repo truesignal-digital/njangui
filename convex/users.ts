@@ -22,6 +22,8 @@ const currentUserValidator = v.object({
   _creationTime: v.number(),
   clerkId: v.string(),
   name: v.string(),
+  username: v.optional(v.string()),
+  email: v.optional(v.string()),
   phone: v.optional(v.string()),
   language: appLanguageValidator,
   avatarUrl: v.optional(v.string()),
@@ -102,6 +104,8 @@ export const createUserFromClerk = internalMutation({
     clerkId: v.string(),
     name: v.string(),
     avatarUrl: v.optional(v.string()),
+    username: v.optional(v.string()),
+    email: v.optional(v.string()),
   },
   returns: v.id('users'),
   handler: async (ctx, args) => {
@@ -111,6 +115,14 @@ export const createUserFromClerk = internalMutation({
       .unique();
 
     if (existingUser) {
+      // Webhook raced a row created earlier (e.g. setVerifiedPhone) — still
+      // sync the Clerk-owned identifiers it carries.
+      await ctx.db.patch(existingUser._id, {
+        ...(args.username !== undefined && {
+          username: args.username.toLowerCase(),
+        }),
+        ...(args.email !== undefined && { email: args.email.toLowerCase() }),
+      });
       return existingUser._id;
     }
 
@@ -119,6 +131,10 @@ export const createUserFromClerk = internalMutation({
       name: args.name || '',
       language: 'fr',
       avatarUrl: args.avatarUrl,
+      ...(args.username !== undefined && {
+        username: args.username.toLowerCase(),
+      }),
+      ...(args.email !== undefined && { email: args.email.toLowerCase() }),
     });
   },
 });
@@ -132,6 +148,8 @@ export const updateUserFromClerk = internalMutation({
     clerkId: v.string(),
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
+    username: v.optional(v.string()),
+    email: v.optional(v.string()),
   },
   returns: v.union(v.null(), v.id('users')),
   handler: async (ctx, args) => {
@@ -148,6 +166,10 @@ export const updateUserFromClerk = internalMutation({
     await ctx.db.patch(user._id, {
       ...(args.name !== undefined && { name: args.name }),
       ...(args.avatarUrl !== undefined && { avatarUrl: args.avatarUrl }),
+      ...(args.username !== undefined && {
+        username: args.username.toLowerCase(),
+      }),
+      ...(args.email !== undefined && { email: args.email.toLowerCase() }),
     });
 
     return user._id;
@@ -254,6 +276,43 @@ export const setVerifiedPhone = internalMutation({
 });
 
 /**
+ * Exact-username lookup for the add-member flow. Members-only and exact
+ * match ONLY — no prefix/fuzzy search, so the user directory can't be
+ * scraped; you find someone because they told you their username.
+ */
+export const findByUsername = query({
+  args: { username: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      userId: v.id('users'),
+      username: v.string(),
+      name: v.string(),
+      avatarUrl: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const me = await getCurrentUserOrNull(ctx);
+    if (!me) return null;
+    const username = args.username.trim().toLowerCase();
+    if (username.length < 3) return null;
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_username', (q) => q.eq('username', username))
+      .unique();
+    if (!user || user.isDeactivated || user.username === undefined) {
+      return null;
+    }
+    return {
+      userId: user._id,
+      username: user.username,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+    };
+  },
+});
+
+/**
  * Phone → Clerk identity, resolved from OUR ledger. Clerk cannot hold
  * Cameroonian phone identifiers at all (`unsupported_country_code` on
  * +237), so post-cutover users.phone — written only by setVerifiedPhone —
@@ -316,6 +375,8 @@ export const current = query({
       _creationTime: user._creationTime,
       clerkId: user.clerkId,
       name: user.name,
+      username: user.username,
+      email: user.email,
       phone: user.phone,
       language: user.language,
       avatarUrl: user.avatarUrl,
@@ -354,6 +415,8 @@ export const getOrCreateCurrentUser = mutation({
         _creationTime: existingUser._creationTime,
         clerkId: existingUser.clerkId,
         name: existingUser.name,
+        username: existingUser.username,
+        email: existingUser.email,
         phone: existingUser.phone,
         language: existingUser.language,
         avatarUrl: existingUser.avatarUrl,
@@ -369,12 +432,21 @@ export const getOrCreateCurrentUser = mutation({
       [identity.givenName, identity.familyName].filter(Boolean).join(' ') ||
       '';
     const avatarUrl = typeof identity.pictureUrl === 'string' ? identity.pictureUrl : undefined;
+    // Best-effort username/email from standard JWT claims; the svix webhook
+    // remains the authoritative sync for both.
+    const username =
+      (typeof identity.preferredUsername === 'string' && identity.preferredUsername) ||
+      (typeof identity.nickname === 'string' && identity.nickname) ||
+      undefined;
+    const email = typeof identity.email === 'string' ? identity.email : undefined;
 
     const userId = await ctx.db.insert('users', {
       clerkId,
       name,
       language: 'fr',
       avatarUrl,
+      ...(username !== undefined && { username: username.toLowerCase() }),
+      ...(email !== undefined && { email: email.toLowerCase() }),
     });
 
     const newUser = await ctx.db.get(userId);
@@ -386,6 +458,8 @@ export const getOrCreateCurrentUser = mutation({
       _creationTime: newUser._creationTime,
       clerkId: newUser.clerkId,
       name: newUser.name,
+      username: newUser.username,
+      email: newUser.email,
       phone: newUser.phone,
       language: newUser.language,
       avatarUrl: newUser.avatarUrl,

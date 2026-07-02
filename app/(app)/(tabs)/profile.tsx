@@ -78,6 +78,14 @@ export default function ProfileScreen() {
             <Text className="font-body-semi text-title text-foreground">
               {me.name || '—'}
             </Text>
+            {me.username ? (
+              <Text className="font-body text-body-sm text-muted">
+                @{me.username} · {t('profile.usernameHint')}
+              </Text>
+            ) : null}
+            {me.email ? (
+              <Text className="font-body text-body-sm text-muted">{me.email}</Text>
+            ) : null}
             {me.phone ? (
               <Text className="font-body text-body-sm text-muted">
                 {me.phone}

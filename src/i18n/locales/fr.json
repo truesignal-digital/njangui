@@ -14,9 +14,9 @@
   "auth": {
     "tagline": "Le carnet de votre tontine (njangi), noir sur blanc.",
     "signInHeading": "Se connecter",
-    "signInDesc": "Entrez votre nom d'utilisateur et votre mot de passe.",
+    "signInDesc": "Entrez votre identifiant (ou email) et votre mot de passe.",
     "signUpHeading": "Créer un compte",
-    "signUpDesc": "Choisissez un nom d'utilisateur et un mot de passe. C'est tout.",
+    "signUpDesc": "Votre nom, un mot de passe — et un email si vous en avez un (il sert à récupérer le compte).",
     "custodyNote": "Pas de frais. Votre argent ne passe jamais par l'appli.",
     "finishingSignInTitle": "Finalisation de la connexion…",
     "finishingSignInBody": "Connexion de votre compte en cours. Cela ne prend qu’un instant.",
@@ -50,7 +50,30 @@
     "usernameTaken": "Ce nom d'utilisateur est déjà pris.",
     "usernameInvalid": "Nom d'utilisateur invalide — 4 caractères min., lettres, chiffres, _ ou -.",
     "passwordTooShort": "Mot de passe trop court (8 caractères min.).",
-    "passwordPwned": "Ce mot de passe a fuité en ligne — choisissez-en un autre."
+    "passwordPwned": "Ce mot de passe a fuité en ligne — choisissez-en un autre.",
+    "identifierLabel": "Nom d'utilisateur ou email",
+    "firstNameLabel": "Prénom",
+    "lastNameLabel": "Nom",
+    "emailLabel": "Email (optionnel)",
+    "emailOptionalHint": "pour récupérer votre compte",
+    "emailAccountLabel": "Email du compte",
+    "nameRequired": "Entrez votre prénom et votre nom.",
+    "usernameAssigned": "Votre identifiant : {{username}}",
+    "emailTaken": "Cet email est déjà utilisé.",
+    "emailInvalid": "Vérifiez l'adresse email.",
+    "verifyEmailHeading": "Vérifiez votre email",
+    "verifyEmailDesc": "Code envoyé à {{email}}.",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetHeading": "Réinitialiser le mot de passe",
+    "resetDesc": "Entrez l'email de votre compte — un code vous y sera envoyé. Sans email, contactez votre président ou le support.",
+    "resetCodeDesc": "Code envoyé à {{email}}. Choisissez un nouveau mot de passe.",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "resetCta": "Changer le mot de passe",
+    "sendResetCode": "Envoyer le code",
+    "backToSignIn": "Retour à la connexion",
+    "resetSuccess": "Mot de passe changé ✓",
+    "continueWithGoogle": "Continuer avec Google",
+    "orDivider": "ou"
   },
   "onboarding": {
     "title": "Comment le groupe vous appelle-t-il ?",
@@ -170,7 +193,11 @@
       "collection": "Circulation de l'argent",
       "perMember": "{{amount}} / membre",
       "notFound": "Groupe introuvable.",
-      "backHome": "Retour à l'accueil"
+      "backHome": "Retour à l'accueil",
+      "addByUsername": "Par identifiant",
+      "addByPhone": "Sans smartphone",
+      "addByUsernameDesc": "Pour les membres qui ont déjà l'appli : entrez leur identifiant exact — ils seront prévenus.",
+      "usernameNotFound": "Aucun compte avec cet identifiant."
     },
     "invite": {
       "title": "Inviter des membres",
@@ -336,7 +363,8 @@
     "addPhoneCta": "Ajouter mon numéro",
     "phoneLinked": "Numéro vérifié et relié.",
     "phoneTaken": "Ce numéro est déjà lié à un autre compte.",
-    "phoneChangeUnsupported": "Changer de numéro n'est pas encore possible."
+    "phoneChangeUnsupported": "Changer de numéro n'est pas encore possible.",
+    "usernameHint": "Votre identifiant de connexion"
   },
   "payout": {
     "title": "Remise du pot",

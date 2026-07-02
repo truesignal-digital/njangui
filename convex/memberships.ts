@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
+import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { mutation, type MutationCtx, query } from './_generated/server';
+import { notifyMemberships } from './push';
 import { membershipRoleValidator, membershipStatusValidator } from './schema';
 import { logActivityEvent } from './utils/activity';
 import { getCurrentUser, getCurrentUserOrNull, requireMembership, requireRole } from './utils/auth';
@@ -317,6 +319,112 @@ export const addFeaturePhoneMember = mutation({
       actorMembershipId: actor._id,
       note: name,
     });
+
+    return { membershipId };
+  },
+});
+
+/**
+ * Add an APP member by their unique username (officer-initiated — the
+ * mirror of join-by-code, which is member-initiated and needs approval).
+ * The username is exact-matched against the Clerk-mirrored directory; the
+ * new member lands `active` immediately and is told by push (+ a courtesy
+ * email when they have one) — being silently inside a money group is the
+ * thing this notification prevents.
+ */
+export const addMemberByUsername = mutation({
+  args: {
+    groupId: v.id('groups'),
+    username: v.string(),
+  },
+  returns: addMemberResultValidator,
+  handler: async (ctx, args) => {
+    const { membership: actor } = await requireRole(ctx, args.groupId, [
+      'president',
+      'treasurer',
+    ]);
+
+    const group = await ctx.db.get(args.groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (group.status === 'archived') {
+      throw new Error('Group is archived');
+    }
+
+    const username = args.username.trim().toLowerCase();
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_username', (q) => q.eq('username', username))
+      .unique();
+    if (!user || user.isDeactivated) {
+      throw new Error('No account with this username');
+    }
+
+    const count = await countActiveAndPending(ctx, args.groupId);
+    if (count >= MEMBERSHIP_CAP) {
+      throw new Error(`Group is at the ${MEMBERSHIP_CAP}-membership cap`);
+    }
+
+    const existingMembership = await ctx.db
+      .query('memberships')
+      .withIndex('by_group_and_user', (q) =>
+        q.eq('groupId', args.groupId).eq('userId', user._id)
+      )
+      .unique();
+    if (existingMembership) {
+      throw new Error('This person already has a membership in this group');
+    }
+    // A feature-phone row seeded with this user's phone would collide once
+    // they were linked — same guard as the phone-based add.
+    if (user.phone !== undefined) {
+      const samePhone = await ctx.db
+        .query('memberships')
+        .withIndex('by_phone', (q) => q.eq('phone', user.phone))
+        .collect();
+      if (samePhone.some((m) => m.groupId === args.groupId)) {
+        throw new Error('This phone number already has a membership in this group');
+      }
+    }
+
+    const membershipId = await ctx.db.insert('memberships', {
+      groupId: args.groupId,
+      userId: user._id,
+      ...(user.phone !== undefined && { phone: user.phone }),
+      displayName: user.name || user.username || username,
+      role: 'member',
+      status: 'active',
+      ...(group.status === 'active' && { joinedMidCycle: true }),
+      joinedAt: Date.now(),
+    });
+
+    await logActivityEvent(ctx, {
+      groupId: args.groupId,
+      kind: 'member_added',
+      entityTable: 'memberships',
+      entityId: membershipId,
+      toState: 'active',
+      actorMembershipId: actor._id,
+      note: user.name || username,
+    });
+
+    await notifyMemberships(ctx, [membershipId], {
+      titleFr: `Ajouté(e) à « ${group.name} »`,
+      titleEn: `Added to "${group.name}"`,
+      bodyFr: `${actor.displayName} vous a ajouté(e) à ce njangi.`,
+      bodyEn: `${actor.displayName} added you to this njangi.`,
+      url: `/groups/${args.groupId}`,
+    });
+    if (user.email !== undefined) {
+      await ctx.scheduler.runAfter(0, internal.email.sendMemberAdded, {
+        email: user.email,
+        memberName: user.name || username,
+        groupName: group.name,
+        actorName: actor.displayName,
+        language: user.language,
+        membershipId,
+      });
+    }
 
     return { membershipId };
   },

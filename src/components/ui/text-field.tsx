@@ -5,6 +5,32 @@ import { cn } from '../../lib/cn';
 import { useAppTheme } from '../../lib/theme';
 
 /**
+ * Numeric keyboards only ever produce numbers: digit-only for
+ * number/decimal pads (FCFA amounts are integers), digits plus a single
+ * leading + for phone pads (pasted E.164). Hardware keyboards, paste and
+ * autofill all bypass the soft keyboard, so the guard lives here.
+ */
+function sanitizeForKeyboard(
+  text: string,
+  keyboardType: TextInputProps['keyboardType']
+): string {
+  if (
+    keyboardType === 'number-pad' ||
+    keyboardType === 'numeric' ||
+    keyboardType === 'decimal-pad'
+  ) {
+    return text.replace(/[^\d]/g, '');
+  }
+  if (keyboardType === 'phone-pad') {
+    const cleaned = text.replace(/[^\d+]/g, '');
+    return cleaned.startsWith('+')
+      ? `+${cleaned.slice(1).replace(/\+/g, '')}`
+      : cleaned.replace(/\+/g, '');
+  }
+  return text;
+}
+
+/**
  * Labeled text input (52px min height — same one-thumb target as CTAs).
  * `prefix` renders a fixed chip before the input (e.g. +237).
  */
@@ -13,7 +39,7 @@ export const TextField = forwardRef<TextInput, TextInputProps & {
   prefix?: string;
   error?: string | null;
   containerClassName?: string;
-}>(function TextField({ label, prefix, error, containerClassName, className, ...inputProps }, ref) {
+}>(function TextField({ label, prefix, error, containerClassName, className, onChangeText, keyboardType, ...inputProps }, ref) {
   const theme = useAppTheme();
 
   return (
@@ -29,6 +55,12 @@ export const TextField = forwardRef<TextInput, TextInputProps & {
           ref={ref}
           placeholderTextColor={theme.textPlaceholder}
           selectionColor={theme.accent}
+          keyboardType={keyboardType}
+          onChangeText={
+            onChangeText
+              ? (text) => onChangeText(sanitizeForKeyboard(text, keyboardType))
+              : undefined
+          }
           className={cn(
             'min-h-cta flex-1 rounded-lg border bg-surface px-md font-body text-body text-foreground',
             error ? 'border-destructive' : 'border-border',

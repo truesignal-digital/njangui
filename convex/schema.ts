@@ -192,6 +192,11 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
     name: v.string(),
+    // Clerk-owned identifiers, mirrored via the svix webhook so member
+    // search / email notify never need a Clerk API round-trip. Uniqueness
+    // is Clerk's (per-instance); never written from client input.
+    username: v.optional(v.string()), // lowercase, unique app-wide
+    email: v.optional(v.string()),
     phone: v.optional(v.string()), // E.164, e.g. '+2376XXXXXXXX'; unique (mutation-enforced)
     language: appLanguageValidator, // default 'fr'
     avatarUrl: v.optional(v.string()),
@@ -207,7 +212,8 @@ export default defineSchema({
     ),
   })
     .index('by_clerk_id', ['clerkId'])
-    .index('by_phone', ['phone']),
+    .index('by_phone', ['phone'])
+    .index('by_username', ['username']),
 
   groups: defineTable({
     name: v.string(),

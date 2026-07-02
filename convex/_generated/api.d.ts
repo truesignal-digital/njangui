@@ -13,6 +13,7 @@ import type * as crons from "../crons.js";
 import type * as cycles from "../cycles.js";
 import type * as dev from "../dev.js";
 import type * as devices from "../devices.js";
+import type * as email from "../email.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as lib_cycleMath from "../lib/cycleMath.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   cycles: typeof cycles;
   dev: typeof dev;
   devices: typeof devices;
+  email: typeof email;
   groups: typeof groups;
   http: typeof http;
   "lib/cycleMath": typeof lib_cycleMath;

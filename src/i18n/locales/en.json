@@ -14,9 +14,9 @@
   "auth": {
     "tagline": "Your njangi (tontine) ledger, in black and white.",
     "signInHeading": "Sign in",
-    "signInDesc": "Enter your username and password.",
+    "signInDesc": "Enter your username (or email) and your password.",
     "signUpHeading": "Create an account",
-    "signUpDesc": "Pick a username and a password. That's it.",
+    "signUpDesc": "Your name, a password — and an email if you have one (it recovers your account).",
     "custodyNote": "No fees. Your money never passes through the app.",
     "finishingSignInTitle": "Finishing sign-in…",
     "finishingSignInBody": "Connecting your account. This only takes a moment.",
@@ -50,7 +50,30 @@
     "usernameTaken": "That username is already taken.",
     "usernameInvalid": "Invalid username — min 4 chars: letters, numbers, _ or -.",
     "passwordTooShort": "Password too short (min 8 characters).",
-    "passwordPwned": "That password has leaked online — pick another one."
+    "passwordPwned": "That password has leaked online — pick another one.",
+    "identifierLabel": "Username or email",
+    "firstNameLabel": "First name",
+    "lastNameLabel": "Last name",
+    "emailLabel": "Email (optional)",
+    "emailOptionalHint": "to recover your account",
+    "emailAccountLabel": "Account email",
+    "nameRequired": "Enter your first and last name.",
+    "usernameAssigned": "Your login name: {{username}}",
+    "emailTaken": "That email is already in use.",
+    "emailInvalid": "Check the email address.",
+    "verifyEmailHeading": "Verify your email",
+    "verifyEmailDesc": "Code sent to {{email}}.",
+    "forgotPassword": "Forgot password?",
+    "resetHeading": "Reset your password",
+    "resetDesc": "Enter your account email — a code will be sent there. No email on the account? Contact your president or support.",
+    "resetCodeDesc": "Code sent to {{email}}. Pick a new password.",
+    "newPasswordLabel": "New password",
+    "resetCta": "Change the password",
+    "sendResetCode": "Send the code",
+    "backToSignIn": "Back to sign in",
+    "resetSuccess": "Password changed ✓",
+    "continueWithGoogle": "Continue with Google",
+    "orDivider": "or"
   },
   "onboarding": {
     "title": "What does the group call you?",
@@ -170,7 +193,11 @@
       "collection": "How the money moves",
       "perMember": "{{amount}} / member",
       "notFound": "Group not found.",
-      "backHome": "Back to home"
+      "backHome": "Back to home",
+      "addByUsername": "By username",
+      "addByPhone": "No smartphone",
+      "addByUsernameDesc": "For members who already have the app: enter their exact username — they'll be notified.",
+      "usernameNotFound": "No account with this username."
     },
     "invite": {
       "title": "Invite members",
@@ -336,7 +363,8 @@
     "addPhoneCta": "Add my number",
     "phoneLinked": "Number verified and linked.",
     "phoneTaken": "That number is already linked to another account.",
-    "phoneChangeUnsupported": "Changing numbers isn't supported yet."
+    "phoneChangeUnsupported": "Changing numbers isn't supported yet.",
+    "usernameHint": "Your login name"
   },
   "payout": {
     "title": "Pot handover",

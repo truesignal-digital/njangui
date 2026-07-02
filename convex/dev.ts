@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { internal } from './_generated/api';
 import { action, mutation } from './_generated/server';
 import { performStartCycle } from './cycles';
 import { devTicketForPhone } from './otp';
@@ -53,6 +54,51 @@ export const devLoginTicket = action({
   handler: async (ctx, args) => {
     assertDevSeedEnabled();
     return await devTicketForPhone(ctx, args.phone);
+  },
+});
+
+/**
+ * One-shot mirror backfill: pull username/email for existing Clerk users
+ * into Convex rows (new signups sync via the webhook; rows created before
+ * the mirror existed don't). Reuses updateUserFromClerk so the write path
+ * stays single.
+ */
+export const devBackfillClerkIdentifiers = action({
+  args: {},
+  returns: v.object({ updated: v.number() }),
+  handler: async (ctx): Promise<{ updated: number }> => {
+    assertDevSeedEnabled();
+    const key = process.env.CLERK_SECRET_KEY;
+    if (!key) throw new Error('CLERK_SECRET_KEY not configured');
+    const response = await fetch('https://api.clerk.com/v1/users?limit=100', {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!response.ok) {
+      throw new Error(`Clerk user list failed: ${response.status}`);
+    }
+    const users = (await response.json()) as {
+      id: string;
+      username: string | null;
+      email_addresses: { id: string; email_address: string }[];
+      primary_email_address_id: string | null;
+    }[];
+    let updated = 0;
+    for (const u of users) {
+      const email =
+        u.email_addresses.find((e) => e.id === u.primary_email_address_id)
+          ?.email_address ?? u.email_addresses[0]?.email_address;
+      if (!u.username && !email) continue;
+      const patched: string | null = await ctx.runMutation(
+        internal.users.updateUserFromClerk,
+        {
+          clerkId: u.id,
+          ...(u.username ? { username: u.username } : {}),
+          ...(email ? { email } : {}),
+        }
+      );
+      if (patched !== null) updated++;
+    }
+    return { updated };
   },
 });
 
