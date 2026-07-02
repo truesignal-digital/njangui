@@ -317,7 +317,14 @@
     "partialWarning": "{{amount}} will remain to contribute.",
     "overWarning": "Amount above what remains expected — declare what you actually sent.",
     "invalidAmount": "Enter a valid amount in F.",
-    "declared": "Payment declared — {{name}} must confirm ✓"
+    "declared": "Payment declared — {{name}} must confirm ✓",
+    "proofPhotoLabel": "Payment proof (photo)",
+    "takePhoto": "Take a photo",
+    "chooseImage": "Choose an image",
+    "removePhoto": "Remove photo",
+    "photoHint": "Screenshot of the SMS or a photo of the receipt — optional but recommended.",
+    "uploadFailed": "Photo upload failed — try again.",
+    "cameraDenied": "Camera access denied — allow it in Settings."
   },
   "tabs": {
     "home": "Home",
@@ -369,7 +376,9 @@
     "disputeTitle": "Dispute",
     "disputeAuto": "Opened automatically — payment not confirmed in time",
     "disputeBy": "Opened by {{name}}",
-    "resolution": "Resolution"
+    "resolution": "Resolution",
+    "proofImage": "Attached proof",
+    "proofImageNote": "Proof helps verify — confirmation is what makes the payment official."
   },
   "profile": {
     "signOut": "Sign out",

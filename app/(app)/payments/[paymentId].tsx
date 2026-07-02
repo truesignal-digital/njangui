@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import type { FunctionReturnType } from 'convex/server';
@@ -146,6 +146,29 @@ export default function PaymentDetailScreen() {
           />
         ) : null}
       </Card>
+
+      {/* Proof photo — shown to the confirmer; accepted, never trusted (I-10) */}
+      {record.screenshotUrl ? (
+        <Card>
+          <Text className="pb-xs font-body-semi text-body text-foreground">
+            {t('payment.proofImage')}
+          </Text>
+          <Image
+            source={{ uri: record.screenshotUrl }}
+            resizeMode="contain"
+            style={{
+              height: 320,
+              width: '100%',
+              borderRadius: theme.radius.lg,
+              backgroundColor: theme.surfaceMuted,
+            }}
+            accessibilityLabel={t('payment.proofImage')}
+          />
+          <Text className="pt-xs font-body text-caption text-muted">
+            {t('payment.proofImageNote')}
+          </Text>
+        </Card>
+      ) : null}
 
       {/* Dispute thread */}
       {record.dispute ? (

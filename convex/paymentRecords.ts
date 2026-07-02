@@ -454,6 +454,23 @@ export async function applyAutoDispute(
 // ============================================================================
 
 /**
+ * Short-lived upload URL for a proof photo (03 B4). The storage id the
+ * client gets back is only ever attached through `claim`, which re-checks
+ * membership and the state machine — an orphaned upload grants nothing.
+ */
+export const generateProofUploadUrl = mutation({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx) => {
+    const auth = await getCurrentUserOrNull(ctx);
+    if (!auth) {
+      throw new Error('Not authenticated');
+    }
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/**
  * Claim (02 §c rows 2–3): payer-side « j'ai envoyé », or payee-side receipt
  * (Meeting Mode tick / beneficiary « j'ai reçu ») — the side is derived
  * from WHO is calling, never from an argument. Self-records (payer = payee)
@@ -1195,6 +1212,7 @@ const paymentRecordDetailValidator = v.object({
   method: v.optional(paymentMethodValidator),
   proofType: proofTypeValidator,
   momoTxnId: v.optional(v.string()),
+  screenshotUrl: v.union(v.string(), v.null()),
   isArrears: v.optional(v.boolean()),
   claimedBySide: v.optional(paymentSideValidator),
   claimedAt: v.optional(v.number()),
@@ -1313,6 +1331,9 @@ export const getPaymentRecord = query({
       method: record.method,
       proofType: record.proofType,
       momoTxnId: record.momoTxnId,
+      screenshotUrl: record.screenshotStorageId
+        ? await ctx.storage.getUrl(record.screenshotStorageId)
+        : null,
       isArrears: record.isArrears,
       claimedBySide: record.claimedBySide,
       claimedAt: record.claimedAt,

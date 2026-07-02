@@ -317,7 +317,14 @@
     "partialWarning": "Il restera {{amount}} à cotiser.",
     "overWarning": "Montant supérieur au reste attendu — déclarez ce que vous avez réellement envoyé.",
     "invalidAmount": "Entrez un montant valide en F.",
-    "declared": "Paiement déclaré — {{name}} doit confirmer ✓"
+    "declared": "Paiement déclaré — {{name}} doit confirmer ✓",
+    "proofPhotoLabel": "Preuve de paiement (photo)",
+    "takePhoto": "Prendre une photo",
+    "chooseImage": "Choisir une image",
+    "removePhoto": "Retirer la photo",
+    "photoHint": "Capture d'écran du SMS ou photo du reçu — facultatif mais recommandé.",
+    "uploadFailed": "Échec de l'envoi de la photo — réessayez.",
+    "cameraDenied": "Accès à l'appareil photo refusé — autorisez-le dans Réglages."
   },
   "tabs": {
     "home": "Accueil",
@@ -369,7 +376,9 @@
     "disputeTitle": "Litige",
     "disputeAuto": "Ouvert automatiquement — paiement non confirmé dans les délais",
     "disputeBy": "Ouvert par {{name}}",
-    "resolution": "Résolution"
+    "resolution": "Résolution",
+    "proofImage": "Preuve jointe",
+    "proofImageNote": "La preuve aide à vérifier — c'est la confirmation qui rend le paiement officiel."
   },
   "profile": {
     "signOut": "Se déconnecter",

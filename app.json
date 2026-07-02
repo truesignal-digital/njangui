@@ -64,7 +64,14 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Njangi accède à vos photos pour joindre une preuve de paiement. / Njangi accesses your photos to attach payment proof.",
+          "cameraPermission": "Njangi utilise l'appareil photo pour photographier une preuve de paiement. / Njangi uses the camera to photograph payment proof."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
