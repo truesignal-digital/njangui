@@ -137,6 +137,7 @@ const groupDetailValidator = v.object({
   meetingDayOfWeek: v.optional(v.number()),
   meetingTime: v.optional(v.string()),
   contributionAmount: v.number(),
+  targetMemberCount: v.optional(v.number()),
   graceDays: v.number(),
   finesEnabled: v.boolean(),
   lateFineAmount: v.optional(v.number()),
@@ -188,6 +189,7 @@ export const createGroup = mutation({
     meetingDayOfWeek: v.optional(v.number()),
     meetingTime: v.optional(v.string()),
     contributionAmount: v.number(),
+    targetMemberCount: v.optional(v.number()), // informational goal, never a guard
     graceDays: v.optional(v.number()), // default 2 — the ONLY group-configurable timer (02)
     finesEnabled: v.optional(v.boolean()), // default false — fines are opt-in (02 §f)
     lateFineAmount: v.optional(v.number()),
@@ -225,6 +227,10 @@ export const createGroup = mutation({
       meetingDayOfWeek: args.meetingDayOfWeek,
       meetingTime: args.meetingTime,
       contributionAmount: args.contributionAmount,
+      ...(args.targetMemberCount !== undefined &&
+        args.targetMemberCount >= 2 && {
+          targetMemberCount: Math.floor(args.targetMemberCount),
+        }),
       graceDays,
       finesEnabled: args.finesEnabled ?? false,
       lateFineAmount: args.lateFineAmount,
@@ -274,6 +280,7 @@ export const updateGroupSettings = mutation({
     meetingDayOfWeek: v.optional(v.number()),
     meetingTime: v.optional(v.string()),
     contributionAmount: v.optional(v.number()),
+    targetMemberCount: v.optional(v.number()),
     graceDays: v.optional(v.number()),
     finesEnabled: v.optional(v.boolean()),
     lateFineAmount: v.optional(v.number()),
@@ -324,6 +331,12 @@ export const updateGroupSettings = mutation({
       ...(args.meetingTime !== undefined && { meetingTime: args.meetingTime }),
       ...(args.contributionAmount !== undefined && {
         contributionAmount: args.contributionAmount,
+      }),
+      ...(args.targetMemberCount !== undefined && {
+        targetMemberCount:
+          args.targetMemberCount >= 2
+            ? Math.floor(args.targetMemberCount)
+            : undefined,
       }),
       ...(args.graceDays !== undefined && { graceDays: args.graceDays }),
       ...(args.finesEnabled !== undefined && {
@@ -428,6 +441,7 @@ export const getGroup = query({
       meetingDayOfWeek: group.meetingDayOfWeek,
       meetingTime: group.meetingTime,
       contributionAmount: group.contributionAmount,
+      targetMemberCount: group.targetMemberCount,
       graceDays: group.graceDays,
       finesEnabled: group.finesEnabled,
       lateFineAmount: group.lateFineAmount,

@@ -223,6 +223,7 @@ export default defineSchema({
     meetingDayOfWeek: v.optional(v.number()), // 0–6 (Sun–Sat); required for weekly/biweekly (mutation-enforced)
     meetingTime: v.optional(v.string()), // 'HH:mm', Africa/Douala — drives dueAt + D-1/D-0 meeting reminders (03 §E)
     contributionAmount: v.number(), // int XAF per member per round (current setting; cycles snapshot it)
+    targetMemberCount: v.optional(v.number()), // "combien serez-vous ?" — informational goal for the setup checklist, never a start guard
     graceDays: v.number(), // GRACE_DAYS — default 2, president-configurable 0–7. The ONLY group-configurable timer (02 DECISION)
     finesEnabled: v.boolean(), // fine policy (02 §f); editable only in setup/between_cycles
     lateFineAmount: v.optional(v.number()), // flat XAF per offense — default for system fine proposals + one-tap manual fines

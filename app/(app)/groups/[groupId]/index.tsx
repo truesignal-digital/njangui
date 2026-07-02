@@ -14,6 +14,7 @@ import { Badge, GROUP_STATUS_TONE } from '../../../../src/components/ui/badge';
 import { AppButton } from '../../../../src/components/ui/button';
 import { Skeleton } from '../../../../src/components/skeleton';
 import { ActivityFeed } from '../../../../src/components/groups/activity-feed';
+import { ReadinessCard } from '../../../../src/components/groups/readiness-card';
 import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
 import { RotationSection } from '../../../../src/components/groups/rotation-section';
@@ -130,22 +131,17 @@ export default function GroupHomeScreen() {
         </View>
       </View>
 
-      {/* Setup banner (docs/03 B2 setup state) */}
-      {group.status === 'setup' && activeMembers.length > 0 ? (
-        <View className="mt-lg rounded-lg border border-accent-muted bg-accent-faint p-sm">
-          <Text className="font-body text-body-sm text-foreground">
-            {t('groups.detail.setupBanner', { count: activeMembers.length })}
-          </Text>
-        </View>
-      ) : null}
-
-      {/* President missing — the cycle can't start without one (02 §a lock guard) */}
-      {canAssignPresident ? (
-        <View className="mt-lg rounded-lg border border-accent-muted bg-accent-faint p-sm">
-          <Text className="font-body text-body-sm text-foreground">
-            {t('groups.detail.noPresidentBanner')}
-          </Text>
-        </View>
+      {/* Setup readiness — the lock guards made visible, plus the projected
+          season so "do we wait for one more member?" has a visible cost */}
+      {group.status === 'setup' && members !== undefined ? (
+        <ReadinessCard
+          activeMemberCount={activeMembers.length}
+          targetMemberCount={group.targetMemberCount}
+          hasPresident={hasPresident}
+          hasTreasurer={activeMembers.some((m) => m.role === 'treasurer')}
+          schedule={group.schedule}
+          meetingDayOfWeek={group.meetingDayOfWeek}
+        />
       ) : null}
 
       {/* Pending approvals — problems float up (president/treasurer only) */}

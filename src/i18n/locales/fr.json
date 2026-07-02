@@ -164,7 +164,10 @@
       "creating": "Création…",
       "inviteTitle": "Invitez le groupe",
       "inviteHint": "Envoyez le code dans le groupe WhatsApp de votre njangi. Vous pourrez aussi ajouter des membres vous-même.",
-      "finish": "Terminer ✓"
+      "finish": "Terminer ✓",
+      "targetLabel": "Combien serez-vous ? (optionnel)",
+      "targetPlaceholder": "ex. 10",
+      "potPreview": "Pot estimé par tour : {{amount}}"
     },
     "detail": {
       "membersTitle": "Membres",
@@ -250,6 +253,14 @@
       "locked": "fixé",
       "thisRound": "CE TOUR",
       "noApp": "sans appli"
+    },
+    "readiness": {
+      "title": "Prêt à démarrer ?",
+      "membersOfTarget": "{{count}} membres sur {{target}}",
+      "minMembers": "2 minimum",
+      "toAssign": "à désigner",
+      "presidentHint": "nommez-en un(e) ci-dessous",
+      "projection": "{{count}} tours · du ~{{start}} au ~{{end}} (estimation)"
     }
   },
   "round": {

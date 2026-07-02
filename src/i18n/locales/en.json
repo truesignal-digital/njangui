@@ -164,7 +164,10 @@
       "creating": "Creating…",
       "inviteTitle": "Invite the group",
       "inviteHint": "Send the code in your njangi's WhatsApp group. You can also add members yourself.",
-      "finish": "Done ✓"
+      "finish": "Done ✓",
+      "targetLabel": "How many will you be? (optional)",
+      "targetPlaceholder": "e.g. 10",
+      "potPreview": "Estimated pot per round: {{amount}}"
     },
     "detail": {
       "membersTitle": "Members",
@@ -250,6 +253,14 @@
       "locked": "fixed",
       "thisRound": "THIS ROUND",
       "noApp": "no app"
+    },
+    "readiness": {
+      "title": "Ready to start?",
+      "membersOfTarget": "{{count}} of {{target}} members",
+      "minMembers": "minimum 2",
+      "toAssign": "to assign",
+      "presidentHint": "name one below",
+      "projection": "{{count}} rounds · ~{{start}} to ~{{end}} (estimate)"
     }
   },
   "round": {
