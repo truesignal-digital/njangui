@@ -490,6 +490,9 @@
     "estimated": "(estimation)",
     "monthSummaryBoth": "vous cotisez {{contrib}} · vous recevez {{receive}}",
     "monthSummaryContrib": "vous cotisez {{contrib}}",
-    "empty": "Aucune échéance — les dates apparaissent dès qu'un cycle démarre (ou en estimation pendant la préparation)."
+    "empty": "Aucune échéance — les dates apparaissent dès qu'un cycle démarre (ou en estimation pendant la préparation).",
+    "roundLabel": "Tour {{n}}",
+    "youReceiveShort": "vous recevez {{amount}}",
+    "receivesShort": "{{name}} reçoit"
   }
 }

@@ -11,7 +11,13 @@ import { Skeleton } from './skeleton';
  * Agenda list (docs/03) — njangi events are sparse (one per group per
  * period), so months are section headers with a money summary line
  * (« vous cotisez X · vous recevez Y ») instead of a mostly-empty grid.
- * Estimated rows (setup groups) are greyed and tagged; past rows dimmed.
+ *
+ * Two modes:
+ * - 'my' (Calendar tab): UPCOMING sessions only, ONE row per group per
+ *   round — what I pay, what I collect. Other members' turns are noise
+ *   here and stay out.
+ * - 'group' (group calendar): the whole season, every round with its
+ *   beneficiary, past rows dimmed.
  */
 
 type AgendaEvent = {
@@ -27,18 +33,64 @@ type AgendaEvent = {
   estimated: boolean;
 };
 
+type SessionRow = {
+  date: number;
+  groupId: string;
+  groupName: string;
+  roundIndex: number;
+  contribution: number; // 0 ⇒ resting beneficiary round
+  hands: number;
+  myPayout: number; // 0 ⇒ not my turn
+  beneficiaryName: string | null; // group mode only
+  estimated: boolean;
+};
+
 type MonthSection = {
   key: string;
   label: string;
   contrib: number;
   receive: number;
-  events: AgendaEvent[];
+  rows: SessionRow[];
 };
 
-function toSections(events: AgendaEvent[], locale: string): MonthSection[] {
-  const sections = new Map<string, MonthSection>();
+/** One row per group-round: contribution + my payout folded together. */
+function toSessions(events: AgendaEvent[], upcomingOnly: boolean): SessionRow[] {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const sessions = new Map<string, SessionRow>();
   for (const event of events) {
-    const d = new Date(event.date);
+    if (upcomingOnly && event.date < todayStart.getTime()) {
+      continue;
+    }
+    const key = `${event.groupId}:${event.roundIndex}`;
+    let row = sessions.get(key);
+    if (!row) {
+      row = {
+        date: event.date,
+        groupId: event.groupId,
+        groupName: event.groupName,
+        roundIndex: event.roundIndex,
+        contribution: 0,
+        hands: event.hands,
+        myPayout: 0,
+        beneficiaryName: event.beneficiaryName,
+        estimated: event.estimated,
+      };
+      sessions.set(key, row);
+    }
+    if (event.kind === 'contribution') {
+      row.contribution = event.amount;
+    } else if (event.isMyPayout) {
+      row.myPayout = event.amount;
+    }
+  }
+  return [...sessions.values()].sort((a, b) => a.date - b.date);
+}
+
+function toSections(rows: SessionRow[], locale: string): MonthSection[] {
+  const sections = new Map<string, MonthSection>();
+  for (const row of rows) {
+    const d = new Date(row.date);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     let section = sections.get(key);
     if (!section) {
@@ -51,59 +103,52 @@ function toSections(events: AgendaEvent[], locale: string): MonthSection[] {
         label: label.charAt(0).toUpperCase() + label.slice(1),
         contrib: 0,
         receive: 0,
-        events: [],
+        rows: [],
       };
       sections.set(key, section);
     }
-    if (event.kind === 'contribution') {
-      section.contrib += event.amount;
-    } else if (event.isMyPayout) {
-      section.receive += event.amount;
-    }
-    section.events.push(event);
+    section.contrib += row.contribution;
+    section.receive += row.myPayout;
+    section.rows.push(row);
   }
   return [...sections.values()];
 }
 
-function EventRow({
-  event,
-  showGroupName,
+function SessionLine({
+  row,
+  mode,
   locale,
 }: {
-  event: AgendaEvent;
-  showGroupName: boolean;
+  row: SessionRow;
+  mode: 'my' | 'group';
   locale: string;
 }) {
   const { t } = useTranslation();
-  const past = event.date < Date.now();
-  const day = new Date(event.date).toLocaleDateString(locale, {
+  const past = row.date < Date.now();
+  const dimmed = row.estimated || (mode === 'group' && past);
+  const day = new Date(row.date).toLocaleDateString(locale, {
     weekday: 'short',
     day: 'numeric',
   });
 
-  const label =
-    event.kind === 'payout'
-      ? event.isMyPayout
-        ? t('calendar.youReceive', {
-            n: event.roundIndex,
-            amount: formatCurrencyXAF(event.amount),
-          })
-        : t('calendar.receives', {
-            n: event.roundIndex,
-            name: event.beneficiaryName ?? '—',
-          })
-      : `${t('calendar.contribution', {
-          amount: formatCurrencyXAF(event.amount),
-        })}${event.hands > 1 ? ` ${t('calendar.hands', { count: event.hands })}` : ''}`;
-
-  const tone =
-    event.estimated || past
-      ? 'text-placeholder'
-      : event.isMyPayout
-        ? 'text-success-dark'
-        : event.kind === 'contribution'
-          ? 'text-foreground'
-          : 'text-muted';
+  const parts: string[] = [];
+  if (row.contribution > 0) {
+    parts.push(
+      `${t('calendar.contribution', {
+        amount: formatCurrencyXAF(row.contribution),
+      })}${row.hands > 1 ? ` ${t('calendar.hands', { count: row.hands })}` : ''}`
+    );
+  }
+  if (row.myPayout > 0) {
+    parts.push(
+      t('calendar.youReceiveShort', {
+        amount: formatCurrencyXAF(row.myPayout),
+      })
+    );
+  }
+  if (mode === 'group' && row.myPayout === 0 && row.beneficiaryName) {
+    parts.push(t('calendar.receivesShort', { name: row.beneficiaryName }));
+  }
 
   return (
     <View className="flex-row items-baseline gap-sm py-xs">
@@ -111,25 +156,26 @@ function EventRow({
         {day}
       </Text>
       <View className="min-w-0 flex-1">
-        {showGroupName ? (
-          <Text
-            className="font-body text-caption text-muted"
-            numberOfLines={1}
-          >
-            {event.groupName}
-          </Text>
-        ) : null}
         <Text
-          className={`font-body-medium text-body-sm ${tone}`}
+          className={`font-body-medium text-body-sm ${dimmed ? 'text-placeholder' : 'text-foreground'}`}
+          numberOfLines={1}
+        >
+          {mode === 'my'
+            ? `${row.groupName} · ${t('calendar.roundLabel', { n: row.roundIndex })}`
+            : t('calendar.roundLabel', { n: row.roundIndex })}
+          {row.estimated ? ` ${t('calendar.estimated')}` : ''}
+        </Text>
+        <Text
+          className={`font-body text-body-sm ${
+            dimmed
+              ? 'text-placeholder'
+              : row.myPayout > 0
+                ? 'text-success-dark'
+                : 'text-muted'
+          }`}
           numberOfLines={2}
         >
-          {label}
-          {event.estimated ? (
-            <Text className="font-body text-caption text-placeholder">
-              {' '}
-              {t('calendar.estimated')}
-            </Text>
-          ) : null}
+          {parts.join(' · ')}
         </Text>
       </View>
     </View>
@@ -138,10 +184,10 @@ function EventRow({
 
 export function CalendarAgenda({
   groupId,
-  showGroupName,
+  mode,
 }: {
   groupId?: string;
-  showGroupName: boolean;
+  mode: 'my' | 'group';
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-GB';
@@ -156,8 +202,9 @@ export function CalendarAgenda({
   );
 
   const sections = useMemo(
-    () => (events ? toSections(events, locale) : []),
-    [events, locale]
+    () =>
+      events ? toSections(toSessions(events, mode === 'my'), locale) : [],
+    [events, mode, locale]
   );
 
   if (events === undefined) {
@@ -198,11 +245,11 @@ export function CalendarAgenda({
             </Text>
           ) : null}
           <View className="rounded-xl bg-surface p-sm">
-            {section.events.map((event, i) => (
-              <EventRow
-                key={`${event.groupId}:${event.roundIndex}:${event.kind}:${i}`}
-                event={event}
-                showGroupName={showGroupName}
+            {section.rows.map((row) => (
+              <SessionLine
+                key={`${row.groupId}:${row.roundIndex}`}
+                row={row}
+                mode={mode}
                 locale={locale}
               />
             ))}

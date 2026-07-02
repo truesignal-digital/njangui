@@ -39,7 +39,7 @@ export default function GroupCalendarScreen() {
           {t('calendar.title')}
         </Text>
       </View>
-      <CalendarAgenda groupId={groupId} showGroupName={false} />
+      <CalendarAgenda groupId={groupId} mode="group" />
     </ScrollView>
   );
 }

@@ -35,7 +35,7 @@ export default function CalendarScreen() {
       <Text className="pb-lg font-heading text-headline text-foreground">
         {t('calendar.title')}
       </Text>
-      <CalendarAgenda showGroupName />
+      <CalendarAgenda mode="my" />
     </ScrollView>
   );
 }

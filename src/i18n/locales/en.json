@@ -490,6 +490,9 @@
     "estimated": "(estimate)",
     "monthSummaryBoth": "you contribute {{contrib}} · you receive {{receive}}",
     "monthSummaryContrib": "you contribute {{contrib}}",
-    "empty": "No dates yet — they appear as soon as a cycle starts (or as estimates during setup)."
+    "empty": "No dates yet — they appear as soon as a cycle starts (or as estimates during setup).",
+    "roundLabel": "Round {{n}}",
+    "youReceiveShort": "you receive {{amount}}",
+    "receivesShort": "{{name}} receives"
   }
 }
