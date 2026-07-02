@@ -310,7 +310,13 @@
     "resolution": "Résolution"
   },
   "profile": {
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "devicesTitle": "Appareils connectés",
+    "devicesDesc": "Les téléphones qui peuvent ouvrir votre compte sans code WhatsApp. Retirez ceux que vous ne reconnaissez pas.",
+    "thisDevice": "Cet appareil",
+    "lastSeen": "Actif le {{date}}",
+    "removeDevice": "Retirer",
+    "deviceRemoved": "Appareil retiré — il devra recevoir un code WhatsApp pour se reconnecter"
   },
   "payout": {
     "title": "Remise du pot",

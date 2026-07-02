@@ -1,5 +1,12 @@
 import { v } from 'convex/values';
-import { internalMutation, internalQuery, mutation, query } from './_generated/server';
+import type { Id } from './_generated/dataModel';
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  type MutationCtx,
+  query,
+} from './_generated/server';
 import {
   constantTimeEqualHex,
   DEVICE_LOGIN_LOCK_MS,
@@ -163,6 +170,27 @@ export const verifyAndTouch = internalMutation({
     return true;
   },
 });
+
+/**
+ * Kill every live credential for a user — a soft-deleted account must not
+ * deviceLogin back into its ledger (auth spec, account-deletion gap).
+ * Plain helper so users.deleteUserByClerkId revokes in the same transaction.
+ */
+export async function revokeAllForUser(
+  ctx: MutationCtx,
+  userId: Id<'users'>
+): Promise<void> {
+  const rows = await ctx.db
+    .query('devices')
+    .withIndex('by_user', (q) => q.eq('userId', userId))
+    .collect();
+  const now = Date.now();
+  for (const device of rows) {
+    if (device.revokedAt === undefined) {
+      await ctx.db.patch(device._id, { revokedAt: now });
+    }
+  }
+}
 
 /** SIM-swap / lost-phone blast-radius control (T-04). */
 export const revokeAllForPhone = internalMutation({

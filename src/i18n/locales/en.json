@@ -310,7 +310,13 @@
     "resolution": "Resolution"
   },
   "profile": {
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "devicesTitle": "Connected devices",
+    "devicesDesc": "Phones that can open your account without a WhatsApp code. Remove any you don't recognize.",
+    "thisDevice": "This device",
+    "lastSeen": "Last active {{date}}",
+    "removeDevice": "Remove",
+    "deviceRemoved": "Device removed — it will need a WhatsApp code to sign in again"
   },
   "payout": {
     "title": "Pot handover",

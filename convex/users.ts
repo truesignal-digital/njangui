@@ -6,6 +6,7 @@ import {
   type MutationCtx,
   query,
 } from './_generated/server';
+import { revokeAllForUser } from './devices';
 import { appLanguageValidator, pushPlatformValidator } from './schema';
 import { logActivityEvent } from './utils/activity';
 import { getCurrentUserOrNull } from './utils/auth';
@@ -249,7 +250,10 @@ export const deleteUserByClerkId = internalMutation({
     }
 
     // Soft delete only — memberships and ledger rows reference this user
-    // forever (decision 6: immutability is the product).
+    // forever (decision 6: immutability is the product). Devices are the
+    // exception: every live credential dies with the account, else the
+    // handset could deviceLogin straight back into the soft-deleted ledger.
+    await revokeAllForUser(ctx, user._id);
     await ctx.db.patch(user._id, { isDeactivated: true });
     return null;
   },

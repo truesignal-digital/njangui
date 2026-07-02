@@ -6,7 +6,11 @@ import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../lib/convex-api';
 import { useClerk, useSignIn } from '../../lib/clerk-client';
-import { getOrCreateDeviceId } from '../../lib/device-credential';
+import {
+  clearDeviceSecret,
+  getOrCreateDeviceId,
+  storeDeviceSecret,
+} from '../../lib/device-credential';
 
 // Test phones (555-01XX block). Slots mirror convex/dev.ts DEV_TEST_PHONES:
 // the seed puts .treasurer/.member on real memberships, so signing in as
@@ -61,6 +65,12 @@ export function DevAuthButton() {
       });
       if (!verified.ok) {
         throw new Error(`verify failed: ${verified.reason}`);
+      }
+      // Store the credential like the real form does — keeps the silent
+      // device-login path exercisable in the sim (local secret must match
+      // the server hash verifyOtp just rotated).
+      if (verified.deviceSecret) {
+        await storeDeviceSecret(verified.deviceSecret, 'dev');
       }
       const attempt = await signIn.create({
         strategy: 'ticket',
@@ -155,6 +165,9 @@ export function DevSeedButton() {
   const switchUser = async () => {
     setBusy('switch');
     try {
+      // Burn the device credential too — otherwise the silent device-login
+      // immediately re-signs-in the SAME identity on the auth screen.
+      await clearDeviceSecret();
       await signOut();
     } finally {
       setBusy(null);
