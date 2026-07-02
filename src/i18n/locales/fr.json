@@ -73,7 +73,9 @@
     "backToSignIn": "Retour à la connexion",
     "resetSuccess": "Mot de passe changé ✓",
     "continueWithGoogle": "Continuer avec Google",
-    "orDivider": "ou"
+    "orDivider": "ou",
+    "newDeviceHeading": "Confirmez que c'est bien vous",
+    "newDeviceDesc": "Nouvel appareil détecté — un code a été envoyé à votre email."
   },
   "onboarding": {
     "title": "Comment le groupe vous appelle-t-il ?",

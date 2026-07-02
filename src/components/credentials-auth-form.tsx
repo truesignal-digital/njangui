@@ -9,7 +9,13 @@ import { generateUsername } from '../lib/username';
 import { AppButton } from './ui/button';
 import { TextField } from './ui/text-field';
 
-type Mode = 'signIn' | 'signUp' | 'verifyEmail' | 'forgot' | 'forgotReset';
+type Mode =
+  | 'signIn'
+  | 'signUp'
+  | 'verifyEmail'
+  | 'forgot'
+  | 'forgotReset'
+  | 'signInEmailCode';
 
 // Clerk API error code → i18n key. Anything unmapped falls back to
 // common.error; the code is preserved in the console for debugging.
@@ -91,6 +97,50 @@ export function CredentialsAuthForm() {
         await setActive({ session: attempt.createdSessionId });
         return;
       }
+      // Clerk's client-trust step-up: an email+password sign-in from a
+      // device Clerk hasn't seen proves inbox possession once (anti
+      // credential-stuffing). Password was already accepted; send the code.
+      const factor = ((attempt.supportedFirstFactors ?? []) as {
+        strategy: string;
+        emailAddressId?: string;
+      }[]).find((f) => f.strategy === 'email_code');
+      if (
+        ((attempt.status as string) === 'needs_client_trust' ||
+          (attempt.status as string) === 'needs_first_factor') &&
+        factor?.emailAddressId
+      ) {
+        await signIn.prepareFirstFactor({
+          strategy: 'email_code',
+          emailAddressId: factor.emailAddressId,
+        });
+        setCode('');
+        setMode('signInEmailCode');
+        return;
+      }
+      console.warn('sign-in unexpected status', attempt.status);
+      setError(t('common.error'));
+    } catch (err) {
+      setError(t(clerkErrorKey(err)));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitSignInEmailCode = async () => {
+    if (!signInLoaded || !signIn) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const attempt = await signIn.attemptFirstFactor({
+        strategy: 'email_code',
+        code: code.trim(),
+      });
+      if (attempt.status === 'complete' && setActive) {
+        haptics.success();
+        await setActive({ session: attempt.createdSessionId });
+        return;
+      }
+      console.warn('sign-in code unexpected status', attempt.status);
       setError(t('common.error'));
     } catch (err) {
       setError(t(clerkErrorKey(err)));
@@ -456,6 +506,43 @@ export function CredentialsAuthForm() {
           onPress={() => void submitEmailVerification()}
           testID="auth-verify-email"
         />
+      </View>
+    );
+  }
+
+  if (mode === 'signInEmailCode') {
+    return (
+      <View className="gap-md px-lg">
+        {heading('auth.newDeviceHeading', 'auth.newDeviceDesc')}
+        <TextField
+          label={t('auth.codeLabel')}
+          value={code}
+          onChangeText={(text) => {
+            setCode(text);
+            clearFieldsError();
+          }}
+          placeholder="000000"
+          keyboardType="number-pad"
+          maxLength={8}
+          autoComplete="one-time-code"
+          error={error}
+          testID="auth-signin-code"
+        />
+        <AppButton
+          label={t('auth.verifyCta')}
+          loading={busy}
+          disabled={busy || code.trim().length < 4}
+          onPress={() => void submitSignInEmailCode()}
+          testID="auth-verify-signin-code"
+        />
+        {linkRow(
+          'auth.backToSignIn',
+          () => {
+            setMode('signIn');
+            setError(null);
+          },
+          'auth-back-signin'
+        )}
       </View>
     );
   }

@@ -73,7 +73,9 @@
     "backToSignIn": "Back to sign in",
     "resetSuccess": "Password changed ✓",
     "continueWithGoogle": "Continue with Google",
-    "orDivider": "or"
+    "orDivider": "or",
+    "newDeviceHeading": "Confirm it's you",
+    "newDeviceDesc": "New device detected — a code was sent to your email."
   },
   "onboarding": {
     "title": "What does the group call you?",
