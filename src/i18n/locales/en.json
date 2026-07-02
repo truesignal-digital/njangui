@@ -264,6 +264,10 @@
       "toAssign": "to assign",
       "presidentHint": "name one below",
       "projection": "{{count}} rounds · ~{{start}} to ~{{end}} (estimate)"
+    },
+    "card": {
+      "roundOf": "{{done}}/{{total}} rounds",
+      "nextDue": "next {{date}}"
     }
   },
   "round": {

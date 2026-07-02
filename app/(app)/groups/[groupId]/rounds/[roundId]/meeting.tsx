@@ -31,6 +31,7 @@ import {
   Badge,
   PaymentStateBadge,
 } from '../../../../../../src/components/ui/badge';
+import { GroupGradientWash } from '../../../../../../src/components/ui/group-identity';
 import { TextField } from '../../../../../../src/components/ui/text-field';
 import { Skeleton } from '../../../../../../src/components/skeleton';
 
@@ -264,6 +265,17 @@ export default function MeetingModeScreen() {
 
   return (
     <View className="flex-1 bg-background" style={screenPadding}>
+      {/* The group's colors over ITS meeting — identity wash, content unchanged */}
+      <View
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 170 }}
+        pointerEvents="none"
+      >
+        <GroupGradientWash
+          colorSeed={group?.colorSeed ?? null}
+          groupId={groupId ?? ''}
+          opacity={0.45}
+        />
+      </View>
       {/* Header — cash custody named, always (00 red line) */}
       <View className="flex-row items-start justify-between gap-sm">
         <View className="min-w-0 flex-1">

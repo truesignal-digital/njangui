@@ -264,6 +264,10 @@
       "toAssign": "à désigner",
       "presidentHint": "nommez-en un(e) ci-dessous",
       "projection": "{{count}} tours · du ~{{start}} au ~{{end}} (estimation)"
+    },
+    "card": {
+      "roundOf": "{{done}}/{{total}} tours",
+      "nextDue": "proch. {{date}}"
     }
   },
   "round": {

@@ -146,6 +146,7 @@ const groupDetailValidator = v.object({
   inviteCode: v.string(),
   status: groupStatusValidator,
   language: v.optional(appLanguageValidator),
+  colorSeed: v.union(v.number(), v.null()),
   memberCount: v.number(), // active memberships
   pendingCount: v.number(), // pending_approval memberships
   viewerMembershipId: v.id('memberships'),
@@ -163,6 +164,13 @@ const myGroupItemValidator = v.object({
   membershipId: v.id('memberships'),
   role: membershipRoleValidator,
   membershipStatus: membershipStatusValidator,
+  colorSeed: v.union(v.number(), v.null()),
+  // Active-cycle card facts — null when no cycle is running.
+  cycleProgress: v.union(
+    v.object({ done: v.number(), total: v.number() }),
+    v.null()
+  ),
+  nextDueAt: v.union(v.number(), v.null()),
 });
 
 const inviteCodeResultValidator = v.object({
@@ -231,6 +239,7 @@ export const createGroup = mutation({
         args.targetMemberCount >= 2 && {
           targetMemberCount: Math.floor(args.targetMemberCount),
         }),
+      colorSeed: Math.floor(Math.random() * 360), // group identity hue — shared by all members
       graceDays,
       finesEnabled: args.finesEnabled ?? false,
       lateFineAmount: args.lateFineAmount,
@@ -450,6 +459,7 @@ export const getGroup = query({
       inviteCode: group.inviteCode,
       status: group.status,
       language: group.language,
+      colorSeed: group.colorSeed ?? null,
       memberCount: memberships.filter((m) => m.status === 'active').length,
       pendingCount: memberships.filter((m) => m.status === 'pending_approval')
         .length,
@@ -486,6 +496,32 @@ export const listMyGroups = query({
             .query('memberships')
             .withIndex('by_group', (q) => q.eq('groupId', m.groupId))
             .collect();
+
+          // Card facts for a running cycle: ring progress + next due date.
+          let cycleProgress: { done: number; total: number } | null = null;
+          let nextDueAt: number | null = null;
+          if (group.status === 'active') {
+            const cycle = await ctx.db
+              .query('cycles')
+              .withIndex('by_group_and_status', (q) =>
+                q.eq('groupId', group._id).eq('status', 'active')
+              )
+              .first();
+            if (cycle) {
+              const rounds = await ctx.db
+                .query('rounds')
+                .withIndex('by_cycle', (q) => q.eq('cycleId', cycle._id))
+                .collect();
+              const live = rounds.filter((r) => r.status !== 'cancelled');
+              const done = live.filter((r) => r.status === 'completed').length;
+              cycleProgress = { done, total: live.length };
+              nextDueAt =
+                live
+                  .filter((r) => r.status !== 'completed')
+                  .sort((a, b) => a.dueAt - b.dueAt)[0]?.dueAt ?? null;
+            }
+          }
+
           return {
             groupId: group._id,
             name: group.name,
@@ -497,6 +533,9 @@ export const listMyGroups = query({
             membershipId: m._id,
             role: m.role,
             membershipStatus: m.status,
+            colorSeed: group.colorSeed ?? null,
+            cycleProgress,
+            nextDueAt,
           };
         })
     );

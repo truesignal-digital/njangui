@@ -18,6 +18,7 @@ import { ReadinessCard } from '../../../../src/components/groups/readiness-card'
 import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
 import { RotationSection } from '../../../../src/components/groups/rotation-section';
+import { GroupAvatar } from '../../../../src/components/ui/group-identity';
 
 /**
  * Group home shell (docs/03 B2, Week 1 slice): roster with roles + status
@@ -117,6 +118,12 @@ export default function GroupHomeScreen() {
         >
           <ChevronLeftIcon size={22} color={theme.textMuted} />
         </Pressable>
+        <GroupAvatar
+          name={group.name}
+          colorSeed={group.colorSeed}
+          groupId={group._id}
+          size={40}
+        />
         <View className="min-w-0 flex-1 gap-xs">
           <Text
             numberOfLines={1}
