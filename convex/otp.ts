@@ -1,0 +1,708 @@
+import { v } from 'convex/values';
+import { internal } from './_generated/api';
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+} from './_generated/server';
+import { isValidE164, normalizePhone } from './utils/phone';
+
+// ============================================================================
+// WhatsApp OTP auth (docs/auth-whatsapp-otp-devicebind-spec.md).
+//
+// Flow: requestOtp (public action) → Twilio Verify sends the WhatsApp code
+// (SMS fallback) → verifyOtp checks it, resolves/creates the Clerk user by
+// phone, mints a SHORT-TTL Clerk sign-in ticket, sets the verified phone
+// through the linkGuard chokepoint, and (optionally) registers a device
+// credential so later logins skip the OTP entirely (deviceLogin).
+//
+// These run BEFORE any session exists → public unauthenticated actions;
+// all state I/O goes through internal mutations. Crypto via Web Crypto —
+// default Convex runtime, no "use node".
+// ============================================================================
+
+// ── Constants (02-style single source) ──────────────────────────────────
+const OTP_TTL_MS = 5 * 60_000;
+const RESEND_COOLDOWN_MS = 60_000;
+const MAX_ATTEMPTS = 5;
+const DAILY_SEND_CAP_PER_PHONE = 8;
+const DAILY_SEND_CAP_PER_DEVICE = 10;
+const GLOBAL_DAILY_SEND_BUDGET = 200; // T-07 circuit-breaker; env override below
+const TICKET_TTL_SECONDS = 120; // never Clerk's 30-day default (T-05)
+const DEVICE_STALE_MS = 180 * 24 * 60 * 60_000; // unused devices expire
+const DEVICE_LOGIN_MAX_FAILURES = 5;
+const DEVICE_LOGIN_LOCK_MS = 15 * 60_000;
+const MAX_DEVICES_PER_USER = 5;
+
+const purposeValidator = v.union(
+  v.literal('login'),
+  v.literal('device_register'),
+  v.literal('phone_change')
+);
+
+// ── Dev provider guard (must-fix #2) ────────────────────────────────────
+// The dev provider generates the code locally and RETURNS it to the client
+// (hands-free sim testing) — a fixed-credential backdoor by construction if
+// it ever reached production. Gated on a server env flag AND a load-time
+// production check. There is no magic code and no bypass: the dev code
+// rides the exact same verify path.
+const DEV_OTP_ENABLED = process.env.DEV_OTP_PROVIDER === 'log';
+if (DEV_OTP_ENABLED && process.env.NODE_ENV === 'production') {
+  throw new Error('DEV_OTP_PROVIDER must never be enabled in production');
+}
+
+// ── Web Crypto helpers ──────────────────────────────────────────────────
+
+function randomHex(bytes: number): string {
+  const buf = new Uint8Array(bytes);
+  crypto.getRandomValues(buf);
+  return [...buf].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function randomDigits(count: number): string {
+  // CSPRNG only (lint-ban Math.random here). Rejection-sample to keep the
+  // distribution uniform.
+  const digits: string[] = [];
+  while (digits.length < count) {
+    const buf = new Uint8Array(16);
+    crypto.getRandomValues(buf);
+    for (const byte of buf) {
+      if (byte < 250 && digits.length < count) {
+        digits.push(String(byte % 10));
+      }
+    }
+  }
+  return digits.join('');
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(input)
+  );
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** Constant-time compare over FIXED-LENGTH hex digests (never raw strings). */
+function constantTimeEqualHex(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false; // digests are fixed-length; a mismatch here is a code bug
+  }
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+function utcDay(now: number): string {
+  return new Date(now).toISOString().slice(0, 10);
+}
+
+// ── Twilio Verify (provider owns the code) ──────────────────────────────
+
+function twilioAuthHeader(): string {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  if (!sid || !token) {
+    throw new Error('Twilio env not configured');
+  }
+  return `Basic ${btoa(`${sid}:${token}`)}`;
+}
+
+async function twilioStartVerification(
+  phone: string,
+  channel: 'whatsapp' | 'sms',
+  locale: 'fr' | 'en'
+): Promise<{ ok: boolean; sid?: string; status?: number }> {
+  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  const response = await fetch(
+    `https://verify.twilio.com/v2/Services/${serviceSid}/Verifications`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: twilioAuthHeader(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ To: phone, Channel: channel, Locale: locale }),
+    }
+  );
+  if (!response.ok) {
+    console.error(
+      `Twilio verification start failed (${channel}): ${response.status}`
+    );
+    return { ok: false, status: response.status };
+  }
+  const data = (await response.json()) as { sid: string };
+  return { ok: true, sid: data.sid };
+}
+
+async function twilioCheckVerification(
+  phone: string,
+  code: string
+): Promise<boolean> {
+  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  const response = await fetch(
+    `https://verify.twilio.com/v2/Services/${serviceSid}/VerificationCheck`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: twilioAuthHeader(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ To: phone, Code: code }),
+    }
+  );
+  if (!response.ok) {
+    return false; // 404 = expired/not-found; anything else = not approved
+  }
+  const data = (await response.json()) as { status: string };
+  return data.status === 'approved';
+}
+
+// ── Clerk Backend API (session authority stays Clerk) ───────────────────
+
+function clerkHeaders(): Record<string, string> {
+  const key = process.env.CLERK_SECRET_KEY;
+  if (!key) {
+    throw new Error('CLERK_SECRET_KEY not configured in Convex env');
+  }
+  return {
+    Authorization: `Bearer ${key}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+async function clerkResolveUserByPhone(phone: string): Promise<string | null> {
+  const response = await fetch(
+    `https://api.clerk.com/v1/users?phone_number=${encodeURIComponent(phone)}`,
+    { headers: clerkHeaders() }
+  );
+  if (!response.ok) {
+    throw new Error(`Clerk user lookup failed: ${response.status}`);
+  }
+  const users = (await response.json()) as { id: string }[];
+  return users[0]?.id ?? null;
+}
+
+async function clerkCreateUserWithPhone(phone: string): Promise<string> {
+  const response = await fetch('https://api.clerk.com/v1/users', {
+    method: 'POST',
+    headers: clerkHeaders(),
+    body: JSON.stringify({
+      phone_number: [phone],
+      skip_password_requirement: true,
+    }),
+  });
+  if (response.status === 422) {
+    // Clerk already owns this phone (race) — treat as existing.
+    const existing = await clerkResolveUserByPhone(phone);
+    if (existing) return existing;
+    throw new Error(`Clerk user create 422 and lookup empty for phone`);
+  }
+  if (!response.ok) {
+    throw new Error(`Clerk user create failed: ${response.status}`);
+  }
+  const data = (await response.json()) as { id: string };
+  return data.id;
+}
+
+async function clerkMintTicket(clerkUserId: string): Promise<string> {
+  const response = await fetch('https://api.clerk.com/v1/sign_in_tokens', {
+    method: 'POST',
+    headers: clerkHeaders(),
+    body: JSON.stringify({
+      user_id: clerkUserId,
+      expires_in_seconds: TICKET_TTL_SECONDS, // single-use, short-TTL (T-05)
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Clerk sign-in token mint failed: ${response.status}`);
+  }
+  const data = (await response.json()) as { token: string };
+  return data.token;
+}
+
+// ============================================================================
+// Internal mutations — all otpChallenges/devices state I/O
+// ============================================================================
+
+export const reserveChallenge = internalMutation({
+  args: {
+    phone: v.string(),
+    purpose: purposeValidator,
+    provider: v.union(v.literal('twilio'), v.literal('dev')),
+    requestDeviceId: v.optional(v.string()),
+  },
+  returns: v.union(
+    v.object({
+      ok: v.literal(true),
+      challengeId: v.id('otpChallenges'),
+    }),
+    v.object({
+      ok: v.literal(false),
+      retryAfterMs: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // T-07 global daily budget circuit-breaker (per-IP is unreliable behind
+    // Cameroonian CGNAT; the global cap is the hard backstop).
+    const budgetKey = `otp-send-${utcDay(now)}`;
+    const budget =
+      Number(process.env.OTP_GLOBAL_DAILY_BUDGET) || GLOBAL_DAILY_SEND_BUDGET;
+    const counter = await ctx.db
+      .query('dailyCounters')
+      .withIndex('by_key', (q) => q.eq('key', budgetKey))
+      .unique();
+    if ((counter?.count ?? 0) >= budget) {
+      console.error('OTP global daily send budget exhausted — circuit open');
+      return { ok: false as const, retryAfterMs: 60 * 60_000 };
+    }
+
+    // Per-device soft cap (client-supplied id — spoofable, still useful).
+    if (args.requestDeviceId) {
+      const deviceKey = `otp-device-${args.requestDeviceId}-${utcDay(now)}`;
+      const deviceCounter = await ctx.db
+        .query('dailyCounters')
+        .withIndex('by_key', (q) => q.eq('key', deviceKey))
+        .unique();
+      if ((deviceCounter?.count ?? 0) >= DAILY_SEND_CAP_PER_DEVICE) {
+        return { ok: false as const, retryAfterMs: 60 * 60_000 };
+      }
+      if (deviceCounter) {
+        await ctx.db.patch(deviceCounter._id, {
+          count: deviceCounter.count + 1,
+        });
+      } else {
+        await ctx.db.insert('dailyCounters', { key: deviceKey, count: 1 });
+      }
+    }
+
+    // ONE active challenge per (phone, purpose) — kills parallel guessing.
+    const existing = await ctx.db
+      .query('otpChallenges')
+      .withIndex('by_phone_and_purpose', (q) =>
+        q.eq('phone', args.phone).eq('purpose', args.purpose)
+      )
+      .collect();
+    const active = existing.find((c) => c.consumedAt === undefined);
+
+    if (active) {
+      const sinceLastSend = now - active.lastSentAt;
+      if (sinceLastSend < RESEND_COOLDOWN_MS) {
+        return {
+          ok: false as const,
+          retryAfterMs: RESEND_COOLDOWN_MS - sinceLastSend,
+        };
+      }
+      const sameDay = utcDay(active.lastSentAt) === utcDay(now);
+      const sendCount = sameDay ? active.sendCount : 0;
+      if (sendCount >= DAILY_SEND_CAP_PER_PHONE) {
+        return { ok: false as const, retryAfterMs: 60 * 60_000 };
+      }
+      // Resend = ROTATE: fresh attempts, fresh expiry; the dev-provider code
+      // is re-attached by the action (a resent code always replaces the old).
+      await ctx.db.patch(active._id, {
+        provider: args.provider,
+        codeHash: undefined,
+        salt: undefined,
+        providerRef: undefined,
+        attemptsRemaining: MAX_ATTEMPTS,
+        sendCount: sendCount + 1,
+        lastSentAt: now,
+        expiresAt: now + OTP_TTL_MS,
+        requestDeviceId: args.requestDeviceId,
+      });
+      await bumpGlobalCounter(ctx, budgetKey);
+      return { ok: true as const, challengeId: active._id };
+    }
+
+    const challengeId = await ctx.db.insert('otpChallenges', {
+      phone: args.phone,
+      purpose: args.purpose,
+      provider: args.provider,
+      attemptsRemaining: MAX_ATTEMPTS,
+      sendCount: 1,
+      lastSentAt: now,
+      expiresAt: now + OTP_TTL_MS,
+      requestDeviceId: args.requestDeviceId,
+    });
+    await bumpGlobalCounter(ctx, budgetKey);
+    return { ok: true as const, challengeId };
+  },
+});
+
+async function bumpGlobalCounter(
+  ctx: MutationCtx,
+  key: string
+): Promise<void> {
+  const counter = await ctx.db
+    .query('dailyCounters')
+    .withIndex('by_key', (q) => q.eq('key', key))
+    .unique();
+  if (counter) {
+    await ctx.db.patch(counter._id, { count: counter.count + 1 });
+  } else {
+    await ctx.db.insert('dailyCounters', { key, count: 1 });
+  }
+}
+
+export const attachSendResult = internalMutation({
+  args: {
+    challengeId: v.id('otpChallenges'),
+    codeHash: v.optional(v.string()),
+    salt: v.optional(v.string()),
+    providerRef: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.challengeId, {
+      ...(args.codeHash !== undefined && { codeHash: args.codeHash }),
+      ...(args.salt !== undefined && { salt: args.salt }),
+      ...(args.providerRef !== undefined && { providerRef: args.providerRef }),
+    });
+    return null;
+  },
+});
+
+/**
+ * Send failed → refund the send count so a forced provider failure can't
+ * exhaust the daily cap, but the 60s cooldown STANDS (lastSentAt untouched)
+ * so failures can't be used to hammer the provider.
+ */
+export const rollbackSend = internalMutation({
+  args: { challengeId: v.id('otpChallenges') },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    if (challenge && challenge.sendCount > 0) {
+      await ctx.db.patch(args.challengeId, {
+        sendCount: challenge.sendCount - 1,
+      });
+    }
+    return null;
+  },
+});
+
+export const getChallenge = internalQuery({
+  args: { phone: v.string(), purpose: purposeValidator },
+  returns: v.union(
+    v.null(),
+    v.object({
+      challengeId: v.id('otpChallenges'),
+      provider: v.union(v.literal('twilio'), v.literal('dev')),
+      expiresAt: v.number(),
+      attemptsRemaining: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query('otpChallenges')
+      .withIndex('by_phone_and_purpose', (q) =>
+        q.eq('phone', args.phone).eq('purpose', args.purpose)
+      )
+      .collect();
+    const active = rows.find((c) => c.consumedAt === undefined);
+    if (!active) return null;
+    return {
+      challengeId: active._id,
+      provider: active.provider,
+      expiresAt: active.expiresAt,
+      attemptsRemaining: active.attemptsRemaining,
+    };
+  },
+});
+
+/**
+ * Atomic check-decrement-burn (must-fix #3). For the dev provider the hash
+ * compare happens HERE, in one transaction; for Twilio the action already
+ * holds the provider verdict and this records consumption + attempt
+ * bookkeeping (the global verify cap applies to both).
+ */
+export const consumeChallenge = internalMutation({
+  args: {
+    challengeId: v.id('otpChallenges'),
+    code: v.optional(v.string()), // dev provider — compared in-transaction
+    providerApproved: v.optional(v.boolean()), // twilio verdict
+  },
+  returns: v.union(v.literal('consumed'), v.literal('rejected'), v.literal('burned')),
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    const now = Date.now();
+    if (
+      !challenge ||
+      challenge.consumedAt !== undefined ||
+      challenge.expiresAt < now ||
+      challenge.attemptsRemaining <= 0
+    ) {
+      return 'burned';
+    }
+
+    let approved = false;
+    if (challenge.provider === 'dev') {
+      if (challenge.codeHash && challenge.salt && args.code) {
+        const hash = await sha256Hex(`${challenge.salt}${args.code.trim()}`);
+        approved = constantTimeEqualHex(hash, challenge.codeHash);
+      }
+    } else {
+      approved = args.providerApproved === true;
+    }
+
+    if (!approved) {
+      const remaining = challenge.attemptsRemaining - 1;
+      await ctx.db.patch(challenge._id, { attemptsRemaining: remaining });
+      return remaining <= 0 ? 'burned' : 'rejected';
+    }
+
+    await ctx.db.patch(challenge._id, { consumedAt: now });
+    return 'consumed';
+  },
+});
+
+/** Cron sweep — hashes must not linger past their usefulness. */
+export const sweepExpired = internalMutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 60 * 60_000; // 1h past expiry / consumption
+    const expired = await ctx.db
+      .query('otpChallenges')
+      .withIndex('by_expires_at', (q) => q.lt('expiresAt', cutoff))
+      .take(200);
+    for (const row of expired) {
+      await ctx.db.delete(row._id);
+    }
+    return null;
+  },
+});
+
+// ============================================================================
+// Public actions
+// ============================================================================
+
+const requestOtpResultValidator = v.object({
+  ok: v.boolean(),
+  retryAfterMs: v.optional(v.number()),
+  /** Dev provider ONLY (env-gated, load-time prod guard) — hands-free sim runs. */
+  devCode: v.optional(v.string()),
+});
+
+/**
+ * Ask for a code. Anti-enumeration (T-08): the response NEVER reveals
+ * whether the phone belongs to a known account — no user lookup happens
+ * here at all; language comes from the client, never a server lookup.
+ */
+export const requestOtp = action({
+  args: {
+    phone: v.string(),
+    purpose: purposeValidator,
+    deviceId: v.optional(v.string()),
+    language: v.union(v.literal('fr'), v.literal('en')),
+    channel: v.optional(v.union(v.literal('whatsapp'), v.literal('sms'))),
+  },
+  returns: requestOtpResultValidator,
+  handler: async (ctx, args) => {
+    const phone = normalizePhone(args.phone);
+    if (!isValidE164(phone)) {
+      return { ok: false, retryAfterMs: 0 };
+    }
+    const provider = DEV_OTP_ENABLED ? ('dev' as const) : ('twilio' as const);
+
+    const reserved: any = await ctx.runMutation(internal.otp.reserveChallenge, {
+      phone,
+      purpose: args.purpose,
+      provider,
+      requestDeviceId: args.deviceId,
+    });
+    if (!reserved.ok) {
+      return { ok: false, retryAfterMs: reserved.retryAfterMs };
+    }
+
+    if (provider === 'dev') {
+      const code = randomDigits(6);
+      const salt = randomHex(16);
+      const codeHash = await sha256Hex(`${salt}${code}`);
+      await ctx.runMutation(internal.otp.attachSendResult, {
+        challengeId: reserved.challengeId,
+        codeHash,
+        salt,
+      });
+      // Never log the code in shared logs beyond dev; keyed off challengeId.
+      console.log(`[dev-otp] challenge ${reserved.challengeId} code ${code}`);
+      return { ok: true, devCode: code };
+    }
+
+    // WhatsApp first; explicit SMS when the client asks (fallback ladder).
+    const channel = args.channel ?? 'whatsapp';
+    let sent = await twilioStartVerification(phone, channel, args.language);
+    if (!sent.ok && channel === 'whatsapp') {
+      sent = await twilioStartVerification(phone, 'sms', args.language);
+    }
+    if (!sent.ok) {
+      await ctx.runMutation(internal.otp.rollbackSend, {
+        challengeId: reserved.challengeId,
+      });
+      return { ok: false, retryAfterMs: RESEND_COOLDOWN_MS };
+    }
+    await ctx.runMutation(internal.otp.attachSendResult, {
+      challengeId: reserved.challengeId,
+      providerRef: sent.sid,
+    });
+    return { ok: true };
+  },
+});
+
+const verifyOtpResultValidator = v.union(
+  v.object({
+    ok: v.literal(true),
+    ticket: v.string(),
+    deviceSecret: v.optional(v.string()), // returned ONCE; client stores in secure-store
+  }),
+  v.object({
+    ok: v.literal(false),
+    reason: v.union(v.literal('invalid_code'), v.literal('expired')),
+  })
+);
+
+/**
+ * Verify the code → Clerk session ticket. Sole trigger of setVerifiedPhone
+ * (the linkGuard chokepoint). Identical failure shape for wrong-code vs
+ * unknown-phone (anti-enumeration).
+ */
+export const verifyOtp = action({
+  args: {
+    phone: v.string(),
+    code: v.string(),
+    purpose: purposeValidator,
+    deviceId: v.optional(v.string()),
+    deviceLabel: v.optional(v.string()),
+    platform: v.optional(
+      v.union(v.literal('ios'), v.literal('android'), v.literal('web'))
+    ),
+  },
+  returns: verifyOtpResultValidator,
+  handler: async (ctx, args) => {
+    const phone = normalizePhone(args.phone);
+    const code = args.code.trim();
+    if (!isValidE164(phone) || !/^\d{4,10}$/.test(code)) {
+      return { ok: false as const, reason: 'invalid_code' as const };
+    }
+
+    const challenge: any = await ctx.runQuery(internal.otp.getChallenge, {
+      phone,
+      purpose: args.purpose,
+    });
+    if (!challenge || challenge.expiresAt < Date.now()) {
+      return { ok: false as const, reason: 'expired' as const };
+    }
+
+    let providerApproved: boolean | undefined;
+    if (challenge.provider === 'twilio') {
+      providerApproved = await twilioCheckVerification(phone, code);
+    }
+
+    const verdict: 'consumed' | 'rejected' | 'burned' = await ctx.runMutation(
+      internal.otp.consumeChallenge,
+      {
+        challengeId: challenge.challengeId,
+        code,
+        providerApproved,
+      }
+    );
+    if (verdict !== 'consumed') {
+      return {
+        ok: false as const,
+        reason: verdict === 'burned' ? ('expired' as const) : ('invalid_code' as const),
+      };
+    }
+
+    // Possession proven. Resolve the Clerk user (existing) or create one
+    // (new signup — Clerk marks the phone verified on Backend-API create).
+    let clerkUserId = await clerkResolveUserByPhone(phone);
+    if (!clerkUserId) {
+      clerkUserId = await clerkCreateUserWithPhone(phone);
+    }
+
+    // linkGuard chokepoint — the ONLY path that sets users.phone / links.
+    const _userId: string = await ctx.runMutation(
+      internal.users.setVerifiedPhone,
+      { clerkId: clerkUserId, phone }
+    );
+    void _userId;
+
+    const ticket = await clerkMintTicket(clerkUserId);
+
+    // Device-bind (the cost-saver): mint a 256-bit bearer secret, store only
+    // its salted hash; the raw secret goes back EXACTLY ONCE.
+    let deviceSecret: string | undefined;
+    if (args.deviceId && args.platform) {
+      deviceSecret = randomHex(32);
+      const salt = randomHex(16);
+      const secretHash = await sha256Hex(`${salt}${deviceSecret}`);
+      const _registered: null = await ctx.runMutation(internal.devices.register, {
+        clerkUserId,
+        phone,
+        deviceId: args.deviceId,
+        secretHash,
+        salt,
+        platform: args.platform,
+        label: args.deviceLabel,
+      });
+      void _registered;
+    }
+
+    return { ok: true as const, ticket, deviceSecret };
+  },
+});
+
+const deviceLoginResultValidator = v.union(
+  v.object({ ok: v.literal(true), ticket: v.string() }),
+  v.object({ ok: v.literal(false) })
+);
+
+/**
+ * Biometric-gated re-auth: possession of the OS-protected device secret →
+ * fresh Clerk ticket. NO WhatsApp message — this is the whole point.
+ * Re-asserts the EXISTING identity only: never sets/changes users.phone,
+ * never links memberships. Stays a Convex action, never an http.ts route
+ * (T-10 — http.ts holds only the svix webhook + /health).
+ */
+export const deviceLogin = action({
+  args: {
+    deviceId: v.string(),
+    deviceSecret: v.string(),
+  },
+  returns: deviceLoginResultValidator,
+  handler: async (ctx, args) => {
+    const verdict: { ok: boolean; clerkUserId?: string; salt?: string } =
+      await ctx.runQuery(internal.devices.getForLogin, {
+        deviceId: args.deviceId,
+      });
+    if (!verdict.ok || !verdict.clerkUserId || !verdict.salt) {
+      return { ok: false as const };
+    }
+    const hash = await sha256Hex(`${verdict.salt}${args.deviceSecret}`);
+    const touched: boolean = await ctx.runMutation(
+      internal.devices.verifyAndTouch,
+      { deviceId: args.deviceId, secretHash: hash }
+    );
+    if (!touched) {
+      return { ok: false as const };
+    }
+    const ticket = await clerkMintTicket(verdict.clerkUserId);
+    return { ok: true as const, ticket };
+  },
+});
+
+export {
+  MAX_DEVICES_PER_USER,
+  DEVICE_STALE_MS,
+  DEVICE_LOGIN_MAX_FAILURES,
+  DEVICE_LOGIN_LOCK_MS,
+  constantTimeEqualHex,
+};
