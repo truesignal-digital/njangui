@@ -44,12 +44,17 @@ const purposeValidator = v.union(
 // ── Dev provider guard (must-fix #2) ────────────────────────────────────
 // The dev provider generates the code locally and RETURNS it to the client
 // (hands-free sim testing) — a fixed-credential backdoor by construction if
-// it ever reached production. Gated on a server env flag AND a load-time
-// production check. There is no magic code and no bypass: the dev code
-// rides the exact same verify path.
+// it ever reached production. Double env gate with a LOAD-TIME throw:
+// enabling DEV_OTP_PROVIDER on any deployment not explicitly marked
+// DEPLOYMENT_TIER=dev fails the push itself. (NODE_ENV is unusable here —
+// Convex module analysis always runs with NODE_ENV=production.) The prod
+// deployment must never define either variable. There is no magic code and
+// no bypass: the dev code rides the exact same verify path.
 const DEV_OTP_ENABLED = process.env.DEV_OTP_PROVIDER === 'log';
-if (DEV_OTP_ENABLED && process.env.NODE_ENV === 'production') {
-  throw new Error('DEV_OTP_PROVIDER must never be enabled in production');
+if (DEV_OTP_ENABLED && process.env.DEPLOYMENT_TIER !== 'dev') {
+  throw new Error(
+    'DEV_OTP_PROVIDER requires DEPLOYMENT_TIER=dev — never enable in production'
+  );
 }
 
 // ── Web Crypto helpers ──────────────────────────────────────────────────
@@ -557,17 +562,14 @@ export const requestOtp = action({
   },
 });
 
-const verifyOtpResultValidator = v.union(
-  v.object({
-    ok: v.literal(true),
-    ticket: v.string(),
-    deviceSecret: v.optional(v.string()), // returned ONCE; client stores in secure-store
-  }),
-  v.object({
-    ok: v.literal(false),
-    reason: v.union(v.literal('invalid_code'), v.literal('expired')),
-  })
-);
+// Flat shape (no discriminated union — the app tsconfig is non-strict and
+// would not narrow it): ok=true ⇒ ticket present; ok=false ⇒ reason present.
+const verifyOtpResultValidator = v.object({
+  ok: v.boolean(),
+  ticket: v.optional(v.string()),
+  deviceSecret: v.optional(v.string()), // returned ONCE; client stores in secure-store
+  reason: v.optional(v.union(v.literal('invalid_code'), v.literal('expired'))),
+});
 
 /**
  * Verify the code → Clerk session ticket. Sole trigger of setVerifiedPhone
@@ -586,11 +588,19 @@ export const verifyOtp = action({
     ),
   },
   returns: verifyOtpResultValidator,
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    ok: boolean;
+    ticket?: string;
+    deviceSecret?: string;
+    reason?: 'invalid_code' | 'expired';
+  }> => {
     const phone = normalizePhone(args.phone);
     const code = args.code.trim();
     if (!isValidE164(phone) || !/^\d{4,10}$/.test(code)) {
-      return { ok: false as const, reason: 'invalid_code' as const };
+      return { ok: false, reason: 'invalid_code' as const };
     }
 
     const challenge: any = await ctx.runQuery(internal.otp.getChallenge, {
@@ -598,7 +608,7 @@ export const verifyOtp = action({
       purpose: args.purpose,
     });
     if (!challenge || challenge.expiresAt < Date.now()) {
-      return { ok: false as const, reason: 'expired' as const };
+      return { ok: false, reason: 'expired' as const };
     }
 
     let providerApproved: boolean | undefined;
@@ -616,7 +626,7 @@ export const verifyOtp = action({
     );
     if (verdict !== 'consumed') {
       return {
-        ok: false as const,
+        ok: false,
         reason: verdict === 'burned' ? ('expired' as const) : ('invalid_code' as const),
       };
     }
@@ -656,14 +666,14 @@ export const verifyOtp = action({
       void _registered;
     }
 
-    return { ok: true as const, ticket, deviceSecret };
+    return { ok: true, ticket, deviceSecret };
   },
 });
 
-const deviceLoginResultValidator = v.union(
-  v.object({ ok: v.literal(true), ticket: v.string() }),
-  v.object({ ok: v.literal(false) })
-);
+const deviceLoginResultValidator = v.object({
+  ok: v.boolean(),
+  ticket: v.optional(v.string()),
+});
 
 /**
  * Biometric-gated re-auth: possession of the OS-protected device secret →
@@ -684,7 +694,7 @@ export const deviceLogin = action({
         deviceId: args.deviceId,
       });
     if (!verdict.ok || !verdict.clerkUserId || !verdict.salt) {
-      return { ok: false as const };
+      return { ok: false };
     }
     const hash = await sha256Hex(`${verdict.salt}${args.deviceSecret}`);
     const touched: boolean = await ctx.runMutation(
@@ -692,10 +702,10 @@ export const deviceLogin = action({
       { deviceId: args.deviceId, secretHash: hash }
     );
     if (!touched) {
-      return { ok: false as const };
+      return { ok: false };
     }
     const ticket = await clerkMintTicket(verdict.clerkUserId);
-    return { ok: true as const, ticket };
+    return { ok: true, ticket };
   },
 });
 

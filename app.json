@@ -47,7 +47,13 @@
       ],
       "@clerk/expo",
       "expo-localization",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": false,
+          "faceIDPermission": "Njangi utilise Face ID pour ouvrir votre carnet en sécurité. / Njangi uses Face ID to open your ledger securely."
+        }
+      ],
       "expo-image",
       "expo-notifications",
       [

@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
 import { router, useGlobalSearchParams } from 'expo-router';
-import { useSignIn, useSignUp } from '@clerk/expo/legacy';
-import { useConvexAuth, useMutation } from 'convex/react';
+import { useAction, useConvexAuth, useMutation } from 'convex/react';
 import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../lib/convex-api';
-import { useClerk } from '../../lib/clerk-client';
+import { useClerk, useSignIn } from '../../lib/clerk-client';
+import { getOrCreateDeviceId } from '../../lib/device-credential';
 
-// Clerk dev-instance test phones (reserved 555-01XX block) → fixed OTP, no
-// SMS. Slots mirror convex/dev.ts DEV_TEST_PHONES: the seed puts .treasurer
-// / .member on real memberships, so signing in as them links those
-// memberships by phone — the two-sided handshake is drivable in the sim.
-const TEST_CODE = '424242';
+// Test phones (555-01XX block). Slots mirror convex/dev.ts DEV_TEST_PHONES:
+// the seed puts .treasurer/.member on real memberships, so signing in as
+// them links those memberships by phone — the two-sided handshake is
+// drivable in the sim.
 const TEST_USERS = [
   { label: 'P', phone: '+12015550100', hint: 'président' },
   { label: 'T', phone: '+12015550101', hint: 'trésorier' },
@@ -20,68 +19,58 @@ const TEST_USERS = [
 ] as const;
 
 /**
- * DEV-only auto sign-in. Bypasses the simulator text-input wall by driving
- * Clerk's JS API with a test number programmatically (one tap per identity).
- * Mount under __DEV__ only. Tries sign-in, falls back to sign-up.
+ * DEV-only auto sign-in — rides the REAL WhatsApp-OTP path (must-fix #2:
+ * no separate credential): requestOtp with the server-side dev provider
+ * (DEV_OTP_PROVIDER=log, throws at load in production) returns the
+ * generated code, verifyOtp consumes it through the same machinery, and
+ * the session lands via the same Clerk ticket. One tap per identity.
  */
 export function DevAuthButton() {
-  const {
-    isLoaded: signInLoaded,
-    signIn,
-    setActive: setActiveSignIn,
-  } = useSignIn();
-  const {
-    isLoaded: signUpLoaded,
-    signUp,
-    setActive: setActiveSignUp,
-  } = useSignUp();
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const requestOtp = useAction(api.otp.requestOtp);
+  const verifyOtp = useAction(api.otp.verifyOtp);
   const [busyPhone, setBusyPhone] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
   const run = async (phone: string) => {
-    if (!signInLoaded || !signUpLoaded || !signIn || !signUp) return;
+    if (!isLoaded || !signIn) return;
     setBusyPhone(phone);
-    setStatus('signing in…');
+    setStatus('requesting dev code…');
     try {
-      try {
-        const attempt = await signIn.create({ identifier: phone });
-        const factor = (attempt.supportedFirstFactors ?? []).find(
-          (f) => f.strategy === 'phone_code'
-        ) as { phoneNumberId: string } | undefined;
-        if (!factor) throw new Error('no phone factor');
-        await signIn.prepareFirstFactor({
-          strategy: 'phone_code',
-          phoneNumberId: factor.phoneNumberId,
-        });
-        const res = await signIn.attemptFirstFactor({
-          strategy: 'phone_code',
-          code: TEST_CODE,
-        });
-        if (res.status === 'complete' && setActiveSignIn) {
-          await setActiveSignIn({ session: res.createdSessionId });
-          return;
-        }
-        throw new Error(`sign-in status ${res.status}`);
-      } catch {
-        // Fresh test user → sign up instead. The Clerk dev instance
-        // requires a password on sign-up; fixed throwaway for test users.
-        setStatus('signing up…');
-        await signUp.create({
-          phoneNumber: phone,
-          password: `dev-Njangi-${TEST_CODE}`,
-        });
-        await signUp.preparePhoneNumberVerification({ strategy: 'phone_code' });
-        const res = await signUp.attemptPhoneNumberVerification({
-          code: TEST_CODE,
-        });
-        if (res.status === 'complete' && setActiveSignUp) {
-          await setActiveSignUp({ session: res.createdSessionId });
-          return;
-        }
+      const deviceId = await getOrCreateDeviceId();
+      const requested = await requestOtp({
+        phone,
+        purpose: 'login',
+        deviceId,
+        language: 'fr',
+      });
+      if (!requested.ok || !requested.devCode) {
         throw new Error(
-          `sign-up status ${res.status} — missing: ${JSON.stringify(res.missingFields)} unverified: ${JSON.stringify(res.unverifiedFields)}`
+          requested.ok
+            ? 'no devCode — set DEV_OTP_PROVIDER=log on the deployment'
+            : `throttled — retry in ${Math.ceil((requested.retryAfterMs ?? 0) / 1000)}s`
         );
       }
+      setStatus('verifying…');
+      const verified = await verifyOtp({
+        phone,
+        code: requested.devCode,
+        purpose: 'login',
+        deviceId,
+        platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      });
+      if (!verified.ok) {
+        throw new Error(`verify failed: ${verified.reason}`);
+      }
+      const attempt = await signIn.create({
+        strategy: 'ticket',
+        ticket: verified.ticket,
+      });
+      if (attempt.status === 'complete' && setActive) {
+        await setActive({ session: attempt.createdSessionId });
+        return;
+      }
+      throw new Error(`ticket sign-in status ${attempt.status}`);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'dev auth failed');
       setBusyPhone(null);
