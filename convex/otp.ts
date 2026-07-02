@@ -66,8 +66,8 @@ function randomHex(bytes: number): string {
 }
 
 function randomDigits(count: number): string {
-  // CSPRNG only (lint-ban Math.random here). Rejection-sample to keep the
-  // distribution uniform.
+  // CSPRNG only — the design lint bans the insecure RNG in this file.
+  // Rejection-sample to keep the distribution uniform.
   const digits: string[] = [];
   while (digits.length < count) {
     const buf = new Uint8Array(16);

@@ -111,6 +111,31 @@ if (!badgeSrc.includes('PAYMENT_STATE_TONE')) {
   }
 }
 
+// 5 — auth-spec CI greps (must-fix #2/#3): CSPRNG only in the OTP engine;
+// no fixed-credential test codes anywhere in app or backend code.
+import { readdirSync, statSync } from 'node:fs';
+function walk(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    if (entry === 'node_modules' || entry === '_generated' || entry.startsWith('.')) continue;
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) walk(path, out);
+    else if (/\.(ts|tsx)$/.test(entry)) out.push(path);
+  }
+  return out;
+}
+for (const file of ['convex/otp.ts', 'convex/devices.ts']) {
+  const src = readFileSync(join(ROOT, file), 'utf8');
+  if (/Math\.random/.test(src)) {
+    errors.push(`${file}: Math.random is banned — CSPRNG only (auth spec must-fix #3)`);
+  }
+}
+for (const path of [...walk(join(ROOT, 'src')), ...walk(join(ROOT, 'convex'))]) {
+  const src = readFileSync(path, 'utf8');
+  if (/TEST_CODE/.test(src)) {
+    errors.push(`${path}: TEST_CODE fixed-credential pattern is banned (auth spec must-fix #2)`);
+  }
+}
+
 if (errors.length > 0) {
   console.error(`✗ design-system lint — ${errors.length} problem(s):\n`);
   for (const error of errors) console.error(`  • ${error}`);
