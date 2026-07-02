@@ -25,18 +25,15 @@ export default function AppLayout() {
         <Stack.Screen name="groups/new" />
         <Stack.Screen name="groups/[groupId]/index" />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/index" />
+        {/* Pay flow: ONE modal layer (the picker). USSD + claim push as
+            cards INSIDE the flow — no modal-on-modal stacking, and no
+            dismiss gesture that can drop a user mid-declaration. */}
         <Stack.Screen
           name="groups/[groupId]/rounds/[roundId]/pay/index"
           options={{ presentation: 'modal', gestureEnabled: true }}
         />
-        <Stack.Screen
-          name="groups/[groupId]/rounds/[roundId]/pay/ussd"
-          options={{ presentation: 'modal', gestureEnabled: true }}
-        />
-        <Stack.Screen
-          name="groups/[groupId]/rounds/[roundId]/pay/claim"
-          options={{ presentation: 'modal', gestureEnabled: true }}
-        />
+        <Stack.Screen name="groups/[groupId]/rounds/[roundId]/pay/ussd" />
+        <Stack.Screen name="groups/[groupId]/rounds/[roundId]/pay/claim" />
         <Stack.Screen
           name="groups/[groupId]/rounds/[roundId]/meeting"
           options={{ presentation: 'fullScreenModal', gestureEnabled: false }}

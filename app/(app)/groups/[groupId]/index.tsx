@@ -19,6 +19,7 @@ import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
 import { RotationSection } from '../../../../src/components/groups/rotation-section';
 import { GroupAvatar } from '../../../../src/components/ui/group-identity';
+import { SectionCard } from '../../../../src/components/ui/section-card';
 
 /**
  * Group home shell (docs/03 B2, Week 1 slice): roster with roles + status
@@ -298,28 +299,6 @@ export default function GroupHomeScreen() {
         </View>
       </SectionCard>
     </ScrollView>
-  );
-}
-
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  const shadow = useShadow();
-
-  return (
-    <View
-      className="mt-lg rounded-xl border border-border-subtle bg-surface p-lg"
-      style={shadow('card')}
-    >
-      <Text className="pb-sm font-body-semi text-title text-foreground">
-        {title}
-      </Text>
-      {children}
-    </View>
   );
 }
 

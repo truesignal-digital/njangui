@@ -27,6 +27,8 @@ import {
 } from '../../../../../../src/components/ui/badge';
 import { AppButton } from '../../../../../../src/components/ui/button';
 import { PotProgress } from '../../../../../../src/components/ui/pot-progress';
+import { SectionCard } from '../../../../../../src/components/ui/section-card';
+import { resolveSeed } from '../../../../../../src/lib/group-colors';
 import { Skeleton } from '../../../../../../src/components/skeleton';
 
 /**
@@ -165,7 +167,7 @@ export default function RoundDetailScreen() {
               expectedTotal={round.expectedTotal}
               inFlightTotal={round.inFlightTotal}
               custodianName={round.custodianName}
-              colorSeed={group?.colorSeed ?? null}
+              colorSeed={group ? resolveSeed(group.colorSeed, round.groupId) : null}
             />
           </SectionCard>
 
@@ -535,17 +537,3 @@ function MemberPaymentRow({ row, isMe }: { row: PaymentRow; isMe: boolean }) {
   );
 }
 
-function SectionCard({ title, children }: { title: string; children: ReactNode }) {
-  const shadow = useShadow();
-  return (
-    <View
-      className="mt-lg rounded-xl border border-border-subtle bg-surface p-lg"
-      style={shadow('card')}
-    >
-      <Text className="pb-sm font-body-semi text-title text-foreground">
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
