@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 
@@ -237,8 +238,12 @@ export function CalendarAgenda({
 
   return (
     <View className="gap-md">
-      {sections.map((section) => (
-        <View key={section.key} className="gap-xs">
+      {sections.map((section, index) => (
+        <Animated.View
+          key={section.key}
+          entering={FadeInDown.duration(240).delay(Math.min(index, 5) * 45)}
+          className="gap-xs"
+        >
           <Text className="font-body-semi text-body text-foreground">
             {section.label}
           </Text>
@@ -264,7 +269,7 @@ export function CalendarAgenda({
               />
             ))}
           </View>
-        </View>
+        </Animated.View>
       ))}
     </View>
   );

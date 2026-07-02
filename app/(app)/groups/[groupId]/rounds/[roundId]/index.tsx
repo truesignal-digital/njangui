@@ -26,6 +26,7 @@ import {
   type PaymentState,
 } from '../../../../../../src/components/ui/badge';
 import { AppButton } from '../../../../../../src/components/ui/button';
+import { PotProgress } from '../../../../../../src/components/ui/pot-progress';
 import { Skeleton } from '../../../../../../src/components/skeleton';
 
 /**
@@ -164,6 +165,7 @@ export default function RoundDetailScreen() {
               expectedTotal={round.expectedTotal}
               inFlightTotal={round.inFlightTotal}
               custodianName={round.custodianName}
+              colorSeed={group?.colorSeed ?? null}
             />
           </SectionCard>
 
@@ -249,48 +251,6 @@ export default function RoundDetailScreen() {
 type PaymentRow = FunctionReturnType<
   typeof api.rounds.listRoundPayments
 >[number];
-
-function PotProgress({
-  confirmedTotal,
-  expectedTotal,
-  inFlightTotal,
-  custodianName,
-}: {
-  confirmedTotal: number;
-  expectedTotal: number;
-  inFlightTotal: number;
-  custodianName: string;
-}) {
-  const { t } = useTranslation();
-  const theme = useAppTheme();
-  const pct =
-    expectedTotal > 0
-      ? Math.min(100, Math.round((confirmedTotal / expectedTotal) * 100))
-      : 0;
-
-  return (
-    <View className="gap-xs">
-      <Text className="font-body-semi text-body text-foreground">
-        {t('round.pot.custody', {
-          confirmed: formatCurrencyXAF(confirmedTotal),
-          expected: formatCurrencyXAF(expectedTotal),
-          name: custodianName,
-        })}
-      </Text>
-      <View className="h-[8px] overflow-hidden rounded-pill bg-surface-muted">
-        <View
-          className="h-full rounded-pill"
-          style={{ width: `${pct}%`, backgroundColor: theme.accent }}
-        />
-      </View>
-      {inFlightTotal > 0 ? (
-        <Text className="font-body text-caption text-muted">
-          {t('round.inFlight', { amount: formatCurrencyXAF(inFlightTotal) })}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
 
 function PaymentStateChip({ state }: { state: PaymentState }) {
   const { t } = useTranslation();

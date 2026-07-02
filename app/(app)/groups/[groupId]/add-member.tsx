@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { XMarkIcon } from 'react-native-heroicons/outline';
 import { CheckCircleIcon } from 'react-native-heroicons/solid';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../../../src/lib/convex-api';
@@ -186,7 +187,10 @@ export default function AddMemberModal() {
           />
           {lookup.length >= 2 && suggestions !== undefined ? (
             suggestions.length > 0 ? (
-              <View className="rounded-xl border border-border-subtle bg-surface">
+              <Animated.View
+                entering={FadeInDown.duration(200)}
+                className="rounded-xl border border-border-subtle bg-surface"
+              >
                 {suggestions.map((s, index) => {
                   const selected = s.username === lookup && !s.alreadyMember;
                   return (
@@ -233,7 +237,7 @@ export default function AddMemberModal() {
                     </Pressable>
                   );
                 })}
-              </View>
+              </Animated.View>
             ) : (
               <Text className="font-body text-body-sm text-muted">
                 {t('groups.detail.usernameNotFound')}

@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import { Text, View } from 'react-native';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 import {
   ClockIcon,
   ExclamationTriangleIcon,
@@ -119,7 +120,13 @@ export function PaymentStateBadge({
       tone={tone}
       label={label}
       className={className}
-      icon={<Icon size={12} color={iconColor[tone]} />}
+      icon={
+        // key={state} remounts on every transition → the icon pops in, so
+        // pending→declared→confirmed is felt, not just repainted.
+        <Animated.View key={state} entering={ZoomIn.springify().damping(14)}>
+          <Icon size={12} color={iconColor[tone]} />
+        </Animated.View>
+      }
     />
   );
 }
