@@ -32,12 +32,17 @@ export function usePushNotifications() {
     let cancelled = false;
     const register = async () => {
       try {
-        const projectId: string | undefined =
-          Constants.expoConfig?.extra?.eas?.projectId;
-        if (!projectId) return; // local build without EAS — inbox covers it
-
+        // Permission FIRST, even without an EAS projectId: local dev builds
+        // can't mint an Expo push token, but they can still DISPLAY
+        // notifications (simulated pushes, future local notifications) and
+        // handle deep-link taps — bailing before the permission ask left
+        // iOS suppressing every banner in dev.
         const permission = await Notifications.requestPermissionsAsync();
         if (permission.status !== 'granted' || cancelled) return;
+
+        const projectId: string | undefined =
+          Constants.expoConfig?.extra?.eas?.projectId;
+        if (!projectId) return; // remote token needs EAS — inbox covers it
 
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('default', {

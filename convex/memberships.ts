@@ -431,6 +431,93 @@ export const addMemberByUsername = mutation({
 });
 
 /**
+ * Assign / transfer the president role (02 §a: the creator picks their
+ * ACTUAL role, so treasurer-created groups start president-less — yet the
+ * cycle lock requires a president). Rules:
+ * - no president yet → the TREASURER names one (the setup-era creator
+ *   administers the group);
+ * - president exists → only the president can hand the role over (they are
+ *   demoted to member — one president per group).
+ * The target must be an active member WITH the app (02 §a: transferable to
+ * any active hasAccount member) and can't be the treasurer (single role).
+ */
+export const assignPresident = mutation({
+  args: {
+    groupId: v.id('groups'),
+    membershipId: v.id('memberships'), // the new president
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { membership: actor } = await requireRole(ctx, args.groupId, [
+      'president',
+      'treasurer',
+    ]);
+
+    const group = await ctx.db.get(args.groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (group.status === 'archived') {
+      throw new Error('Group is archived');
+    }
+
+    const target = await ctx.db.get(args.membershipId);
+    if (!target || target.groupId !== args.groupId) {
+      throw new Error('Membership not found in this group');
+    }
+    if (target.role === 'president') {
+      return null; // idempotent
+    }
+    if (target.status !== 'active') {
+      throw new Error('The president must be an active member');
+    }
+    if (target.userId === undefined) {
+      throw new Error('The president must have the app');
+    }
+    if (target.role === 'treasurer') {
+      // Mirror of reassignTreasurer's guard: one literal role per membership.
+      throw new Error('The treasurer cannot also hold the president role');
+    }
+
+    const groupMemberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
+      .collect();
+    const currentPresident = groupMemberships.find(
+      (m) => m.role === 'president' && m.status === 'active'
+    );
+    if (currentPresident) {
+      if (actor._id !== currentPresident._id) {
+        throw new Error('Only the president can hand the role over');
+      }
+      await ctx.db.patch(currentPresident._id, { role: 'member' });
+    }
+    // else: president-less group — the treasurer (actor, via requireRole) names one.
+
+    await ctx.db.patch(target._id, { role: 'president' });
+
+    await logActivityEvent(ctx, {
+      groupId: args.groupId,
+      kind: 'role_reassigned',
+      entityTable: 'memberships',
+      entityId: target._id,
+      toState: 'president',
+      actorMembershipId: actor._id,
+      note: target.displayName,
+    });
+    await notifyMemberships(ctx, [target._id], {
+      titleFr: `Vous êtes président(e) de « ${group.name} »`,
+      titleEn: `You are the president of "${group.name}"`,
+      bodyFr: `${actor.displayName} vous a nommé(e) président(e). Vous pouvez définir l'ordre de rotation et démarrer le cycle.`,
+      bodyEn: `${actor.displayName} named you president. You can set the rotation order and start the cycle.`,
+      url: `/groups/${args.groupId}`,
+    });
+
+    return null;
+  },
+});
+
+/**
  * Reassign the single treasurer role (president-only, 02 §e5). The previous
  * treasurer is demoted to `member`.
  */

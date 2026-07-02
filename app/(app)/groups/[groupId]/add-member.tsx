@@ -46,10 +46,11 @@ export default function AddMemberModal() {
   const addFeaturePhoneMember = useMutation(api.memberships.addFeaturePhoneMember);
   const addMemberByUsername = useMutation(api.memberships.addMemberByUsername);
   const lookup = username.trim().toLowerCase();
-  const found = useQuery(
-    api.users.findByUsername,
-    lookup.length >= 3 ? { username: lookup } : 'skip'
+  const suggestions = useQuery(
+    api.users.searchByUsername,
+    lookup.length >= 2 ? { prefix: lookup } : 'skip'
   );
+  const found = (suggestions ?? []).find((s) => s.username === lookup) ?? null;
 
   const canSubmitPhone = name.trim().length > 0 && phone.trim().length >= 9 && !busy;
 
@@ -169,28 +170,48 @@ export default function AddMemberModal() {
             autoFocus
             testID="add-member-username"
           />
-          {lookup.length >= 3 ? (
-            found ? (
-              <View className="flex-row items-center gap-md rounded-xl border border-border-subtle bg-surface p-lg">
-                <View className="h-[40px] w-[40px] items-center justify-center rounded-pill bg-accent-faint">
-                  <Text className="font-body-semi text-body text-accent">
-                    {(found.name || found.username).slice(0, 1).toUpperCase()}
-                  </Text>
-                </View>
-                <View className="min-w-0 flex-1">
-                  <Text className="font-body-semi text-body text-foreground">
-                    {found.name || found.username}
-                  </Text>
-                  <Text className="font-body text-body-sm text-muted">
-                    @{found.username}
-                  </Text>
-                </View>
+          {lookup.length >= 2 && suggestions !== undefined ? (
+            suggestions.length > 0 ? (
+              <View className="rounded-xl border border-border-subtle bg-surface">
+                {suggestions.map((s, index) => {
+                  const selected = s.username === lookup;
+                  return (
+                    <Pressable
+                      key={s.userId}
+                      accessibilityRole="button"
+                      onPress={() => setUsername(s.username)}
+                      className={
+                        index > 0
+                          ? 'flex-row items-center gap-md border-t border-border-faint p-lg'
+                          : 'flex-row items-center gap-md p-lg'
+                      }
+                      testID={`add-member-suggestion-${s.username}`}
+                    >
+                      <View className="h-[40px] w-[40px] items-center justify-center rounded-pill bg-accent-faint">
+                        <Text className="font-body-semi text-body text-accent">
+                          {(s.name || s.username).slice(0, 1).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View className="min-w-0 flex-1">
+                        <Text className="font-body-semi text-body text-foreground">
+                          {s.name || s.username}
+                        </Text>
+                        <Text className="font-body text-body-sm text-muted">
+                          @{s.username}
+                        </Text>
+                      </View>
+                      {selected ? (
+                        <Text className="font-body-semi text-body-sm text-accent">✓</Text>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
               </View>
-            ) : found === null ? (
+            ) : (
               <Text className="font-body text-body-sm text-muted">
                 {t('groups.detail.usernameNotFound')}
               </Text>
-            ) : null
+            )
           ) : null}
           <AppButton
             label={busy ? t('groups.detail.adding') : t('groups.detail.add')}

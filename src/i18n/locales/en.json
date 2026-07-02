@@ -199,7 +199,10 @@
       "addByUsername": "By username",
       "addByPhone": "No smartphone",
       "addByUsernameDesc": "For members who already have the app: enter their exact username — they'll be notified.",
-      "usernameNotFound": "No account with this username."
+      "usernameNotFound": "No account with this username.",
+      "makePresident": "Make president",
+      "presidentAssignedToast": "{{name}} is now the president ✓",
+      "noPresidentBanner": "This group has no president yet — name one below to be able to start the cycle."
     },
     "invite": {
       "title": "Invite members",

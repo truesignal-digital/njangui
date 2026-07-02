@@ -91,6 +91,12 @@ export default function GroupHomeScreen() {
   }));
   const pendingMembers = roster.filter((m) => m.status === 'pending_approval');
   const activeMembers = roster.filter((m) => m.status === 'active');
+  // Treasurer-created groups start president-less (02 §a: the creator picks
+  // their real role) but the cycle lock REQUIRES a president — until one is
+  // named, the treasurer sees a banner + a per-member action.
+  const hasPresident = activeMembers.some((m) => m.role === 'president');
+  const canAssignPresident =
+    members !== undefined && !hasPresident && group.viewerRole === 'treasurer';
 
   return (
     <ScrollView
@@ -133,6 +139,15 @@ export default function GroupHomeScreen() {
         </View>
       ) : null}
 
+      {/* President missing — the cycle can't start without one (02 §a lock guard) */}
+      {canAssignPresident ? (
+        <View className="mt-lg rounded-lg border border-accent-muted bg-accent-faint p-sm">
+          <Text className="font-body text-body-sm text-foreground">
+            {t('groups.detail.noPresidentBanner')}
+          </Text>
+        </View>
+      ) : null}
+
       {/* Pending approvals — problems float up (president/treasurer only) */}
       {canManage && pendingMembers.length > 0 ? (
         <SectionCard
@@ -159,7 +174,12 @@ export default function GroupHomeScreen() {
             <Skeleton className="h-[48px] rounded-md" />
           </View>
         ) : (
-          <MemberList members={activeMembers} canManage={canManage} />
+          <MemberList
+            members={activeMembers}
+            canManage={canManage}
+            canAssignPresident={canAssignPresident}
+            groupId={group._id}
+          />
         )}
         {canManage ? (
           <AppButton

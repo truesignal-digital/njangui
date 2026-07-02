@@ -276,14 +276,14 @@ export const setVerifiedPhone = internalMutation({
 });
 
 /**
- * Exact-username lookup for the add-member flow. Members-only and exact
- * match ONLY — no prefix/fuzzy search, so the user directory can't be
- * scraped; you find someone because they told you their username.
+ * Username PREFIX search for the add-member flow (product decision
+ * 2026-07-02: suggestions while typing beat pure exact-match UX).
+ * Members-only, ≥2 chars, capped at 5 — the index range keeps it one
+ * cheap lookup, and the cap keeps directory scraping unattractive.
  */
-export const findByUsername = query({
-  args: { username: v.string() },
-  returns: v.union(
-    v.null(),
+export const searchByUsername = query({
+  args: { prefix: v.string() },
+  returns: v.array(
     v.object({
       userId: v.id('users'),
       username: v.string(),
@@ -293,22 +293,23 @@ export const findByUsername = query({
   ),
   handler: async (ctx, args) => {
     const me = await getCurrentUserOrNull(ctx);
-    if (!me) return null;
-    const username = args.username.trim().toLowerCase();
-    if (username.length < 3) return null;
-    const user = await ctx.db
+    if (!me) return [];
+    const prefix = args.prefix.trim().toLowerCase();
+    if (prefix.length < 2) return [];
+    const rows = await ctx.db
       .query('users')
-      .withIndex('by_username', (q) => q.eq('username', username))
-      .unique();
-    if (!user || user.isDeactivated || user.username === undefined) {
-      return null;
-    }
-    return {
-      userId: user._id,
-      username: user.username,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
-    };
+      .withIndex('by_username', (q) =>
+        q.gte('username', prefix).lt('username', `${prefix}\uffff`)
+      )
+      .take(5);
+    return rows
+      .filter((u) => !u.isDeactivated && u.username !== undefined)
+      .map((u) => ({
+        userId: u._id,
+        username: u.username as string,
+        name: u.name,
+        avatarUrl: u.avatarUrl,
+      }));
   },
 });
 

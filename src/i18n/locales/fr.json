@@ -199,7 +199,10 @@
       "addByUsername": "Par identifiant",
       "addByPhone": "Sans smartphone",
       "addByUsernameDesc": "Pour les membres qui ont déjà l'appli : entrez leur identifiant exact — ils seront prévenus.",
-      "usernameNotFound": "Aucun compte avec cet identifiant."
+      "usernameNotFound": "Aucun compte avec cet identifiant.",
+      "makePresident": "Nommer président(e)",
+      "presidentAssignedToast": "{{name}} est maintenant président(e) ✓",
+      "noPresidentBanner": "Ce groupe n'a pas encore de président(e) — nommez-en un(e) ci-dessous pour pouvoir démarrer le cycle."
     },
     "invite": {
       "title": "Inviter des membres",
