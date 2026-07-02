@@ -14,9 +14,9 @@
   "auth": {
     "tagline": "Your njangi (tontine) ledger, in black and white.",
     "signInHeading": "Sign in",
-    "signInDesc": "Enter your phone number. A code arrives on WhatsApp.",
+    "signInDesc": "Enter your username and password.",
     "signUpHeading": "Create an account",
-    "signUpDesc": "Your phone number is enough. A code arrives on WhatsApp.",
+    "signUpDesc": "Pick a username and a password. That's it.",
     "custodyNote": "No fees. Your money never passes through the app.",
     "finishingSignInTitle": "Finishing sign-in…",
     "finishingSignInBody": "Connecting your account. This only takes a moment.",
@@ -36,7 +36,21 @@
     "resend": "Resend the code",
     "resendIn": "Resend ({{seconds}} s)",
     "retryLater": "Too many requests — try again in {{seconds}} s.",
-    "biometricPrompt": "Unlock to open your Njangi ledger"
+    "biometricPrompt": "Unlock to open your Njangi ledger",
+    "usernameLabel": "Username",
+    "passwordLabel": "Password",
+    "signInCta": "Sign in",
+    "signUpCta": "Create my account",
+    "switchToSignUp": "No account? Create one",
+    "switchToSignIn": "I already have an account",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "userNotFound": "Username not found.",
+    "badPassword": "Wrong password.",
+    "usernameTaken": "That username is already taken.",
+    "usernameInvalid": "Invalid username — min 4 chars: letters, numbers, _ or -.",
+    "passwordTooShort": "Password too short (min 8 characters).",
+    "passwordPwned": "That password has leaked online — pick another one."
   },
   "onboarding": {
     "title": "What does the group call you?",
@@ -316,7 +330,13 @@
     "thisDevice": "This device",
     "lastSeen": "Last active {{date}}",
     "removeDevice": "Remove",
-    "deviceRemoved": "Device removed — it will need a WhatsApp code to sign in again"
+    "deviceRemoved": "Device removed — it will need a WhatsApp code to sign in again",
+    "phoneTitle": "WhatsApp number",
+    "phoneDesc": "Add your number to link your existing njangis and secure your account.",
+    "addPhoneCta": "Add my number",
+    "phoneLinked": "Number verified and linked.",
+    "phoneTaken": "That number is already linked to another account.",
+    "phoneChangeUnsupported": "Changing numbers isn't supported yet."
   },
   "payout": {
     "title": "Pot handover",

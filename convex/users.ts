@@ -168,13 +168,24 @@ const PHONE_PROOF_GRACE_MS = 60_000;
  * and fires the membership link. Sole invoker: internal.otp/verifyOtp.
  * Creates the users row when the Clerk webhook hasn't landed yet.
  */
+// Flat result (non-strict app tsconfig — unions don't narrow). Expected
+// user-facing refusals come back as reasons; an invariant breach (no fresh
+// proof) still THROWS — that's a bug or an attack, never a UX state.
+const setVerifiedPhoneResultValidator = v.object({
+  ok: v.boolean(),
+  userId: v.optional(v.id('users')),
+  reason: v.optional(
+    v.union(v.literal('collision'), v.literal('phone_change'))
+  ),
+});
+
 export const setVerifiedPhone = internalMutation({
   args: {
     clerkId: v.string(),
     phone: v.string(),
     name: v.optional(v.string()), // seed for a webhook-race insert only
   },
-  returns: v.id('users'),
+  returns: setVerifiedPhoneResultValidator,
   handler: async (ctx, args) => {
     const phone = normalizePhone(args.phone);
 
@@ -216,22 +227,29 @@ export const setVerifiedPhone = internalMutation({
       // Idempotent re-verify on the same device/phone — still (re)link any
       // memberships added by phone since the last login.
       await linkMembershipsByPhone(ctx, user._id, phone);
-      return user._id;
+      return { ok: true, userId: user._id };
+    }
+
+    if (user.phone !== undefined) {
+      // Phone-CHANGE is out of MVP scope (spec open gap): it must migrate
+      // memberships.phone, revoke old-phone devices and emit the SIM-swap
+      // audit event — refuse loudly rather than silently re-home identity.
+      console.error('setVerifiedPhone refused: phone change unsupported');
+      return { ok: false, reason: 'phone_change' as const };
     }
 
     const available = await phoneIfAvailable(ctx, phone, user._id);
     if (!available) {
       // Another ACCOUNT holds this verified phone. Possession was proven,
-      // so this is the phone-change/collision surface — out of MVP scope
-      // (spec open gap); refuse loudly rather than silently re-home money.
-      throw new Error(
-        'This phone is already attached to another account — contact support'
-      );
+      // so this is the collision surface — refuse loudly rather than
+      // silently re-home money (T-03).
+      console.error('setVerifiedPhone refused: phone held by another account');
+      return { ok: false, reason: 'collision' as const };
     }
 
     await ctx.db.patch(user._id, { phone });
     await linkMembershipsByPhone(ctx, user._id, phone);
-    return user._id;
+    return { ok: true, userId: user._id };
   },
 });
 

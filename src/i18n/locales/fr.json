@@ -14,9 +14,9 @@
   "auth": {
     "tagline": "Le carnet de votre tontine (njangi), noir sur blanc.",
     "signInHeading": "Se connecter",
-    "signInDesc": "Entrez votre numéro de téléphone. Un code vous arrive sur WhatsApp.",
+    "signInDesc": "Entrez votre nom d'utilisateur et votre mot de passe.",
     "signUpHeading": "Créer un compte",
-    "signUpDesc": "Votre numéro de téléphone suffit. Un code vous arrive sur WhatsApp.",
+    "signUpDesc": "Choisissez un nom d'utilisateur et un mot de passe. C'est tout.",
     "custodyNote": "Pas de frais. Votre argent ne passe jamais par l'appli.",
     "finishingSignInTitle": "Finalisation de la connexion…",
     "finishingSignInBody": "Connexion de votre compte en cours. Cela ne prend qu’un instant.",
@@ -36,7 +36,21 @@
     "resend": "Renvoyer le code",
     "resendIn": "Renvoyer ({{seconds}} s)",
     "retryLater": "Trop de demandes — réessayez dans {{seconds}} s.",
-    "biometricPrompt": "Déverrouillez pour ouvrir votre carnet Njangi"
+    "biometricPrompt": "Déverrouillez pour ouvrir votre carnet Njangi",
+    "usernameLabel": "Nom d'utilisateur",
+    "passwordLabel": "Mot de passe",
+    "signInCta": "Se connecter",
+    "signUpCta": "Créer mon compte",
+    "switchToSignUp": "Pas de compte ? Créez-en un",
+    "switchToSignIn": "J'ai déjà un compte",
+    "showPassword": "Afficher",
+    "hidePassword": "Masquer",
+    "userNotFound": "Nom d'utilisateur introuvable.",
+    "badPassword": "Mot de passe incorrect.",
+    "usernameTaken": "Ce nom d'utilisateur est déjà pris.",
+    "usernameInvalid": "Nom d'utilisateur invalide — 4 caractères min., lettres, chiffres, _ ou -.",
+    "passwordTooShort": "Mot de passe trop court (8 caractères min.).",
+    "passwordPwned": "Ce mot de passe a fuité en ligne — choisissez-en un autre."
   },
   "onboarding": {
     "title": "Comment le groupe vous appelle-t-il ?",
@@ -316,7 +330,13 @@
     "thisDevice": "Cet appareil",
     "lastSeen": "Actif le {{date}}",
     "removeDevice": "Retirer",
-    "deviceRemoved": "Appareil retiré — il devra recevoir un code WhatsApp pour se reconnecter"
+    "deviceRemoved": "Appareil retiré — il devra recevoir un code WhatsApp pour se reconnecter",
+    "phoneTitle": "Numéro WhatsApp",
+    "phoneDesc": "Ajoutez votre numéro pour relier vos njangis existants et sécuriser votre compte.",
+    "addPhoneCta": "Ajouter mon numéro",
+    "phoneLinked": "Numéro vérifié et relié.",
+    "phoneTaken": "Ce numéro est déjà lié à un autre compte.",
+    "phoneChangeUnsupported": "Changer de numéro n'est pas encore possible."
   },
   "payout": {
     "title": "Remise du pot",

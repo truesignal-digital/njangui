@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { internal } from './_generated/api';
 import {
   action,
+  type ActionCtx,
   internalMutation,
   internalQuery,
   type MutationCtx,
@@ -309,7 +310,10 @@ export const reserveChallenge = internalMutation({
     }
 
     // Per-device soft cap (client-supplied id — spoofable, still useful).
-    if (args.requestDeviceId) {
+    // Daily SEND caps are provider-cost protections — the dev provider
+    // sends nothing, and one sim device burns 10 real-path logins fast, so
+    // they don't apply to it (cooldown/attempts/verify caps all still do).
+    if (args.requestDeviceId && args.provider !== 'dev') {
       const deviceKey = `otp-device-${args.requestDeviceId}-${utcDay(now)}`;
       const deviceCounter = await ctx.db
         .query('dailyCounters')
@@ -346,7 +350,7 @@ export const reserveChallenge = internalMutation({
       }
       const sameDay = utcDay(active.lastSentAt) === utcDay(now);
       const sendCount = sameDay ? active.sendCount : 0;
-      if (sendCount >= DAILY_SEND_CAP_PER_PHONE) {
+      if (sendCount >= DAILY_SEND_CAP_PER_PHONE && args.provider !== 'dev') {
         return { ok: false as const, retryAfterMs: 60 * 60_000 };
       }
       // Resend = ROTATE: fresh attempts, fresh expiry; the dev-provider code
@@ -602,40 +606,59 @@ export const requestOtp = action({
 });
 
 // Flat shape (no discriminated union — the app tsconfig is non-strict and
-// would not narrow it): ok=true ⇒ ticket present; ok=false ⇒ reason present.
-const verifyOtpResultValidator = v.object({
+// would not narrow it): ok=true ⇒ linked; ok=false ⇒ reason present.
+const linkPhoneResultValidator = v.object({
   ok: v.boolean(),
-  ticket: v.optional(v.string()),
   deviceSecret: v.optional(v.string()), // returned ONCE; client stores in secure-store
-  reason: v.optional(v.union(v.literal('invalid_code'), v.literal('expired'))),
+  reason: v.optional(
+    v.union(
+      v.literal('invalid_code'),
+      v.literal('expired'),
+      v.literal('collision'),
+      v.literal('phone_change'),
+      v.literal('not_authenticated')
+    )
+  ),
 });
 
 /**
- * Verify the code → Clerk session ticket. Sole trigger of setVerifiedPhone
- * (the linkGuard chokepoint). Identical failure shape for wrong-code vs
- * unknown-phone (anti-enumeration).
+ * Attach a possession-verified phone to the SIGNED-IN account (auth is
+ * username+password; the phone is optional and this is the only way it
+ * gets set). Sole trigger of setVerifiedPhone — the linkGuard chokepoint
+ * that fires linkMembershipsByPhone. The identity comes from the session
+ * JWT, never from an argument. Also registers the device credential so
+ * phone-verified users get silent device re-auth.
  */
-export const verifyOtp = action({
+export const linkPhone = action({
   args: {
     phone: v.string(),
     code: v.string(),
-    purpose: purposeValidator,
     deviceId: v.optional(v.string()),
     deviceLabel: v.optional(v.string()),
     platform: v.optional(
       v.union(v.literal('ios'), v.literal('android'), v.literal('web'))
     ),
   },
-  returns: verifyOtpResultValidator,
+  returns: linkPhoneResultValidator,
   handler: async (
     ctx,
     args
   ): Promise<{
     ok: boolean;
-    ticket?: string;
     deviceSecret?: string;
-    reason?: 'invalid_code' | 'expired';
+    reason?:
+      | 'invalid_code'
+      | 'expired'
+      | 'collision'
+      | 'phone_change'
+      | 'not_authenticated';
   }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { ok: false, reason: 'not_authenticated' as const };
+    }
+    const clerkUserId = identity.subject;
+
     const phone = normalizePhone(args.phone);
     const code = args.code.trim();
     if (!isValidE164(phone) || !/^\d{4,10}$/.test(code)) {
@@ -644,7 +667,7 @@ export const verifyOtp = action({
 
     const challenge: any = await ctx.runQuery(internal.otp.getChallenge, {
       phone,
-      purpose: args.purpose,
+      purpose: 'login',
     });
     if (!challenge || challenge.expiresAt < Date.now()) {
       return { ok: false, reason: 'expired' as const };
@@ -670,32 +693,18 @@ export const verifyOtp = action({
       };
     }
 
-    // Possession proven. Resolve the identity: OUR ledger first (Convex
-    // users.phone is the phone authority — Clerk can't hold +237
-    // identifiers), then Clerk by phone (legacy pre-cutover users whose
-    // phone still lives in Clerk), then create (new signup).
-    let clerkUserId: string | null = await ctx.runQuery(
-      internal.users.getClerkIdByPhone,
-      { phone }
-    );
-    if (!clerkUserId) {
-      clerkUserId = await clerkResolveUserByPhone(phone);
-    }
-    if (!clerkUserId) {
-      clerkUserId = await clerkCreateUserForPhone(phone);
-    }
-
     // linkGuard chokepoint — the ONLY path that sets users.phone / links.
-    const _userId: string = await ctx.runMutation(
-      internal.users.setVerifiedPhone,
-      { clerkId: clerkUserId, phone }
-    );
-    void _userId;
+    const linked: any = await ctx.runMutation(internal.users.setVerifiedPhone, {
+      clerkId: clerkUserId,
+      phone,
+    });
+    if (!linked.ok) {
+      return { ok: false, reason: linked.reason };
+    }
 
-    const ticket = await clerkMintTicket(clerkUserId);
-
-    // Device-bind (the cost-saver): mint a 256-bit bearer secret, store only
-    // its salted hash; the raw secret goes back EXACTLY ONCE.
+    // Device-bind: mint a 256-bit bearer secret, store only its salted
+    // hash; the raw secret goes back EXACTLY ONCE. Gives phone-verified
+    // users silent re-auth when the Clerk session lapses.
     let deviceSecret: string | undefined;
     if (args.deviceId && args.platform) {
       deviceSecret = randomHex(32);
@@ -713,7 +722,7 @@ export const verifyOtp = action({
       void _registered;
     }
 
-    return { ok: true, ticket, deviceSecret };
+    return { ok: true, deviceSecret };
   },
 });
 
@@ -755,6 +764,73 @@ export const deviceLogin = action({
     return { ok: true, ticket };
   },
 });
+
+/**
+ * Dev-harness only (convex/dev.ts devLoginTicket): one-tap identity switch
+ * for the sim pills now that user-facing login is username+password. Runs
+ * the REAL machinery end-to-end with a server-generated code — reserve →
+ * consume → setVerifiedPhone (fresh possession proof, so linkGuard fires
+ * exactly like production) → short-TTL ticket. Refuses unless the
+ * dev provider is enabled (double env gate + load-time prod throw above).
+ */
+export async function devTicketForPhone(
+  ctx: ActionCtx,
+  rawPhone: string
+): Promise<{ ok: boolean; ticket?: string; retryAfterMs?: number }> {
+  if (!DEV_OTP_ENABLED) {
+    throw new Error('devTicketForPhone requires the dev OTP provider');
+  }
+  const phone = normalizePhone(rawPhone);
+  if (!isValidE164(phone)) {
+    throw new Error('Invalid phone');
+  }
+
+  const reserved: any = await ctx.runMutation(internal.otp.reserveChallenge, {
+    phone,
+    purpose: 'login',
+    provider: 'dev',
+  });
+  if (!reserved.ok) {
+    return { ok: false, retryAfterMs: reserved.retryAfterMs };
+  }
+  const code = randomDigits(6);
+  const salt = randomHex(16);
+  const codeHash = await sha256Hex(`${salt}${code}`);
+  await ctx.runMutation(internal.otp.attachSendResult, {
+    challengeId: reserved.challengeId,
+    codeHash,
+    salt,
+  });
+  const verdict: 'consumed' | 'rejected' | 'burned' = await ctx.runMutation(
+    internal.otp.consumeChallenge,
+    { challengeId: reserved.challengeId, code }
+  );
+  if (verdict !== 'consumed') {
+    throw new Error(`dev ticket challenge not consumable: ${verdict}`);
+  }
+
+  let clerkUserId: string | null = await ctx.runQuery(
+    internal.users.getClerkIdByPhone,
+    { phone }
+  );
+  if (!clerkUserId) {
+    clerkUserId = await clerkResolveUserByPhone(phone);
+  }
+  if (!clerkUserId) {
+    clerkUserId = await clerkCreateUserForPhone(phone);
+  }
+
+  const linked: any = await ctx.runMutation(internal.users.setVerifiedPhone, {
+    clerkId: clerkUserId,
+    phone,
+  });
+  if (!linked.ok) {
+    throw new Error(`dev ticket link refused: ${linked.reason}`);
+  }
+
+  const ticket = await clerkMintTicket(clerkUserId);
+  return { ok: true, ticket };
+}
 
 export {
   MAX_DEVICES_PER_USER,

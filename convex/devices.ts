@@ -15,7 +15,7 @@ import {
   MAX_DEVICES_PER_USER,
 } from './otp';
 import { pushPlatformValidator } from './schema';
-import { getCurrentUser } from './utils/auth';
+import { getCurrentUser, getCurrentUserOrNull } from './utils/auth';
 
 // ============================================================================
 // Device credentials (docs/auth-whatsapp-otp-devicebind-spec.md): one row
@@ -229,7 +229,12 @@ export const listMyDevices = query({
   args: {},
   returns: v.array(deviceItemValidator),
   handler: async (ctx) => {
-    const { user } = await getCurrentUser(ctx);
+    // Null-safe: this query is live on the profile screen while sign-out
+    // tears the session down — it re-runs unauthenticated before the client
+    // flips to 'skip'. Empty list, not a throw.
+    const result = await getCurrentUserOrNull(ctx);
+    if (!result) return [];
+    const { user } = result;
     const rows = await ctx.db
       .query('devices')
       .withIndex('by_user', (q) => q.eq('userId', user._id))

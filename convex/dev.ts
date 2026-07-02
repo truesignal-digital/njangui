@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
-import { mutation } from './_generated/server';
+import { action, mutation } from './_generated/server';
 import { performStartCycle } from './cycles';
+import { devTicketForPhone } from './otp';
 import { generateUniqueInviteCode } from './groups';
 import { openRoundForTick } from './rounds';
 import { logActivityEvent } from './utils/activity';
@@ -33,6 +34,27 @@ export const DEV_TEST_PHONES = {
   treasurer: '+12015550101',
   member: '+12015550102',
 } as const;
+
+/**
+ * One-tap sim sign-in for the DEV pills. User-facing auth is
+ * username+password now, so the pills mint a Clerk ticket through the real
+ * OTP machinery server-side (devTicketForPhone: fresh consumed challenge →
+ * setVerifiedPhone → linkGuard fires like production). Double-gated:
+ * DEV_SEED_ENABLED here, plus the dev OTP provider's own env gate with its
+ * load-time production throw.
+ */
+export const devLoginTicket = action({
+  args: { phone: v.string() },
+  returns: v.object({
+    ok: v.boolean(),
+    ticket: v.optional(v.string()),
+    retryAfterMs: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    return await devTicketForPhone(ctx, args.phone);
+  },
+});
 
 const SEED_NAMES = [
   'Awa Ndip',

@@ -15,6 +15,7 @@ import { useAppTheme } from '../../../src/lib/theme';
 import { AppButton } from '../../../src/components/ui/button';
 import { DeviceList } from '../../../src/components/device-list';
 import { LanguageToggle } from '../../../src/components/language-toggle';
+import { PhoneLinkSection } from '../../../src/components/phone-link';
 import { Skeleton } from '../../../src/components/skeleton';
 
 /**
@@ -86,6 +87,8 @@ export default function ProfileScreen() {
         ) : null}
 
         <LanguageToggle />
+
+        <PhoneLinkSection />
 
         <DeviceList />
 

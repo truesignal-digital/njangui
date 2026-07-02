@@ -15,8 +15,8 @@ import { api } from '../lib/convex-api';
 import { useAuth } from '../lib/clerk-client';
 import { getAppTheme, useShadow } from '../lib/theme';
 import { useDeviceLogin } from '../hooks/use-device-login';
+import { CredentialsAuthForm } from './credentials-auth-form';
 import { LanguageToggle } from './language-toggle';
-import { OtpAuthForm } from './otp-auth-form';
 
 type AuthMode = 'signIn' | 'signUp' | 'signInOrUp';
 
@@ -28,11 +28,12 @@ function needsOnboarding(user: { name: string; phone?: string }): boolean {
 }
 
 /**
- * Auth screen (auth spec): 1) silent device-login first — biometric-gated
- * device secret → Clerk ticket, zero OTP spend; 2) fall back to the
- * WhatsApp OTP form. Clerk stays the session authority throughout (the
- * ticket strategy) — the old Clerk SMS AuthView is gone. Wrapped with the
- * Njangi tagline, FR/EN toggle and the custody-free trust line.
+ * Auth screen: 1) silent device-login first — biometric-gated device
+ * secret → Clerk ticket (phone-verified users skip typing anything);
+ * 2) fall back to username+password (Clerk password strategy). The
+ * OPTIONAL phone is attached later from the profile via WhatsApp OTP.
+ * Wrapped with the Njangi tagline, FR/EN toggle and the custody-free
+ * trust line.
  */
 export function ClerkAuthScreen({ mode: _mode = 'signInOrUp' }: { mode?: AuthMode }) {
   const { t } = useTranslation();
@@ -109,7 +110,7 @@ export function ClerkAuthScreen({ mode: _mode = 'signInOrUp' }: { mode?: AuthMod
         </View>
         <LanguageToggle />
       </View>
-      <OtpAuthForm />
+      <CredentialsAuthForm />
       <View className="flex-1" />
       <Text className="px-lg pb-sm pt-xl text-center font-body text-caption text-placeholder">
         {t('auth.custodyNote')}

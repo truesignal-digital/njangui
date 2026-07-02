@@ -1,16 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router, useGlobalSearchParams } from 'expo-router';
 import { useAction, useConvexAuth, useMutation } from 'convex/react';
 import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../lib/convex-api';
 import { useClerk, useSignIn } from '../../lib/clerk-client';
-import {
-  clearDeviceSecret,
-  getOrCreateDeviceId,
-  storeDeviceSecret,
-} from '../../lib/device-credential';
+import { clearDeviceSecret } from '../../lib/device-credential';
 
 // Test phones (555-01XX block). Slots mirror convex/dev.ts DEV_TEST_PHONES:
 // the seed puts .treasurer/.member on real memberships, so signing in as
@@ -23,58 +19,33 @@ const TEST_USERS = [
 ] as const;
 
 /**
- * DEV-only auto sign-in — rides the REAL WhatsApp-OTP path (must-fix #2:
- * no separate credential): requestOtp with the server-side dev provider
- * (DEV_OTP_PROVIDER=log, throws at load in production) returns the
- * generated code, verifyOtp consumes it through the same machinery, and
- * the session lands via the same Clerk ticket. One tap per identity.
+ * DEV-only auto sign-in. User-facing auth is username+password now, so the
+ * pills call devLoginTicket — the server composes the REAL OTP machinery
+ * (fresh consumed challenge → setVerifiedPhone → linkGuard fires exactly
+ * like production) and returns a Clerk ticket. Double env-gated server-side
+ * (DEV_SEED_ENABLED + dev OTP provider with its load-time prod throw).
+ * One tap per identity.
  */
 export function DevAuthButton() {
   const { isLoaded, signIn, setActive } = useSignIn();
-  const requestOtp = useAction(api.otp.requestOtp);
-  const verifyOtp = useAction(api.otp.verifyOtp);
+  const devLoginTicket = useAction(api.dev.devLoginTicket);
   const [busyPhone, setBusyPhone] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
   const run = async (phone: string) => {
     if (!isLoaded || !signIn) return;
     setBusyPhone(phone);
-    setStatus('requesting dev code…');
+    setStatus('minting dev ticket…');
     try {
-      const deviceId = await getOrCreateDeviceId();
-      const requested = await requestOtp({
-        phone,
-        purpose: 'login',
-        deviceId,
-        language: 'fr',
-      });
-      if (!requested.ok || !requested.devCode) {
+      const minted = await devLoginTicket({ phone });
+      if (!minted.ok || !minted.ticket) {
         throw new Error(
-          requested.ok
-            ? 'no devCode — set DEV_OTP_PROVIDER=log on the deployment'
-            : `throttled — retry in ${Math.ceil((requested.retryAfterMs ?? 0) / 1000)}s`
+          `throttled — retry in ${Math.ceil((minted.retryAfterMs ?? 0) / 1000)}s`
         );
-      }
-      setStatus('verifying…');
-      const verified = await verifyOtp({
-        phone,
-        code: requested.devCode,
-        purpose: 'login',
-        deviceId,
-        platform: Platform.OS === 'ios' ? 'ios' : 'android',
-      });
-      if (!verified.ok) {
-        throw new Error(`verify failed: ${verified.reason}`);
-      }
-      // Store the credential like the real form does — keeps the silent
-      // device-login path exercisable in the sim (local secret must match
-      // the server hash verifyOtp just rotated).
-      if (verified.deviceSecret) {
-        await storeDeviceSecret(verified.deviceSecret, 'dev');
       }
       const attempt = await signIn.create({
         strategy: 'ticket',
-        ticket: verified.ticket,
+        ticket: minted.ticket,
       });
       if (attempt.status === 'complete' && setActive) {
         await setActive({ session: attempt.createdSessionId });
