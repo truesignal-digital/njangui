@@ -81,7 +81,7 @@ export default function HomeScreen() {
     <View className="flex-1 bg-background">
       <FlashList
         data={myGroups as GroupListItem[]}
-        keyExtractor={(group) => group.groupId}
+        keyExtractor={(group) => group.membershipId}
         renderItem={({ item }: ListRenderItemInfo<GroupListItem>) => <GroupRow group={item} />}
         contentContainerStyle={{
           ...screenPadding,

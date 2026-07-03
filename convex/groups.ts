@@ -692,6 +692,39 @@ export const listMyGroups = query({
         })
     );
 
-    return items.filter((item) => item !== null);
+    /*
+     * One row per group. A user can end up with two memberships in the
+     * same group (added manually AND linked by phone) — duplicate rows
+     * would show the group twice and collide list keys client-side.
+     * The rows describe the same person in the same group, so their
+     * money facts MERGE (a due on one twin and a receiving on the other
+     * are both real); the due-bearing row wins as the base because its
+     * myDue.roundId drives the pay flow.
+     */
+    const deduped = new Map<string, NonNullable<(typeof items)[number]>>();
+    for (const item of items) {
+      if (item === null) continue;
+      const existing = deduped.get(item.groupId);
+      if (!existing) {
+        deduped.set(item.groupId, item);
+        continue;
+      }
+      const money = (row: typeof item) =>
+        (row.myDue !== null ? 2 : 0) + (row.receiving !== null ? 1 : 0);
+      const active = (row: typeof item) =>
+        row.membershipStatus === 'active' ? 1 : 0;
+      const winner =
+        money(item) > money(existing) ||
+        (money(item) === money(existing) && active(item) > active(existing))
+          ? item
+          : existing;
+      const loser = winner === item ? existing : item;
+      deduped.set(item.groupId, {
+        ...winner,
+        myDue: winner.myDue ?? loser.myDue,
+        receiving: winner.receiving ?? loser.receiving,
+      });
+    }
+    return [...deduped.values()];
   },
 });

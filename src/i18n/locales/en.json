@@ -296,7 +296,10 @@
       "myTurn": "It’s your turn",
       "setupLine": "Invite members to get started",
       "betweenLine": "Cycle finished · plan the next draw",
-      "contribute": "Contribute · {{amount}}"
+      "contribute": "Contribute · {{amount}}",
+      "dueChip": "{{amount}} due",
+      "yourTurn": "Your turn 🎁",
+      "upToDateInline": "all paid ✓"
     },
     "tab": {
       "sectionOngoing": "Ongoing",
@@ -311,7 +314,11 @@
       "create": "Create a njangi",
       "join": "Join with a code",
       "emptyTitle": "No njangi yet",
-      "emptyBody": "Create your own, or join your association’s with an invite code."
+      "emptyBody": "Create your own, or join your association’s with an invite code.",
+      "circleCount_one": "{{count}} circle",
+      "circleCount_other": "{{count}} circles",
+      "actionsCount_one": "{{count}} action waiting",
+      "actionsCount_other": "{{count}} actions waiting"
     }
   },
   "round": {

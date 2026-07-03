@@ -296,7 +296,10 @@
       "myTurn": "C’est votre tour",
       "setupLine": "Invitez des membres pour démarrer",
       "betweenLine": "Cycle terminé · prochain tirage à planifier",
-      "contribute": "Cotiser · {{amount}}"
+      "contribute": "Cotiser · {{amount}}",
+      "dueChip": "{{amount}} dus",
+      "yourTurn": "Votre tour 🎁",
+      "upToDateInline": "à jour ✓"
     },
     "tab": {
       "sectionOngoing": "En cours",
@@ -311,7 +314,11 @@
       "create": "Créer un njangi",
       "join": "Rejoindre avec un code",
       "emptyTitle": "Aucun njangi pour l’instant",
-      "emptyBody": "Créez le vôtre, ou rejoignez celui de votre association avec un code d’invitation."
+      "emptyBody": "Créez le vôtre, ou rejoignez celui de votre association avec un code d’invitation.",
+      "circleCount_one": "{{count}} cercle",
+      "circleCount_other": "{{count}} cercles",
+      "actionsCount_one": "{{count}} action attendue",
+      "actionsCount_other": "{{count}} actions attendues"
     }
   },
   "round": {
