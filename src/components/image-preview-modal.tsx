@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { XMarkIcon } from 'react-native-heroicons/outline';
 
+import mobileUiConfig from '../lib/mobile-ui-config.json';
+
 /**
  * Full-screen viewer for proof photos. Pinch-to-zoom comes from ScrollView's
  * native zoom (maximumZoomScale) — no gesture library needed. Rendered as a
@@ -51,7 +53,7 @@ export function ImagePreviewModal({
           style={{ position: 'absolute', top: insets.top + 8, right: 16 }}
           className="flex-row items-center gap-xs rounded-pill bg-black/60 px-md py-xs"
         >
-          <XMarkIcon size={16} color="#FFFFFF" />
+          <XMarkIcon size={16} color={mobileUiConfig.structuralColors.white} />
           <Text className="font-body-medium text-body text-white">
             {t('common.close')}
           </Text>

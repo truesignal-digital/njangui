@@ -167,7 +167,7 @@ export default function RoundDetailScreen() {
               expectedTotal={round.expectedTotal}
               inFlightTotal={round.inFlightTotal}
               custodianName={round.custodianName}
-              colorSeed={group ? resolveSeed(group.colorSeed, round.groupId) : null}
+              colorSeed={resolveSeed(group?.colorSeed ?? null, round.groupId)}
             />
           </SectionCard>
 

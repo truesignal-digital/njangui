@@ -194,7 +194,8 @@ export default function StartCycleScreen() {
       });
       haptics.success();
       toast.success(t('groups.cycle.lockedToast'));
-      setConfirming(false);
+      // Navigate only — hiding the confirm Modal in the same tick races
+      // two dismissal animations; the route unmount takes the Modal down.
       close();
     } catch (err) {
       haptics.error();

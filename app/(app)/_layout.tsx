@@ -27,10 +27,12 @@ export default function AppLayout() {
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/index" />
         {/* Pay flow: ONE modal layer (the picker). USSD + claim push as
             cards INSIDE the flow — no modal-on-modal stacking, and no
-            dismiss gesture that can drop a user mid-declaration. */}
+            dismiss gesture that can drop a user mid-declaration: a swipe
+            on the sheet would tear down the whole flow, losing a typed
+            claim (amount + proof), so the gesture is off for the flow. */}
         <Stack.Screen
           name="groups/[groupId]/rounds/[roundId]/pay/index"
-          options={{ presentation: 'modal', gestureEnabled: true }}
+          options={{ presentation: 'modal', gestureEnabled: false }}
         />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/pay/ussd" />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/pay/claim" />

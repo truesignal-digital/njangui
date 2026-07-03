@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Text, View, useColorScheme } from 'react-native';
 import Svg, {
   Circle,
@@ -21,8 +22,6 @@ import {
  * extra native module, cheap on low-end Androids.
  */
 
-let gradientCounter = 0;
-
 /** Absolute-fill subtle wash. Parent needs `overflow-hidden` + a radius. */
 export function GroupGradientWash({
   colorSeed,
@@ -36,7 +35,10 @@ export function GroupGradientWash({
   const dark = useColorScheme() === 'dark';
   const seed = resolveSeed(colorSeed, groupId);
   const { start, end } = groupGradient(seed, dark);
-  const gid = `wash-${seed}-${(gradientCounter = (gradientCounter + 1) % 1e6)}`;
+  // Stable per-instance SVG def id: a changing id rebuilds the native
+  // gradient brush on every re-render (and mutating during render breaks
+  // render idempotence).
+  const gid = `wash-${useId().replace(/:/g, '')}`;
   return (
     <Svg
       width="100%"
@@ -75,7 +77,7 @@ export function GroupAvatar({
   const dark = useColorScheme() === 'dark';
   const seed = resolveSeed(colorSeed, groupId);
   const { start, end } = groupAvatarGradient(seed, dark);
-  const gid = `disc-${seed}-${(gradientCounter = (gradientCounter + 1) % 1e6)}`;
+  const gid = `disc-${useId().replace(/:/g, '')}`;
 
   const ring = progress && progress.total > 0;
   const stroke = 3;
