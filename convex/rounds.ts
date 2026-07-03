@@ -51,6 +51,22 @@ export function expectedForMember(
   });
 }
 
+/**
+ * Full expected pot for a round: Σ hands-aware expected over every
+ * membership holding a position in the locked rotation. The calendar and
+ * home money surfaces share this — never payers × base amount.
+ */
+export function expectedPotTotal(
+  cycle: Doc<'cycles'>,
+  round: Doc<'rounds'>
+): number {
+  let total = 0;
+  for (const membershipId of handsByMembership(cycle.rotationOrder).keys()) {
+    total += expectedForMember(cycle, round, membershipId);
+  }
+  return total;
+}
+
 export async function loadActiveRoundContext(
   ctx: MutationCtx,
   round: Doc<'rounds'>

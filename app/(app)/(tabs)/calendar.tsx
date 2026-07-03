@@ -40,7 +40,7 @@ export default function CalendarScreen() {
       <Text className="pb-lg font-heading text-headline text-foreground">
         {t('calendar.title')}
       </Text>
-      <CalendarAgenda mode="my" />
+      <CalendarAgenda mode="my" showMonthSummary />
     </ScrollView>
   );
 }

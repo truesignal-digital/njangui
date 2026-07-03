@@ -28,6 +28,8 @@ export type GroupListItem = {
   colorSeed: number | null;
   cycleProgress: { done: number; total: number } | null;
   nextDueAt: number | null;
+  myDue: { roundId: string; amount: number; dueAt: number } | null;
+  receiving: { amount: number; date: number } | null;
 };
 
 export const GroupCard = memo(function GroupCard({ group }: { group: GroupListItem }) {

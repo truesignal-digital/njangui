@@ -92,7 +92,27 @@
     "emptyBody": "Create your own, or ask your president for the invite link.",
     "emptyCreate": "Create a njangi",
     "emptyHaveLink": "I have a code",
-    "haveLink": "I have an invite code"
+    "haveLink": "I have an invite code",
+    "greeting": "Hello",
+    "hero": {
+      "thisWeek": "This week",
+      "toReceive": "+{{amount}} to receive {{date}}"
+    },
+    "actions": {
+      "contribute": "Contribute",
+      "join": "Join",
+      "new": "New",
+      "calendar": "Calendar"
+    },
+    "inOut": {
+      "toPay": "To pay",
+      "toReceive": "To receive"
+    },
+    "groupsSection": "My njangis · {{count}}",
+    "row": {
+      "due": "{{amount}} due · {{date}}",
+      "receiving": "I receive · {{date}}"
+    }
   },
   "groups": {
     "memberCount_one": "{{count}} member",
@@ -499,7 +519,9 @@
     "roundLabel": "Round {{n}}",
     "youReceiveShort": "you receive {{amount}}",
     "receivesShort": "{{name}} receives",
-    "handOf": "hand {{n}}/{{total}}"
+    "handOf": "hand {{n}}/{{total}}",
+    "monthOut": "Outgoing {{month}}",
+    "monthIn": "Incoming {{month}}"
   },
   "errors": {
     "network": "No connection. Your data is safe — try again once you're back online."

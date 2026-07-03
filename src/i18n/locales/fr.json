@@ -92,7 +92,27 @@
     "emptyBody": "Créez le vôtre ou demandez le lien d'invitation à votre président.",
     "emptyCreate": "Créer un njangi",
     "emptyHaveLink": "J'ai un code",
-    "haveLink": "J'ai un code d'invitation"
+    "haveLink": "J'ai un code d'invitation",
+    "greeting": "Bonjour",
+    "hero": {
+      "thisWeek": "Cette semaine",
+      "toReceive": "+{{amount}} à recevoir {{date}}"
+    },
+    "actions": {
+      "contribute": "Cotiser",
+      "join": "Rejoindre",
+      "new": "Nouveau",
+      "calendar": "Calendrier"
+    },
+    "inOut": {
+      "toPay": "À payer",
+      "toReceive": "À recevoir"
+    },
+    "groupsSection": "Mes njangis · {{count}}",
+    "row": {
+      "due": "{{amount}} dus · {{date}}",
+      "receiving": "je reçois · {{date}}"
+    }
   },
   "groups": {
     "memberCount_one": "{{count}} membre",
@@ -499,7 +519,9 @@
     "roundLabel": "Tour {{n}}",
     "youReceiveShort": "vous recevez {{amount}}",
     "receivesShort": "{{name}} reçoit",
-    "handOf": "main {{n}}/{{total}}"
+    "handOf": "main {{n}}/{{total}}",
+    "monthOut": "Sorties {{month}}",
+    "monthIn": "Entrées {{month}}"
   },
   "errors": {
     "network": "Pas de connexion. Vos données sont en sécurité — réessayez une fois en ligne."

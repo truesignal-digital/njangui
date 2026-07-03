@@ -5,7 +5,9 @@ import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 
 import { api, type Id } from '../lib/convex-api';
+import { toIntlLocale } from '../lib/app-locale';
 import { formatCurrencyXAF } from '../lib/format-currency';
+import { InOutCells } from './ui/in-out-cells';
 import { Skeleton } from './skeleton';
 
 /**
@@ -196,12 +198,15 @@ function SessionLine({
 export function CalendarAgenda({
   groupId,
   mode,
+  showMonthSummary = false,
 }: {
   groupId?: string;
   mode: 'my' | 'group';
+  /** Money-hero planner header: current-month sorties/entrées cells. */
+  showMonthSummary?: boolean;
 }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-GB';
+  const locale = toIntlLocale(i18n.language);
   const { isAuthenticated } = useConvexAuth();
   const events = useQuery(
     api.calendar.myAgenda,
@@ -217,6 +222,30 @@ export function CalendarAgenda({
       events ? toSections(toSessions(events, mode === 'my'), locale) : [],
     [events, mode, locale]
   );
+
+  // Current-month in/out from the events already subscribed — no extra
+  // query; whole-month totals (past rounds included), unlike the
+  // upcoming-only agenda rows below.
+  const monthSummary = useMemo(() => {
+    if (!showMonthSummary || !events) return null;
+    const now = new Date();
+    let out = 0;
+    let incoming = 0;
+    for (const event of events) {
+      const d = new Date(event.date);
+      if (
+        d.getFullYear() !== now.getFullYear() ||
+        d.getMonth() !== now.getMonth()
+      ) {
+        continue;
+      }
+      if (event.kind === 'contribution') out += event.amount;
+      else if (event.isMyPayout) incoming += event.amount;
+    }
+    if (out === 0 && incoming === 0) return null;
+    const month = now.toLocaleDateString(locale, { month: 'long' });
+    return { out, incoming, month };
+  }, [showMonthSummary, events, locale]);
 
   if (events === undefined) {
     return (
@@ -238,6 +267,14 @@ export function CalendarAgenda({
 
   return (
     <View className="gap-md">
+      {monthSummary ? (
+        <InOutCells
+          payLabel={t('calendar.monthOut', { month: monthSummary.month })}
+          payAmount={formatCurrencyXAF(monthSummary.out)}
+          receiveLabel={t('calendar.monthIn', { month: monthSummary.month })}
+          receiveAmount={formatCurrencyXAF(monthSummary.incoming)}
+        />
+      ) : null}
       {sections.map((section, index) => (
         <Animated.View
           key={section.key}

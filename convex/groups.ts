@@ -1,10 +1,13 @@
 import { v } from 'convex/values';
+import type { Id } from './_generated/dataModel';
 import { mutation, type MutationCtx, query } from './_generated/server';
 import {
   GRACE_DAYS_DEFAULT,
   GRACE_DAYS_MAX,
   GRACE_DAYS_MIN,
 } from './lib/paymentStateMachine';
+import { computePotProgress } from './lib/roundMath';
+import { expectedForMember, expectedPotTotal } from './rounds';
 import {
   appLanguageValidator,
   collectionModeValidator,
@@ -171,6 +174,23 @@ const myGroupItemValidator = v.object({
     v.null()
   ),
   nextDueAt: v.union(v.number(), v.null()),
+  // Viewer money position (money-hero home) — server-computed so the client
+  // never does cross-group money math. `myDue` = what the viewer still owes
+  // on the round currently collecting (expectedForMember minus confirmed +
+  // in-flight); `receiving` = the full expected pot of the next
+  // non-completed round when the viewer is its beneficiary.
+  myDue: v.union(
+    v.object({
+      roundId: v.id('rounds'),
+      amount: v.number(),
+      dueAt: v.number(),
+    }),
+    v.null()
+  ),
+  receiving: v.union(
+    v.object({ amount: v.number(), date: v.number() }),
+    v.null()
+  ),
 });
 
 const inviteCodeResultValidator = v.object({
@@ -500,6 +520,12 @@ export const listMyGroups = query({
           // Card facts for a running cycle: ring progress + next due date.
           let cycleProgress: { done: number; total: number } | null = null;
           let nextDueAt: number | null = null;
+          let myDue: {
+            roundId: Id<'rounds'>;
+            amount: number;
+            dueAt: number;
+          } | null = null;
+          let receiving: { amount: number; date: number } | null = null;
           if (group.status === 'active') {
             const cycle = await ctx.db
               .query('cycles')
@@ -515,10 +541,60 @@ export const listMyGroups = query({
               const live = rounds.filter((r) => r.status !== 'cancelled');
               const done = live.filter((r) => r.status === 'completed').length;
               cycleProgress = { done, total: live.length };
-              nextDueAt =
-                live
-                  .filter((r) => r.status !== 'completed')
-                  .sort((a, b) => a.dueAt - b.dueAt)[0]?.dueAt ?? null;
+              const upcoming = live
+                .filter((r) => r.status !== 'completed')
+                .sort((a, b) => a.dueAt - b.dueAt);
+              nextDueAt = upcoming[0]?.dueAt ?? null;
+
+              // My unpaid due on the round currently collecting (open/grace).
+              // One bounded indexed read (that round's contribution records);
+              // expected amounts ONLY via expectedForMember (hands-aware).
+              // Active viewers only — an exited member may still sit in the
+              // immutable rotationOrder but owes nothing.
+              const collecting =
+                m.status === 'active'
+                  ? upcoming.find(
+                      (r) => r.status === 'open' || r.status === 'grace'
+                    )
+                  : undefined;
+              if (collecting) {
+                const expected = expectedForMember(cycle, collecting, m._id);
+                if (expected > 0) {
+                  const contributions = await ctx.db
+                    .query('paymentRecords')
+                    .withIndex('by_round_and_kind', (q) =>
+                      q.eq('roundId', collecting._id).eq('kind', 'contribution')
+                    )
+                    .collect();
+                  const mine = computePotProgress(
+                    contributions
+                      .filter((r) => r.payerMembershipId === m._id)
+                      .map((r) => ({
+                        state: r.state,
+                        amount: r.amount,
+                        claimedAt: r.claimedAt,
+                      }))
+                  );
+                  const remaining =
+                    expected - mine.confirmedAmount - mine.inFlightAmount;
+                  if (remaining > 0) {
+                    myDue = {
+                      roundId: collecting._id,
+                      amount: remaining,
+                      dueAt: collecting.dueAt,
+                    };
+                  }
+                }
+              }
+
+              // Am I (any of my hands) the next pot's beneficiary?
+              const next = m.status === 'active' ? upcoming[0] : undefined;
+              if (next && next.beneficiaryMembershipId === m._id) {
+                receiving = {
+                  amount: expectedPotTotal(cycle, next),
+                  date: next.dueAt,
+                };
+              }
             }
           }
 
@@ -536,6 +612,8 @@ export const listMyGroups = query({
             colorSeed: group.colorSeed ?? null,
             cycleProgress,
             nextDueAt,
+            myDue,
+            receiving,
           };
         })
     );

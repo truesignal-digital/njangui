@@ -4,7 +4,7 @@ import type { Doc } from './_generated/dataModel';
 import { query, type QueryCtx } from './_generated/server';
 import { handsByMembership } from './lib/roundMath';
 import { addPeriods, estimatedFirstRound } from './lib/scheduleMath';
-import { expectedForMember } from './rounds';
+import { expectedForMember, expectedPotTotal } from './rounds';
 import { getCurrentUserOrNull } from './utils/auth';
 
 /**
@@ -84,7 +84,6 @@ async function groupEvents(
     .withIndex('by_group', (q) => q.eq('groupId', group._id))
     .collect();
   const nameOf = new Map(members.map((m) => [m._id, m.displayName]));
-  const payerIds = [...handsByMembership(cycle.rotationOrder).keys()];
   const myHands =
     handsByMembership(cycle.rotationOrder).get(myMembership._id) ?? 0;
 
@@ -97,10 +96,7 @@ async function groupEvents(
     if (round.status === 'cancelled') {
       continue;
     }
-    const pot = payerIds.reduce(
-      (sum, id) => sum + expectedForMember(cycle, round, id),
-      0
-    );
+    const pot = expectedPotTotal(cycle, round);
     const isMyPayout = round.beneficiaryMembershipId === myMembership._id;
     events.push({
       date: round.dueAt,

@@ -1,24 +1,39 @@
-import { RefreshControl, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { KeyIcon, PlusIcon, UsersIcon } from 'react-native-heroicons/outline';
+import {
+  ArrowUpIcon,
+  CalendarDaysIcon,
+  KeyIcon,
+  PlusIcon,
+  UsersIcon,
+} from 'react-native-heroicons/outline';
 
 import { api } from '../../../src/lib/convex-api';
 import { useAuth } from '../../../src/lib/clerk-client';
+import { toIntlLocale } from '../../../src/lib/app-locale';
+import { cn } from '../../../src/lib/cn';
+import { formatCurrencyXAF } from '../../../src/lib/format-currency';
+import { haptics } from '../../../src/lib/haptics';
 import { useAppTheme } from '../../../src/lib/theme';
 import { Skeleton } from '../../../src/components/skeleton';
 import { AppButton } from '../../../src/components/ui/button';
-import { GroupCard, type GroupListItem } from '../../../src/components/groups/group-card';
+import { InOutCells } from '../../../src/components/ui/in-out-cells';
+import { GroupRow } from '../../../src/components/groups/group-row';
+import type { GroupListItem } from '../../../src/components/groups/group-card';
 import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
 
 /**
- * Home — Week 1 scope: my group list (docs/05 Week 1). The activity-feed /
- * group-pulse home (docs/03 B1) layers on in Weeks 4–5. Auth gating follows
- * piol mobile's screen-level pattern: queries pass 'skip' until
- * authenticated; signed-out users are redirected to sign-in.
+ * Home — money-hero direction (docs/ui-proposals-iter3-money-hero.html):
+ * the screen answers « where does my money stand across all my njangis? »
+ * with a net-position hero, a quick-action row and In/Out cells, all
+ * server-computed by listMyGroups (myDue/receiving) — no client money math.
+ * Auth gating follows piol mobile's screen-level pattern: queries pass
+ * 'skip' until authenticated; signed-out users are redirected to sign-in.
  */
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -41,14 +56,18 @@ export default function HomeScreen() {
   if (!isLoaded || myGroups === undefined) {
     return (
       <View className="flex-1 bg-background px-lg" style={screenPadding}>
-        <View className="flex-row items-center justify-between">
-          <Skeleton className="h-[32px] w-[160px]" />
-          <Skeleton className="h-[40px] w-[130px] rounded-md" />
+        <Skeleton className="h-[28px] w-[140px]" />
+        <Skeleton className="mt-lg h-[44px] w-[220px]" />
+        <View className="mt-lg flex-row gap-sm">
+          <Skeleton className="h-[72px] flex-1 rounded-lg" />
+          <Skeleton className="h-[72px] flex-1 rounded-lg" />
+          <Skeleton className="h-[72px] flex-1 rounded-lg" />
+          <Skeleton className="h-[72px] flex-1 rounded-lg" />
         </View>
         <View className="mt-lg gap-sm">
-          <Skeleton className="h-[96px] rounded-xl" />
-          <Skeleton className="h-[96px] rounded-xl" />
-          <Skeleton className="h-[96px] rounded-xl" />
+          <Skeleton className="h-[64px] rounded-lg" />
+          <Skeleton className="h-[64px] rounded-lg" />
+          <Skeleton className="h-[64px] rounded-lg" />
         </View>
       </View>
     );
@@ -63,14 +82,13 @@ export default function HomeScreen() {
       <FlashList
         data={myGroups as GroupListItem[]}
         keyExtractor={(group) => group.groupId}
-        renderItem={({ item }: ListRenderItemInfo<GroupListItem>) => <GroupCard group={item} />}
+        renderItem={({ item }: ListRenderItemInfo<GroupListItem>) => <GroupRow group={item} />}
         contentContainerStyle={{
           ...screenPadding,
           paddingHorizontal: theme.spacing.lg,
         }}
         ItemSeparatorComponent={ListSeparator}
-        ListHeaderComponent={<HomeHeader />}
-        ListFooterComponent={<HomeFooter />}
+        ListHeaderComponent={<HomeHeader groups={myGroups as GroupListItem[]} />}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -81,38 +99,153 @@ export default function HomeScreen() {
 }
 
 function ListSeparator() {
-  return <View className="h-sm" />;
+  return <View className="h-xs" />;
 }
 
-function HomeHeader() {
-  const { t } = useTranslation();
-  const theme = useAppTheme();
-
+/** One quick-action tile — icon + short label, whole tile pressable. */
+function QuickAction({
+  icon,
+  label,
+  onPress,
+  disabled = false,
+  hot = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  hot?: boolean;
+}) {
   return (
-    <View className="flex-row items-center justify-between gap-sm pb-lg">
-      <Text className="font-heading text-display-lg text-foreground">{t('home.heading')}</Text>
-      <AppButton
-        size="sm"
-        label={t('home.createGroup')}
-        icon={<PlusIcon size={16} color={theme.primaryForeground} />}
-        onPress={() => router.push('/groups/new')}
-      />
-    </View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={() => {
+        haptics.select();
+        onPress();
+      }}
+      className={cn(
+        'flex-1 items-center gap-1 rounded-lg border border-border-subtle bg-surface py-sm active:opacity-90',
+        hot && 'border-accent bg-accent',
+        disabled && 'opacity-50'
+      )}
+    >
+      {icon}
+      <Text
+        numberOfLines={1}
+        className={cn(
+          'font-body-semi text-caption text-foreground',
+          hot && 'text-primary-fg'
+        )}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
-function HomeFooter() {
-  const { t } = useTranslation();
+/**
+ * Hero + quick actions + In/Out cells. All amounts come server-computed
+ * (myDue/receiving on each listMyGroups item); this only sums for display.
+ */
+function HomeHeader({ groups }: { groups: GroupListItem[] }) {
+  const { t, i18n } = useTranslation();
   const theme = useAppTheme();
+  const locale = toIntlLocale(i18n.language);
+
+  const dues = groups.filter((g) => g.myDue !== null);
+  const totalDue = dues.reduce((sum, g) => sum + (g.myDue?.amount ?? 0), 0);
+  const nearestDue = [...dues].sort(
+    (a, b) => (a.myDue?.dueAt ?? 0) - (b.myDue?.dueAt ?? 0)
+  )[0];
+  const receivings = groups.filter((g) => g.receiving !== null);
+  const totalReceiving = receivings.reduce(
+    (sum, g) => sum + (g.receiving?.amount ?? 0),
+    0
+  );
+  const nextReceivingDate = [...receivings].sort(
+    (a, b) => (a.receiving?.date ?? 0) - (b.receiving?.date ?? 0)
+  )[0]?.receiving?.date;
+
+  const shortDate = (ts: number) =>
+    new Date(ts).toLocaleDateString(locale, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
 
   return (
-    <View className="pt-md">
-      <AppButton
-        variant="ghost"
-        label={t('home.haveLink')}
-        icon={<KeyIcon size={18} color={theme.textMuted} />}
-        onPress={() => router.push('/join-by-code')}
-      />
+    <View className="pb-sm">
+      <Text className="font-heading text-display-lg text-foreground">
+        {t('home.greeting')}
+      </Text>
+
+      {/* Net-position hero — the amount to pay leads, receiving is the delta line */}
+      <View className="pt-lg">
+        <Text className="font-body-semi text-overline uppercase text-muted">
+          {t('home.hero.thisWeek')}
+        </Text>
+        <Text className="pt-1 font-mono-bold text-stat-lg text-foreground">
+          {formatCurrencyXAF(-totalDue)}
+        </Text>
+        {totalReceiving > 0 && nextReceivingDate !== undefined ? (
+          <Text className="pt-1 font-body-medium text-body-sm text-success-dark">
+            {t('home.hero.toReceive', {
+              amount: formatCurrencyXAF(totalReceiving),
+              date: shortDate(nextReceivingDate),
+            })}
+          </Text>
+        ) : null}
+      </View>
+
+      <View className="flex-row gap-xs pt-lg">
+        <QuickAction
+          hot
+          icon={<ArrowUpIcon size={18} color={theme.primaryForeground} />}
+          label={t('home.actions.contribute')}
+          disabled={!nearestDue?.myDue}
+          onPress={() => {
+            if (!nearestDue?.myDue) return;
+            router.push({
+              pathname: '/groups/[groupId]/rounds/[roundId]/pay',
+              params: {
+                groupId: nearestDue.groupId,
+                roundId: nearestDue.myDue.roundId,
+              },
+            });
+          }}
+        />
+        <QuickAction
+          icon={<KeyIcon size={18} color={theme.accent} />}
+          label={t('home.actions.join')}
+          onPress={() => router.push('/join-by-code')}
+        />
+        <QuickAction
+          icon={<PlusIcon size={18} color={theme.accent} />}
+          label={t('home.actions.new')}
+          onPress={() => router.push('/groups/new')}
+        />
+        <QuickAction
+          icon={<CalendarDaysIcon size={18} color={theme.accent} />}
+          label={t('home.actions.calendar')}
+          onPress={() => router.push('/calendar')}
+        />
+      </View>
+
+      <View className="pt-md">
+        <InOutCells
+          payLabel={t('home.inOut.toPay')}
+          payAmount={formatCurrencyXAF(totalDue)}
+          receiveLabel={t('home.inOut.toReceive')}
+          receiveAmount={formatCurrencyXAF(totalReceiving)}
+        />
+      </View>
+
+      <Text className="pb-sm pt-lg font-body-semi text-overline uppercase text-muted">
+        {t('home.groupsSection', { count: groups.length })}
+      </Text>
     </View>
   );
 }
