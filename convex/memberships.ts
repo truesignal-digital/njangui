@@ -84,10 +84,12 @@ export const joinViaCode = mutation({
       throw new Error('Invalid invite code');
     }
 
+    // .first(), not .unique() — legacy dupes (manual add + phone link)
+    // must block the re-join, not crash it.
     const existing = await ctx.db
       .query('memberships')
       .withIndex('by_group_and_user', (q) => q.eq('groupId', group._id).eq('userId', user._id))
-      .unique();
+      .first();
 
     if (existing) {
       if (existing.status === 'pending_approval' || existing.status === 'active') {
@@ -294,7 +296,7 @@ export const addFeaturePhoneMember = mutation({
         .withIndex('by_group_and_user', (q) =>
           q.eq('groupId', args.groupId).eq('userId', existingUser._id)
         )
-        .unique();
+        .first();
       if (existingMembership) {
         throw new Error('This person already has a membership in this group');
       }
@@ -372,7 +374,7 @@ export const addMemberByUsername = mutation({
       .withIndex('by_group_and_user', (q) =>
         q.eq('groupId', args.groupId).eq('userId', user._id)
       )
-      .unique();
+      .first();
     if (existingMembership) {
       // ConvexError so the client can show a real message, not a generic one.
       throw new ConvexError({ code: 'already_member' });

@@ -53,6 +53,24 @@ async function linkMembershipsByPhone(ctx: MutationCtx, userId: Id<'users'>, pho
     if (membership.userId !== undefined) {
       continue;
     }
+    /*
+     * Never create a second membership for the same user in one group
+     * (e.g. they joined by code before verifying their phone). Dupes
+     * crash .unique() reads and double the group list; the unclaimed row
+     * stays for the president to reconcile.
+     */
+    const alreadyMember = await ctx.db
+      .query('memberships')
+      .withIndex('by_group_and_user', (q) =>
+        q.eq('groupId', membership.groupId).eq('userId', userId)
+      )
+      .first();
+    if (alreadyMember) {
+      console.log(
+        `linkMembershipsByPhone: skipped ${membership._id} — user ${userId} already holds ${alreadyMember._id} in group ${membership.groupId}`
+      );
+      continue;
+    }
     await ctx.db.patch(membership._id, { userId });
     await logActivityEvent(ctx, {
       groupId: membership.groupId,
