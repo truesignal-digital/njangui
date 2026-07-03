@@ -132,6 +132,7 @@ Convex `useQuery` subscriptions are the cache — no TanStack layer, no manual i
 - Client-originated claims send an idempotency key generated ONCE per tap and reused on retry (`src/lib/idempotency.ts`).
 - Denormalize deliberately and document why in `convex/schema.ts` (examples: `rounds.groupId`, `paymentRecords.confirmedAt`); the mutation that writes the source field owns updating the copy.
 - `expectedForMember` is the ONLY legal source of a member's expected contribution amount (multi-hand rotations) — never recompute it ad hoc.
+- **Public function signatures evolve additively** once released binaries exist: new args optional; never rename/retype/remove args or `returns` fields in one step — deprecate, ship updated clients, then remove. A Convex deploy reaches prod in minutes; installed binaries update at store speed. Mirrors the "evolve persisted shapes additively" storage rule.
 
 **Transitions:** for instant list→detail navigation, pass already-known display fields (name, `colorSeed`) through expo-router params so the header renders while `useQuery` resolves.
 
