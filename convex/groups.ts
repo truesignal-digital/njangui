@@ -191,7 +191,26 @@ const myGroupItemValidator = v.object({
     v.object({ amount: v.number(), date: v.number() }),
     v.null()
   ),
+  // Group-tab roster health (round-2 §2): who has fully paid the round
+  // currently collecting. Counted per member against expectedForMember —
+  // never per record, so partial-claim splits don't inflate the tally.
+  roundHealth: v.union(
+    v.object({ confirmed: v.number(), expected: v.number() }),
+    v.null()
+  ),
+  // Up to 5 active members for the card's avatar stack. Initials only —
+  // no extra doc reads beyond the memberships already collected.
+  memberPreview: v.array(v.object({ initials: v.string(), paid: v.boolean() })),
+  currentReceiverName: v.union(v.string(), v.null()),
 });
+
+/** « Mariam Ndip » → « MN » — server twin of the client's groupInitials. */
+function personInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '·';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
 
 const inviteCodeResultValidator = v.object({
   inviteCode: v.string(),
@@ -526,6 +545,10 @@ export const listMyGroups = query({
             dueAt: number;
           } | null = null;
           let receiving: { amount: number; date: number } | null = null;
+          let roundHealth: { confirmed: number; expected: number } | null =
+            null;
+          let memberPreview: { initials: string; paid: boolean }[] = [];
+          let currentReceiverName: string | null = null;
           if (group.status === 'active') {
             const cycle = await ctx.db
               .query('cycles')
@@ -546,54 +569,102 @@ export const listMyGroups = query({
                 .sort((a, b) => a.dueAt - b.dueAt);
               nextDueAt = upcoming[0]?.dueAt ?? null;
 
-              // My unpaid due on the round currently collecting (open/grace).
-              // One bounded indexed read (that round's contribution records);
-              // expected amounts ONLY via expectedForMember (hands-aware).
-              // Active viewers only — an exited member may still sit in the
-              // immutable rotationOrder but owes nothing.
-              const collecting =
-                m.status === 'active'
-                  ? upcoming.find(
-                      (r) => r.status === 'open' || r.status === 'grace'
-                    )
-                  : undefined;
+              // The round currently collecting (open/grace) drives both the
+              // viewer's due and the card's roster health. One bounded
+              // indexed read (that round's contribution records); expected
+              // amounts ONLY via expectedForMember (hands-aware).
+              const collecting = upcoming.find(
+                (r) => r.status === 'open' || r.status === 'grace'
+              );
+              /** payerMembershipId → fully paid (confirmed ≥ expected). */
+              const paidByMember = new Map<string, boolean>();
               if (collecting) {
-                const expected = expectedForMember(cycle, collecting, m._id);
-                if (expected > 0) {
-                  const contributions = await ctx.db
-                    .query('paymentRecords')
-                    .withIndex('by_round_and_kind', (q) =>
-                      q.eq('roundId', collecting._id).eq('kind', 'contribution')
-                    )
-                    .collect();
-                  const mine = computePotProgress(
-                    contributions
-                      .filter((r) => r.payerMembershipId === m._id)
-                      .map((r) => ({
+                const contributions = await ctx.db
+                  .query('paymentRecords')
+                  .withIndex('by_round_and_kind', (q) =>
+                    q.eq('roundId', collecting._id).eq('kind', 'contribution')
+                  )
+                  .collect();
+                const byPayer = new Map<string, typeof contributions>();
+                for (const record of contributions) {
+                  const rows = byPayer.get(record.payerMembershipId) ?? [];
+                  rows.push(record);
+                  byPayer.set(record.payerMembershipId, rows);
+                }
+                let confirmedCount = 0;
+                for (const [payerId, rows] of byPayer) {
+                  const expected = expectedForMember(
+                    cycle,
+                    collecting,
+                    payerId as Id<'memberships'>
+                  );
+                  if (expected <= 0) continue;
+                  const progress = computePotProgress(
+                    rows.map((r) => ({
+                      state: r.state,
+                      amount: r.amount,
+                      claimedAt: r.claimedAt,
+                    }))
+                  );
+                  const paid = progress.confirmedAmount >= expected;
+                  paidByMember.set(payerId, paid);
+                  if (paid) confirmedCount++;
+                }
+                roundHealth = {
+                  confirmed: confirmedCount,
+                  expected: paidByMember.size,
+                };
+
+                // Viewer's remaining due — an exited member may still sit in
+                // the immutable rotationOrder but owes nothing.
+                if (m.status === 'active') {
+                  const expected = expectedForMember(cycle, collecting, m._id);
+                  if (expected > 0) {
+                    const mine = computePotProgress(
+                      (byPayer.get(m._id) ?? []).map((r) => ({
                         state: r.state,
                         amount: r.amount,
                         claimedAt: r.claimedAt,
                       }))
-                  );
-                  const remaining =
-                    expected - mine.confirmedAmount - mine.inFlightAmount;
-                  if (remaining > 0) {
-                    myDue = {
-                      roundId: collecting._id,
-                      amount: remaining,
-                      dueAt: collecting.dueAt,
-                    };
+                    );
+                    const remaining =
+                      expected - mine.confirmedAmount - mine.inFlightAmount;
+                    if (remaining > 0) {
+                      myDue = {
+                        roundId: collecting._id,
+                        amount: remaining,
+                        dueAt: collecting.dueAt,
+                      };
+                    }
                   }
                 }
               }
 
-              // Am I (any of my hands) the next pot's beneficiary?
-              const next = m.status === 'active' ? upcoming[0] : undefined;
-              if (next && next.beneficiaryMembershipId === m._id) {
-                receiving = {
-                  amount: expectedPotTotal(cycle, next),
-                  date: next.dueAt,
-                };
+              // Card roster stack: first 5 active members, viewer first so
+              // people recognize themselves in their own groups.
+              const activeMembers = groupMemberships
+                .filter((gm) => gm.status === 'active')
+                .sort((a, b) =>
+                  a._id === m._id ? -1 : b._id === m._id ? 1 : 0
+                );
+              memberPreview = activeMembers.slice(0, 5).map((gm) => ({
+                initials: personInitials(gm.displayName),
+                paid: paidByMember.get(gm._id) ?? false,
+              }));
+
+              // Whose turn is the next pot? (name for the card's round line)
+              const next = upcoming[0];
+              if (next) {
+                currentReceiverName =
+                  groupMemberships.find(
+                    (gm) => gm._id === next.beneficiaryMembershipId
+                  )?.displayName ?? null;
+                if (m.status === 'active' && next.beneficiaryMembershipId === m._id) {
+                  receiving = {
+                    amount: expectedPotTotal(cycle, next),
+                    date: next.dueAt,
+                  };
+                }
               }
             }
           }
@@ -614,6 +685,9 @@ export const listMyGroups = query({
             nextDueAt,
             myDue,
             receiving,
+            roundHealth,
+            memberPreview,
+            currentReceiverName,
           };
         })
     );

@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Njangi — Proposals round 2 · 7 surfaces + business logic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3f4f0; --surface:#ffffff; --ink:#1b2420; --muted:#6c7a72; --placeholder:#9aa69f;
+    --border:#e4e7e1; --border-faint:#eef0ec;
+    --accent:#e9a13b; --accent-dark:#a86f1d; --accent-faint:#fdf4e4;
+    --success:#1e7f4f; --success-bg:#e4f2ea; --warn:#b07a1e; --warn-bg:#f7ecd8; --danger:#c0442c;
+  }
+  *{box-sizing:border-box; margin:0}
+  body{background:var(--paper); color:var(--ink); font-family:"Plus Jakarta Sans",sans-serif; line-height:1.6; padding:3rem 1.5rem 6rem}
+  main{max-width:1220px; margin:0 auto}
+  h1{font-size:2rem; font-weight:800; letter-spacing:-.02em}
+  .sub{color:var(--muted); margin:.5rem 0 1.5rem; max-width:70ch}
+  nav.toc{display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:2.5rem}
+  nav.toc a{font-size:.78rem; font-weight:700; color:var(--ink); background:var(--surface); border:1px solid var(--border);
+    border-radius:99px; padding:.35rem .8rem; text-decoration:none}
+  nav.toc a.hot{background:var(--ink); color:#fff; border-color:var(--ink)}
+  section.prop{background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2rem; margin-bottom:2rem;
+    display:grid; grid-template-columns:minmax(340px,1fr) auto; gap:2rem; align-items:start}
+  @media (max-width:960px){ section.prop{grid-template-columns:1fr} }
+  .prop h2{font-size:1.25rem; font-weight:800; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap}
+  .tag{font-size:.66rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:.22rem .6rem; border-radius:99px}
+  .tag.effort{background:var(--accent-faint); color:var(--accent-dark)}
+  .tag.logic{background:#e8e4f4; color:#4a3d80}
+  .tag.nav{background:var(--success-bg); color:var(--success)}
+  .prop p{margin:.7rem 0; max-width:60ch}
+  .issues{margin:.6rem 0 0 1.1rem; max-width:60ch; color:#404b45; font-size:.92rem}
+  .issues li{margin:.3rem 0}
+  .issues b{color:var(--danger)}
+  .src{font-size:.82rem; color:var(--muted); margin-top:.9rem; max-width:60ch}
+  .src a{color:var(--success); text-decoration:none; border-bottom:1px dotted}
+  .cost{font-size:.8rem; margin-top:.7rem; color:var(--muted)}
+  .cost b{color:var(--ink)}
+
+  /* phone */
+  .phones{display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:center}
+  .phone{width:290px; height:600px; background:var(--paper); border-radius:38px; overflow:hidden;
+    box-shadow:0 16px 40px rgba(27,36,32,.16), inset 0 0 0 2px #dfe2dc; display:flex; flex-direction:column; position:relative; flex-shrink:0}
+  .phone.short{height:auto; min-height:300px; padding-bottom:1.4rem}
+  .phone .label{position:absolute; inset:auto 0 0 0; text-align:center; font-size:.64rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); background:rgba(243,244,240,.95); padding:.32rem 0; font-weight:700; border-top:1px solid var(--border)}
+  .statusbar{display:flex; justify-content:space-between; padding:.7rem 1.2rem .1rem; font-size:.68rem; font-weight:700; color:var(--muted)}
+  .screen{flex:1; padding:.4rem 1rem 1.9rem; overflow:hidden}
+  .sml{font-size:.7rem} .mut{color:var(--muted)} .plc{color:var(--placeholder)}
+  .ov{font-size:.62rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+  .mono{font-family:"IBM Plex Mono",monospace; font-weight:700; letter-spacing:-.02em}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:.8rem; margin-top:.7rem;
+    box-shadow:0 2px 8px rgba(27,36,32,.05)}
+  .row{display:flex; align-items:center; gap:.6rem; padding:.5rem 0; border-bottom:1px solid var(--border-faint)}
+  .row:last-child{border-bottom:0}
+  .disc{width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:.62rem; font-weight:800; color:#fff; flex-shrink:0; position:relative}
+  .disc.sm{width:26px; height:26px; font-size:.54rem}
+  .who{flex:1; min-width:0}
+  .who b{display:block; font-size:.78rem; font-weight:700}
+  .who span{display:block; font-size:.66rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .chip{font-size:.6rem; font-weight:800; padding:.18rem .55rem; border-radius:99px; white-space:nowrap}
+  .chip.ok{background:var(--success-bg); color:var(--success)}
+  .chip.out{border:1.2px solid var(--border); color:var(--muted); background:transparent}
+  .chip.warn{background:var(--warn-bg); color:var(--warn)}
+  .chip.hue{background:hsl(158 42% 93%); color:hsl(158 45% 28%)}
+  .pill-btn{font-size:.66rem; font-weight:800; border-radius:99px; padding:.34rem .7rem; white-space:nowrap}
+  .pill-btn.act{background:var(--ink); color:#fff}
+  .pill-btn.line{border:1.4px solid var(--accent-dark); color:var(--accent-dark)}
+  .pill-btn.ghost{background:#edeeea; color:var(--ink)}
+  .stack{display:flex}
+  .stack .disc{margin-left:-9px; border:2px solid var(--surface)}
+  .stack .disc:first-child{margin-left:0}
+  .dot{width:8px; height:8px; border-radius:50%; position:absolute; right:-1px; bottom:-1px; border:1.5px solid var(--surface)}
+
+  /* timeline */
+  .tl{display:flex; gap:.6rem; padding:.3rem 0}
+  .tl .rail{width:20px; display:flex; flex-direction:column; align-items:center}
+  .tl .node{width:18px; height:18px; border-radius:50%; flex-shrink:0; display:grid; place-items:center; font-size:.6rem; font-weight:900}
+  .node.done{background:var(--success); color:#fff}
+  .node.cur{border:2px solid var(--ink); background:var(--surface)}
+  .node.cur i{width:7px; height:7px; border-radius:50%; background:var(--ink); display:block}
+  .node.fut{border:1.6px solid var(--border); background:var(--surface)}
+  .node.wrn{background:var(--warn-bg); color:var(--warn); border:1.6px solid var(--warn)}
+  .tl .line{width:2px; flex:1; min-height:12px; background:var(--border)}
+  .tl .line.done{background:var(--success)}
+  .tl .body{flex:1; padding-bottom:.55rem; min-width:0}
+  .tl .body .l1{display:flex; justify-content:space-between; gap:.5rem; font-size:.74rem; font-weight:700}
+  .tl .body .l1 .ts{font-size:.62rem; color:var(--muted); font-weight:600; white-space:nowrap}
+  .tl .body .l2{font-size:.64rem; color:var(--muted)}
+
+  .ring{border-radius:50%; display:grid; place-items:center; flex-shrink:0}
+  .heroamt{font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:1.35rem; letter-spacing:-.02em}
+  .footerbar{position:absolute; left:12px; right:12px; bottom:30px; border-radius:14px; text-align:center;
+    font-size:.74rem; font-weight:800; padding:.7rem}
+  .footerbar.line{border:1.6px solid var(--ink); color:var(--ink); background:rgba(255,255,255,.92)}
+  .footerbar.go{background:var(--accent); color:#4a3000}
+  .grid7{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; margin-top:.4rem}
+  .grid7 .d{font-size:.66rem; padding:.32rem 0; border-radius:9px; position:relative}
+  .grid7 .wd{font-size:.56rem; color:var(--placeholder); font-weight:800}
+  .grid7 .today{outline:1.6px solid var(--accent); outline-offset:-1.6px}
+  .grid7 .sel{background:var(--ink); color:#fff; font-weight:800}
+  .gdots{display:flex; gap:2px; justify-content:center; margin-top:1px}
+  .gdots i{width:4px; height:4px; border-radius:50%; display:block}
+  .tabbar{position:absolute; inset:auto 0 0 0; display:flex; justify-content:space-around; padding:.5rem 0 1.5rem;
+    background:var(--surface); border-top:1px solid var(--border); font-size:.58rem; font-weight:700; color:var(--muted)}
+  .tabbar .on{color:var(--accent-dark)}
+  .tabbar .b{position:relative}
+  .tabbar .badge{position:absolute; top:-4px; right:-10px; background:var(--accent); color:#4a3000; font-size:.52rem;
+    font-weight:900; border-radius:99px; padding:0 .3rem; min-width:14px}
+  .sheet{position:absolute; left:8px; right:8px; bottom:8px; background:var(--surface); border-radius:18px; padding:1rem;
+    box-shadow:0 -8px 30px rgba(27,36,32,.25); text-align:center}
+  footer{color:var(--muted); font-size:.85rem; text-align:center; margin-top:3rem}
+  .flow{display:flex; flex-direction:column; gap:.5rem; margin-top:.8rem; max-width:430px}
+  .fbox{border:1.4px solid var(--border); border-radius:12px; padding:.55rem .8rem; font-size:.8rem; background:var(--paper)}
+  .fbox b{font-size:.82rem}
+  .fbox.bad{border-color:var(--danger); background:#faeeea}
+  .fbox.fix{border-color:var(--success); background:var(--success-bg)}
+  .arrow{text-align:center; color:var(--muted); font-size:.8rem; line-height:.6}
+</style>
+</head>
+<body>
+<main>
+  <h1>Proposals — round 2</h1>
+  <p class="sub">Sept surfaces + la logique métier, à partir d'un audit du code réel et d'un balayage Mobbin par surface. Chaque section : problèmes constatés dans le code → maquette → sources → coût. Rien n'est implémenté — validez section par section.</p>
+  <nav class="toc">
+    <a href="#logic" class="hot">0 · Logique métier</a>
+    <a href="#inbox">1 · Tab «À confirmer» → Accueil</a>
+    <a href="#gtab">2 · Onglet Groupe</a>
+    <a href="#gdetail">3 · Fiche njangi</a>
+    <a href="#cal">4 · Calendrier</a>
+    <a href="#round">5 · États de paiement</a>
+    <a href="#meeting">6 · Mode réunion</a>
+    <a href="#profile">7 · Profil</a>
+  </nav>
+
+  <!-- ══════════ 0 BUSINESS LOGIC ══════════ -->
+  <section class="prop" id="logic">
+    <div>
+      <h2>0 · Qui confirme l'argent du trésorier ? <span class="tag logic">logique métier</span></h2>
+      <p>Vous avez trouvé un vrai trou. Dans le code (<code>convex/rounds.ts:240</code>, <code>paymentRecords.ts:562</code>) :</p>
+      <div class="flow">
+        <div class="fbox"><b>Membre ordinaire</b> — payer = membre, payee = trésorier → le membre déclare, <b>le trésorier confirme</b>. ✓ contre-partie réelle</div>
+        <div class="fbox bad"><b>Trésorier lui-même</b> — payer = payee = trésorier → <code>isSelfRecord</code> → <b>confirmé instantanément, par personne</b>. Seule trace : une ligne «auto-confirmé» dans le fil d'activité.</div>
+        <div class="arrow">▼ proposition</div>
+        <div class="fbox fix"><b>Règle de contre-signature</b> — un enregistrement «self» reçoit un vrai confirmateur :<br>
+          1. le <b>président</b> confirme les cotisations du trésorier (la mécanique «confirmer au nom de» existe déjà dans <code>confirm</code>) ;<br>
+          2. si président = trésorier → le <b>bénéficiaire du tour</b> confirme ;<br>
+          3. si les trois rôles sont la même personne → auto-confirmation conservée, mais étiquetée en gros «auto-confirmé (aucun contre-signataire)» dans le ledger ET le mode réunion.</div>
+      </div>
+      <p style="margin-top:1rem">Symétrie déjà saine : la remise du pot est contre-signée (le bénéficiaire confirme le payout, minuterie anti-fuite de 7 j) — l'exposition est donc par cotisation, pas sur le pot entier.</p>
+      <h2 style="margin-top:1.6rem; font-size:1.05rem">0b · «60 000 à recevoir» ≠ «j'ai cotisé partout»</h2>
+      <p>Votre confusion sur le héros est un défaut réel : recevoir et être à jour sont indépendants, et rien ne le dit. Ajouts proposés (maquette ci-contre) : une ligne «À jour dans 4 cercles sur 5» sous le héros, et un chip «À jour ✓» par rangée de groupe quand toutes mes cotisations du tour courant sont réglées.</p>
+      <p class="cost"><b>Coût :</b> contre-signature = mutation Convex (choix du confirmateur pour records self) + copies fr/en — moyen. «À jour» = un booléen de plus sur listMyGroups — petit.</p>
+    </div>
+    <div class="phones">
+      <div class="phone short" style="width:280px">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div class="ov">À cotiser</div>
+          <div class="heroamt">-10 000 F</div>
+          <div class="sml" style="color:var(--success); font-weight:700">+60 000 F à recevoir jeu. 9 juil.</div>
+          <div class="sml mut" style="margin-top:.15rem">À jour dans <b style="color:var(--ink)">4 cercles sur 5</b></div>
+          <div class="card">
+            <div class="row">
+              <div class="disc" style="background:hsl(158 40% 42%)">NT</div>
+              <div class="who"><b>Njangi Test</b><span>0/5 tours</span></div>
+              <span class="chip ok">À jour ✓</span>
+            </div>
+            <div class="row">
+              <div class="disc" style="background:hsl(280 35% 50%)">NT</div>
+              <div class="who"><b>Njangi Test</b><span>10 000 F dus · jeu. 9 juil.</span></div>
+              <span class="chip warn">à cotiser</span>
+            </div>
+          </div>
+          <div class="card" style="border-color:var(--warn); background:var(--warn-bg)">
+            <div class="sml" style="font-weight:700; color:var(--warn)">Cotisation du trésorier — contre-signée</div>
+            <div class="sml mut">« Mama Ngozi (trésorière) a déclaré 10 000 F —<br><b style="color:var(--ink)">confirmée par Papa D. (président)</b> ✓ »</div>
+          </div>
+        </div>
+        <div class="label">à-jour + contre-signature</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 1 INBOX → HOME ══════════ -->
+  <section class="prop" id="inbox">
+    <div>
+      <h2>1 · Tuer l'onglet «À confirmer» <span class="tag nav">navigation</span><span class="tag effort">effort moyen</span></h2>
+      <p><b>Décision proposée : 4 onglets.</b> L'état normal du tab est «rien à faire» — un slot de navigation sur cinq qui apprend aux gens à l'ignorer. Remplacement : une pile d'actions en haut de l'Accueil (0 pixel quand vide), badge compté sur l'onglet Accueil, et un écran poussé «Tout voir» pour les listes longues.</p>
+      <ul class="issues">
+        <li>Icône actuelle = CheckCircle («fait») pour un onglet «action requise» — <b>même glyphe, deux sens opposés</b></li>
+        <li>Badge d'onglet rouge plateforme, hors système de tokens</li>
+        <li>Les rangées n'affichent ni l'heure de la déclaration ni la fenêtre d'objection — la raison d'être de l'écran</li>
+        <li>Montant noyé au milieu d'une ligne de texte, contre la posture money-first du nouvel Accueil</li>
+      </ul>
+      <p>Le pill «Vérifier» route vers le détail du paiement — <b>jamais de confirmation en un tap depuis une liste</b> (posture server-truth conservée).</p>
+      <p class="src">Sources : <a href="https://mobbin.com/screens/28f8bdc3-5ea8-4bb8-b0f7-0ff4bab4bb2c">Deel — upcoming actions sur l'accueil</a> · <a href="https://mobbin.com/screens/9b3cefde-7aec-41a0-916e-d9bc2a87c7ed">Chime — pending card, montant en tête</a> · <a href="https://mobbin.com/screens/f1df9592-8bf5-45f4-bca3-2f0fa4c15209">PayPal — section Pending sans tab</a> · <a href="https://mobbin.com/screens/72dbcfff-3d62-41ee-9084-10c64bd2bd15">Satispay — liste poussée hors tab bar</a></p>
+      <p class="cost"><b>Coût :</b> déplacer inbox.tsx vers /confirmations, section Accueil, badge stylé — moyen, zéro backend.</p>
+    </div>
+    <div class="phones">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div style="font-weight:800; font-size:1.1rem">Bonjour</div>
+          <div class="ov" style="margin-top:.5rem">À cotiser</div>
+          <div class="heroamt">-10 000 F</div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center">
+              <span class="ov">À confirmer</span>
+              <span class="sml" style="color:var(--accent-dark); font-weight:800">Tout voir (5)</span>
+            </div>
+            <div class="row">
+              <div class="disc" style="background:hsl(200 40% 90%); color:hsl(200 45% 30%)">AN</div>
+              <div class="who"><b>Aminatou N. — <span class="mono">25 000 F</span></b><span>Déclare vous avoir payé · Tontine du quartier · il y a 2 h</span></div>
+              <span class="pill-btn line">Vérifier</span>
+            </div>
+            <div class="row">
+              <div class="disc" style="background:hsl(24 50% 90%); color:hsl(24 55% 32%)">JK</div>
+              <div class="who"><b>Jean-Paul K. — <span class="mono">10 000 F</span></b><span>MoMo · <b style="color:var(--warn)">expire dans 5 h</b></span></div>
+              <span class="pill-btn line">Vérifier</span>
+            </div>
+            <div class="row">
+              <div class="disc" style="background:hsl(280 30% 91%); color:hsl(280 35% 35%)">MM</div>
+              <div class="who"><b>Mballa M. — <span class="mono">25 000 F</span></b><span>Déclare avoir reçu votre paiement · hier</span></div>
+              <span class="pill-btn line">Vérifier</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:.5rem; margin-top:.7rem">
+            <div class="card" style="flex:1; margin-top:0"><div class="ov">À payer</div><div class="mono" style="font-size:.95rem">10 000 F</div></div>
+            <div class="card" style="flex:1; margin-top:0"><div class="ov">À recevoir</div><div class="mono" style="font-size:.95rem; color:var(--success)">60 000 F</div></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <span class="on b">Accueil<span class="badge">3</span></span><span>Groupe</span><span>Calendrier</span><span>Profil</span>
+        </div>
+        <div class="label">accueil · pile à-confirmer · 4 tabs</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 2 GROUP TAB ══════════ -->
+  <section class="prop" id="gtab">
+    <div>
+      <h2>2 · Onglet Groupe = santé du cercle <span class="tag effort">effort moyen</span></h2>
+      <p>Aujourd'hui la carte duplique la rangée d'Accueil (le code le prouve : <code>myDue</code>/<code>receiving</code> sont récupérés puis jamais rendus). Nouveau métier de l'onglet : <b>gestion et santé par groupe</b> — qui a cotisé ce tour, à qui le tour, quoi faire ensuite.</p>
+      <ul class="issues">
+        <li><b>Tri cassé</b> pour les égalités (deux groupes actifs → ordre non déterministe)</li>
+        <li>Aucun point d'entrée créer/rejoindre sur tout l'onglet</li>
+        <li>État vide avec la copie de l'Accueil (mauvais contexte), pas de pull-to-refresh</li>
+        <li>«12 membres» = un mot, pas un roster</li>
+      </ul>
+      <p>Carte : avatar+ring · verdict de santé («À jour» / «3 en attente») · pile d'avatars avec point vert par cotisant · «Tour 4 sur 12 · Bénéficiaire : Mireille» · pill «Cotiser» seulement là où j'ai une dette. Sections EN COURS / TERMINÉS.</p>
+      <p class="src">Sources : <a href="https://mobbin.com/screens/8d4a1f26-0dd5-488c-a257-990a28c15159">Splitwise — attention routing</a> · <a href="https://mobbin.com/screens/90cecf19-4ae7-463d-87f2-fc5ba8bdbb14">Revolut — roster = santé du pot</a> · <a href="https://mobbin.com/screens/ae165087-821c-4ef6-b5df-c407f1167d57">Quicken — verdict «on track»</a> · <a href="https://mobbin.com/screens/62949335-6a31-46a5-a277-346f03216608">Rocket Money — sections par état</a></p>
+      <p class="cost"><b>Coût :</b> +2 champs serveur sur listMyGroups (<code>roundHealth</code>, <code>memberPreview</code> 5 max) + refonte carte — moyen.</p>
+    </div>
+    <div class="phones">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span style="font-weight:800; font-size:1.1rem">Mes njangis</span>
+            <span class="pill-btn ghost" style="border-radius:50%; width:30px; height:30px; display:grid; place-items:center">＋</span>
+          </div>
+          <div class="sml mut">3 en cours · 1 en pause · 1 terminé</div>
+          <div class="ov" style="margin-top:.6rem">En cours</div>
+          <div class="card">
+            <div class="row" style="border:0; padding-bottom:.2rem">
+              <div class="disc" style="background:hsl(158 40% 42%)">FB</div>
+              <div class="who"><b>Famille Bayere <span class="chip out" style="font-size:.52rem">Trésorier</span></b></div>
+              <span class="chip hue">À jour</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:.5rem; padding:.3rem 0 .2rem 2px">
+              <div class="stack">
+                <div class="disc sm" style="background:hsl(158 40% 42%)">MA<span class="dot" style="background:var(--success)"></span></div>
+                <div class="disc sm" style="background:hsl(280 35% 50%)">JN<span class="dot" style="background:var(--success)"></span></div>
+                <div class="disc sm" style="background:hsl(24 55% 48%)">PK<span class="dot" style="background:var(--success)"></span></div>
+                <div class="disc sm" style="background:hsl(200 40% 45%)">FT</div>
+                <div class="disc sm" style="background:#edeeea; color:var(--muted)">+8</div>
+              </div>
+              <span class="sml mut">8/12 ont cotisé ce tour</span>
+            </div>
+            <div class="sml" style="font-weight:600; padding-left:2px">Tour 4 sur 12 · Bénéficiaire : Mireille · sam. 12 juil.</div>
+            <div class="sml plc" style="padding-left:2px">25 000 FCFA · Mensuel</div>
+          </div>
+          <div class="card">
+            <div class="row" style="border:0; padding-bottom:.2rem">
+              <div class="disc" style="background:hsl(280 35% 50%)">CQ</div>
+              <div class="who"><b>Collègues Quartier</b></div>
+              <span class="chip out">3 en attente</span>
+            </div>
+            <div class="sml" style="font-weight:600; padding-left:2px">C'est votre tour · sam. 4 juil.</div>
+            <div style="display:flex; justify-content:flex-end; margin-top:.3rem">
+              <span class="pill-btn act">Cotiser · 25 000 F</span>
+            </div>
+          </div>
+          <div class="ov" style="margin-top:.6rem">Terminés</div>
+          <div class="card" style="padding:.55rem .8rem">
+            <div class="row" style="border:0">
+              <div class="disc sm" style="background:hsl(80 30% 45%)">AV</div>
+              <div class="who"><b style="font-size:.72rem">Anciens du village</b><span>12 tours · terminé en mai 2026</span></div>
+              <span class="mut">›</span>
+            </div>
+          </div>
+        </div>
+        <div class="label">groupe · roster + verdict + action</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 3 GROUP DETAIL ══════════ -->
+  <section class="prop" id="gdetail">
+    <div>
+      <h2>3 · Fiche njangi : héros + timeline <span class="tag effort">effort moyen</span></h2>
+      <p>Le montant de cotisation — LE chiffre du groupe — est aujourd'hui dans la <b>dernière</b> carte de l'écran ; le nom du bénéficiaire est répété 3 fois ; 12 tours = un mur de ~550 px de rangées identiques ; et la page du groupe n'utilise même pas l'identité (wash/ring) construite pour lui.</p>
+      <ul class="issues">
+        <li>Le ring de progression existe sur GroupAvatar mais n'est jamais passé ici</li>
+        <li>Barre du pot en <code>bg-accent</code> global au lieu de la teinte du groupe (double style className+inline)</li>
+        <li>Deux en-têtes empilés dans la carte rotation, imports morts, doc-comment périmé</li>
+      </ul>
+      <p>Régions : héros identité (wash + ring + «Cotisation 5 000 F / membre» + stat versé/attendu) → Tour en cours (barre teinte groupe + légende de garde) → <b>timeline verticale des tours</b> (fait/actuel/à venir, fenêtre repliée «Voir les 8 tours») → Membres avec chip «À jour / En attente» par personne → Inviter (rétrogradé en cycle) → Activité → Règles allégées.</p>
+      <p class="src">Sources : <a href="https://mobbin.com/screens/9391c15c-ddfa-435c-accb-5bb20151e9a8">Revolut — héros de coffre partagé</a> · <a href="https://mobbin.com/screens/896a8f02-33b2-45e2-8d85-2d30cba028b8">Afterpay — timeline cousue</a> · <a href="https://mobbin.com/screens/fd7d9e0a-16b8-4b5f-a6c0-31bc7c1c2a93">Revolut Party — statut d'argent par membre</a></p>
+      <p class="cost"><b>Coût :</b> surtout du re-layout de l'existant ; chip par membre = statut par tour déjà côté round detail, à exposer si pas cher — moyen.</p>
+    </div>
+    <div class="phones">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div class="card" style="margin-top:.2rem; background:linear-gradient(135deg, hsl(158 45% 95%), #fff 65%)">
+            <div style="display:flex; justify-content:space-between"><span class="mut">←</span><span class="chip hue">Actif</span></div>
+            <div class="row" style="border:0">
+              <div class="disc" style="background:hsl(158 40% 42%); outline:3px solid hsl(158 45% 55%); outline-offset:2px">FB</div>
+              <div class="who"><b style="font-size:.9rem">Famille Bayere</b><span>8 membres · Hebdomadaire · Jeudi</span></div>
+            </div>
+            <div style="display:flex; gap:1rem; margin-top:.3rem">
+              <div><div class="ov">Cotisation</div><div style="font-weight:800; font-size:.85rem">5 000 F <span class="mut" style="font-weight:600">/ membre</span></div></div>
+              <div><div class="ov">Versé ce tour</div><div style="font-weight:800; font-size:.85rem">20 000 <span class="mut" style="font-weight:600">/ 40 000 F</span></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sml" style="font-weight:700">Tour 3 sur 8 — Bénéficiaire : Mariam N.</div>
+            <div style="height:8px; border-radius:99px; background:var(--border-faint); margin:.4rem 0 .3rem; overflow:hidden">
+              <div style="width:50%; height:100%; border-radius:99px; background:hsl(158 45% 42%)"></div>
+            </div>
+            <div class="sml plc">20 000 F sur 40 000 F — détenus par Awa (trésorière)</div>
+          </div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.3rem">
+              <span class="sml" style="font-weight:800">Rotation · Cycle 1</span><span class="chip out">🔒 verrouillé</span>
+            </div>
+            <div class="tl"><div class="rail"><div class="node done">✓</div><div class="line done"></div></div>
+              <div class="body"><div class="l1"><span class="mut" style="font-weight:600">Tour 2 · Awa B.</span><span class="ts">Reçu 40 000 F · 12 juin</span></div></div></div>
+            <div class="tl" style="background:var(--accent-faint); border-radius:10px; margin:0 -4px; padding:.3rem 4px"><div class="rail"><div class="node cur"><i></i></div><div class="line"></div></div>
+              <div class="body"><div class="l1"><span>Tour 3 · Mariam N.</span><span class="chip hue">Ce tour</span></div></div></div>
+            <div class="tl"><div class="rail"><div class="node fut"></div></div>
+              <div class="body"><div class="l1"><span class="plc">Tour 4 · Paul K.</span><span class="ts">Prévu le 26 juin</span></div></div></div>
+            <div class="sml" style="text-align:center; color:var(--accent-dark); font-weight:800; margin-top:.2rem">Voir les 8 tours</div>
+          </div>
+          <div class="card">
+            <div class="sml" style="font-weight:800; margin-bottom:.2rem">Membres · 8</div>
+            <div class="row"><div class="disc sm" style="background:hsl(280 35% 50%)">MN</div>
+              <div class="who"><b style="font-size:.72rem">Mariam N. <span class="plc" style="font-weight:600">★ vous</span></b></div><span class="chip ok">À jour</span></div>
+            <div class="row"><div class="disc sm" style="background:hsl(24 55% 48%)">PK</div>
+              <div class="who"><b style="font-size:.72rem">Paul K.</b></div><span class="chip out">En attente</span></div>
+          </div>
+        </div>
+        <div class="label">fiche njangi · héros + timeline</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 4 CALENDAR ══════════ -->
+  <section class="prop" id="cal">
+    <div>
+      <h2>4 · Calendrier hybride <span class="tag effort">effort moyen</span></h2>
+      <p>Le tab n'a <b>aucun calendrier visuel</b> — juste du texte. Le jour de paie (le meilleur moment de la surface) a la même typographie qu'une cotisation, et les rangées ne sont même pas tappables.</p>
+      <ul class="issues">
+        <li>«estimé» et «passé» partagent le même gris — deux sens, un seul style</li>
+        <li>Aucun repère «aujourd'hui», aucun saut de mois</li>
+        <li>Zéro identité de groupe sur les rangées (mur monochrome dès 3 groupes)</li>
+      </ul>
+      <p>Hybride : héros «Prochaine échéance» (gros numéro du jour, «dans 3 jours», montant) → grille de mois repliable avec points teinte-groupe + tick vert les jours de paie → agenda en <b>rail timeline</b> (plein=confirmé, anneau accent=prochain, tirets=estimé) avec fond teinté succès sur les jours de paie. Rangées tappables → groupe.</p>
+      <p class="src">Sources : <a href="https://mobbin.com/screens/0fe3af19-4929-4cff-b324-2929d7ddc5a2">Rocket Money — grille + marqueurs</a> · <a href="https://mobbin.com/screens/02013212-ca2e-4f31-bee0-dbce799d9f1d">Hyundai Card — grille repliable</a> · <a href="https://mobbin.com/screens/1941c872-3daa-4581-bd6e-ae052c79b018">Klarna — échéances relatives</a> · <a href="https://mobbin.com/screens/896a8f02-33b2-45e2-8d85-2d30cba028b8">Afterpay — rail</a></p>
+      <p class="cost"><b>Coût :</b> zéro backend (myAgenda déjà souscrit) ; grille + rail + héros — moyen.</p>
+    </div>
+    <div class="phones">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span style="font-weight:800; font-size:1.1rem">Calendrier</span>
+            <span class="pill-btn ghost">Aujourd'hui</span>
+          </div>
+          <div class="card" style="background:linear-gradient(135deg, hsl(158 45% 94%), #fff 70%)">
+            <div style="display:flex; gap:.8rem; align-items:center">
+              <div style="text-align:center; min-width:52px"><div style="font-weight:800; font-size:1.5rem; line-height:1">15</div><div class="sml mut">juil.</div></div>
+              <div style="flex:1">
+                <div class="sml" style="font-weight:800">Famille Bayere · Tour 4</div>
+                <div class="sml mut">dans 3 jours</div>
+                <div class="sml" style="font-weight:700">Vous cotisez 10 000 F</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center">
+              <span class="sml mut">‹</span><span class="sml" style="font-weight:800">Juillet 2026</span><span class="sml mut">› ⌃</span>
+            </div>
+            <div class="grid7">
+              <span class="d wd">L</span><span class="d wd">M</span><span class="d wd">M</span><span class="d wd">J</span><span class="d wd">V</span><span class="d wd">S</span><span class="d wd">D</span>
+              <span class="d plc">29</span><span class="d plc">30</span><span class="d today">1</span><span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d">5</span>
+              <span class="d">6</span><span class="d">7</span><span class="d">8</span><span class="d sel">9<span class="gdots"><i style="background:hsl(280 45% 60%)"></i><i style="background:var(--success)"></i></span></span><span class="d">10</span><span class="d">11</span><span class="d">12</span>
+              <span class="d">13</span><span class="d">14</span><span class="d">15<span class="gdots"><i style="background:hsl(158 45% 45%)"></i></span></span><span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d">19</span>
+            </div>
+            <div style="display:flex; gap:.5rem; margin-top:.5rem">
+              <div style="flex:1"><div class="ov">Sorties juil.</div><div class="mono" style="font-size:.82rem">25 000 F</div></div>
+              <div style="flex:1"><div class="ov">Entrées juil.</div><div class="mono" style="font-size:.82rem; color:var(--success)">60 000 F</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="tl" style="background:var(--success-bg); border-radius:10px; margin:0 -4px; padding:.35rem 6px">
+              <div class="rail"><div class="node cur" style="border-color:var(--success)"><i style="background:var(--success)"></i></div></div>
+              <div class="body"><div class="l1"><span><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:hsl(280 45% 60%)"></i> Collègues Qtr · Tour 7</span><span class="ts">jeu. 9</span></div>
+                <div class="l2" style="color:var(--success); font-weight:700">Vous recevez 60 000 F (main 1/2)</div></div>
+            </div>
+            <div class="tl"><div class="rail"><div class="node fut" style="border-style:dashed"></div></div>
+              <div class="body"><div class="l1"><span class="mut"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:hsl(158 45% 45%)"></i> Famille Bayere · Tour 4 <span class="chip out" style="font-size:.5rem">Estimé</span></span><span class="ts">mer. 15</span></div>
+                <div class="l2">Vous cotisez 10 000 F</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="label">calendrier · héros + grille + rail</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 5 ROUND STATES ══════════ -->
+  <section class="prop" id="round">
+    <div>
+      <h2>5 · «Ma cotisation» = timeline de cycle de vie <span class="tag effort">effort moyen</span></h2>
+      <p>Vos deux plaintes sont dans le code : l'état n'est porté que par des chips de 12 px, et le chip «déclaré» emprunte <b>la couleur de marque</b> (accent doré) — en mode clair, le fond de «déclaré» est <b>littéralement la même valeur</b> que celui de «contesté». Et quand c'est réglé : deux coches vertes qui disent la même chose.</p>
+      <p><b>Réponse standard fintech</b> (Wise, Revolut, Fidelity) : une timeline verticale par enregistrement — étapes faites en fines lignes horodatées, étape courante en phrase nommant <b>qui agit</b> («En attente de confirmation par Mama Ngozi»), et la timeline finie EST le reçu. Retonage global : accent = action/CTA seulement ; pending=contour, déclaré=neutre, <b>confirmé = le seul fond coloré (succès)</b>, contesté=warning. Multi-mains : «1ʳᵉ main · 5 000 F» par bloc.</p>
+      <p class="src">Sources : <a href="https://mobbin.com/screens/be2cd595-c9a0-451f-994c-a907cfff3288">Wise — l'étape courante en prose</a> · <a href="https://mobbin.com/screens/6ade5a53-e2a8-423e-b5d9-c135e5bf010c">CVS — stepper monochrome, zéro fond teinté</a> · <a href="https://mobbin.com/screens/25e11619-e36d-45bd-b170-df6beedef976">Wise — la timeline devient le reçu</a> · <a href="https://mobbin.com/screens/b7a4d4f5-b5a7-4f95-a39e-84e7a258996c">Revolut — compteur d'étapes dans le titre</a></p>
+      <p class="cost"><b>Coût :</b> zéro backend (les horodatages existent déjà côté serveur, jetés par l'UI) ; nouveau composant timeline ~120 lignes + retonage badge partout — moyen.</p>
+    </div>
+    <div class="phones">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:.4rem">
+              <span class="sml" style="font-weight:800">Ma cotisation</span><span class="sml mut">1/2 étapes</span>
+            </div>
+            <div class="ov" style="margin-bottom:.2rem">1ʳᵉ main · 5 000 F</div>
+            <div class="tl"><div class="rail"><div class="node done">✓</div><div class="line done"></div></div>
+              <div class="body"><div class="l1"><span class="mut" style="font-weight:600">Déclarée</span><span class="ts">2 juil., 14 h 32</span></div>
+                <div class="l2">MTN MoMo · vous</div></div></div>
+            <div class="tl"><div class="rail"><div class="node cur"><i></i></div></div>
+              <div class="body"><div class="l1"><span>En attente de confirmation par <b>Mama Ngozi</b></span></div>
+                <div class="l2">Votre cotisation compte dans le pot après sa confirmation.</div></div></div>
+            <div class="ov" style="margin:.5rem 0 .2rem">2ᵉ main · 5 000 F</div>
+            <div class="tl"><div class="rail"><div class="node done">✓</div><div class="line done"></div></div>
+              <div class="body"><div class="l1"><span class="mut" style="font-weight:600">Déclarée</span><span class="ts">30 juin, 18 h 05</span></div></div></div>
+            <div class="tl"><div class="rail"><div class="node done">✓</div></div>
+              <div class="body"><div class="l1"><span style="color:var(--success); font-weight:800">Confirmée par Mama Ngozi</span><span class="ts">30 juin, 19 h 12</span></div>
+                <div class="l2" style="color:var(--accent-dark); font-weight:700">Voir le reçu →</div></div></div>
+          </div>
+          <div class="card">
+            <div class="sml" style="font-weight:800; margin-bottom:.2rem">Cotisations des membres</div>
+            <div class="row"><div class="who"><b style="font-size:.72rem">Jean N.</b></div><span class="chip ok">✓ confirmé</span></div>
+            <div class="row"><div class="who"><b style="font-size:.72rem">Fatou T.</b></div><span class="chip out" style="background:#edeeea; border:0; color:var(--ink)">déclaré</span></div>
+            <div class="row"><div class="who"><b style="font-size:.72rem">Solange B.</b></div><span class="chip out">◌ en attente</span></div>
+            <div class="row"><div class="who"><b style="font-size:.72rem">Emmanuel N.</b></div><span class="chip warn">⚠ contesté</span></div>
+          </div>
+        </div>
+        <div class="label">timeline + retonage des chips</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 6 MEETING MODE ══════════ -->
+  <section class="prop" id="meeting">
+    <div>
+      <h2>6 · Mode réunion = cérémonie <span class="tag effort">effort moyen</span></h2>
+      <p>La plomberie (file d'attente offline, idempotence) est bonne — mais le trésorier qui compte du liquide dans une salle n'a <b>aucun total encaissé/attendu à l'écran</b> avant de taper «Terminer». Et un effleurement de rangée annule un pointage sans confirmation.</p>
+      <ul class="issues">
+        <li>Le montant disparaît d'une rangée dès qu'elle est pointée</li>
+        <li>Édition de montant = long-press caché, zéro découvrabilité</li>
+        <li>Pot complet ressemble exactement à 3/12 — aucun moment</li>
+      </ul>
+      <p>Héros = <b>anneau de progression 96 px</b> (teinte du groupe, le «one bold use») avec 8/12 au centre + total encaissé à droite. Rangées en deux sections — «À encaisser» / «Encaissé» (les pointés coulent en bas, animés). Annulation = bouton dédié + <b>feuille de confirmation</b> (Partiful). Crayon visible sur le montant. Pied collant réconciliateur : «Terminer — reste 120 000 F (4 membres)» → devient primaire «Clôturer — le compte est bon» à 100 % avec un seul burst de confetti (Klima). Écran final = cérémonie : gros pot, garde nommée, carte bénéficiaire, «À lire à voix haute».</p>
+      <p class="src">Sources : <a href="https://mobbin.com/screens/ea985466-4b63-4131-a55d-7f43a9985882">Partiful — check-in + feuille d'annulation</a> · <a href="https://mobbin.com/screens/e5781973-d3b2-4f1c-8cf2-fd85e500c667">How We Feel — l'anneau EST l'écran</a> · <a href="https://mobbin.com/screens/2313ebbe-5ba9-40d4-8c1c-2c57925fbdee">Klima — 100 % = confetti</a> · <a href="https://mobbin.com/screens/d3cd7701-4eba-43ab-9dfb-957502d64c95">Splitwise — pied réconciliateur</a> · <a href="https://mobbin.com/screens/33fe54a9-4b98-486a-8d71-9df2224fc173">Jobber — crayon sur le montant</a></p>
+      <p class="cost"><b>Coût :</b> présentation pure — mutations, file, idempotence intactes. Moyen.</p>
+    </div>
+    <div class="phones">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen" style="background:linear-gradient(180deg, hsl(158 40% 94%), var(--paper) 30%)">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <div><div style="font-weight:800; font-size:1rem">Appel des cotisations</div>
+            <div class="ov">Caisse tenue par Mama Ngozi</div></div><span class="mut">✕</span>
+          </div>
+          <div style="display:flex; gap:.8rem; align-items:center; padding:.7rem 0 .4rem">
+            <div class="ring" style="width:84px; height:84px; background:conic-gradient(hsl(158 45% 42%) 0 66%, var(--border-faint) 66% 100%)">
+              <div class="ring" style="width:66px; height:66px; background:var(--paper)"><div style="text-align:center"><b style="font-size:.95rem">8/12</b><div class="sml mut" style="font-size:.56rem">membres</div></div></div>
+            </div>
+            <div>
+              <div class="mono" style="font-size:1.05rem">240 000 F</div>
+              <div class="sml mut">sur 360 000 F attendus</div>
+              <div class="sml plc">Espèces entre les mains de Mama Ngozi</div>
+            </div>
+          </div>
+          <div class="ov">À encaisser (4)</div>
+          <div class="card" style="margin-top:.3rem">
+            <div class="row">
+              <div class="disc" style="background:hsl(24 55% 48%)">PK</div>
+              <div class="who"><b>Paul K.</b><span>Attendu · 30 000 F ✎</span></div>
+              <div style="width:30px; height:30px; border-radius:50%; border:2px solid var(--border)"></div>
+            </div>
+            <div class="row">
+              <div class="disc" style="background:hsl(200 40% 45%)">FT</div>
+              <div class="who"><b>Fatou T.</b><span>A déclaré avoir payé — touchez pour confirmer</span></div>
+              <span class="pill-btn act" style="background:var(--accent); color:#4a3000">Confirmer</span>
+            </div>
+          </div>
+          <div class="ov" style="margin-top:.5rem">Encaissé (8)</div>
+          <div class="card" style="margin-top:.3rem; background:#fafbf8">
+            <div class="row">
+              <div class="disc" style="background:hsl(280 35% 50%)">JN</div>
+              <div class="who"><b class="mut">Jean N.</b><span>Encaissé · 30 000 F ✓</span></div>
+              <span class="pill-btn ghost">Annuler</span>
+            </div>
+          </div>
+          <div class="footerbar line">Terminer l'appel — reste 120 000 F (4 membres)</div>
+        </div>
+        <div class="label">réunion · anneau + sections</div>
+      </div>
+      <div class="phone short" style="width:250px">
+        <div class="screen" style="position:relative; min-height:290px">
+          <div style="opacity:.35; padding-top:1rem">
+            <div class="ov">À encaisser (4)</div>
+            <div class="card"><div class="row"><div class="disc sm" style="background:hsl(24 55% 48%)">PK</div><div class="who"><b style="font-size:.7rem">Paul K.</b></div></div></div>
+          </div>
+          <div class="sheet">
+            <div class="disc" style="background:hsl(280 35% 50%); margin:0 auto .4rem; width:44px; height:44px">JN</div>
+            <div style="font-weight:800; font-size:.85rem">Annuler le pointage de Jean ?</div>
+            <div class="sml mut" style="margin:.2rem 0 .6rem">Son versement redeviendra en attente.</div>
+            <div class="pill-btn act" style="display:block; margin-bottom:.4rem">Annuler le pointage</div>
+            <div class="pill-btn ghost" style="display:block">Garder</div>
+          </div>
+        </div>
+        <div class="label">feuille d'annulation</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 7 PROFILE ══════════ -->
+  <section class="prop" id="profile">
+    <div>
+      <h2>7 · Profil = identité + réputation <span class="tag effort">effort moyen</span></h2>
+      <p>L'écran est un stub assumé (le commentaire du fichier le dit) : pile plate non scrollable, téléphone affiché deux fois, déconnexion au milieu du flux. Or le schéma réserve déjà <code>reliabilityStats</code> — <b>les données que cet écran attend existent sur le papier, personne ne les lit</b>.</p>
+      <p>Structure : carte identité (initiales 56 px, «Membre depuis mars 2026», <b>bande de 3 stats</b> : total cotisé / cagnottes reçues / à l'heure 12/13) → carte <b>Fiabilité</b> style banque calme (anneau succès, «À l'heure sur 12 de vos 13 tours» — réputation, pas gamification) → section COMPTE en rangées groupées (WhatsApp «Vérifié ✓» ou «À relier» — c'est la garde de linkMemberships, l'état non-lié mérite une pression visible ; Appareils ; Notifications) → PARTAGER (inviter un proche) → déconnexion en dernier + version.</p>
+      <p class="src">Sources : <a href="https://mobbin.com/screens/86386b5e-8520-4911-8fd7-51ed54a0babc">Forest — stats dans la carte d'identité</a> · <a href="https://mobbin.com/screens/aa71f7a9-287d-4c9f-84f7-07f9491239d6">CRED — sections groupées calmes</a> · <a href="https://mobbin.com/screens/b645b735-388a-4e6a-b930-35693d666964">Zopa — la fiabilité en posture bancaire</a></p>
+      <p class="cost"><b>Coût :</b> une nouvelle query <code>users.myProfileStats</code> (agrégat paymentRecords confirmés + rounds reçus, lisant reliabilityStats quand ses writers existeront) + re-layout — moyen.</p>
+    </div>
+    <div class="phones">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span style="font-weight:800; font-size:1.05rem">Profil</span>
+            <span class="chip out" style="padding:.25rem .6rem">FR | <b>EN</b></span>
+          </div>
+          <div class="card">
+            <div class="row" style="border:0">
+              <div class="disc" style="width:46px; height:46px; background:var(--accent-faint); color:var(--accent-dark); font-size:.8rem">AN</div>
+              <div class="who"><b style="font-size:.9rem">Awa Ndip</b><span>@awa · Membre depuis mars 2026</span></div>
+            </div>
+            <div style="display:flex; border-top:1px solid var(--border-faint); margin-top:.4rem; padding-top:.5rem; text-align:center">
+              <div style="flex:1.2"><div style="font-weight:800; font-size:.8rem">240 000 F</div><div class="sml mut" style="font-size:.56rem">Cotisé au total</div></div>
+              <div style="flex:1; border-left:1px solid var(--border-faint)"><div style="font-weight:800; font-size:.8rem">3</div><div class="sml mut" style="font-size:.56rem">Cagnottes reçues</div></div>
+              <div style="flex:1; border-left:1px solid var(--border-faint)"><div style="font-weight:800; font-size:.8rem">12/13</div><div class="sml mut" style="font-size:.56rem">À l'heure</div></div>
+            </div>
+          </div>
+          <div class="sml plc" style="padding:.25rem 2px">Montants confirmés par vos groupes — l'appli ne détient jamais l'argent.</div>
+          <div class="card">
+            <div class="row" style="border:0">
+              <div class="ring" style="width:34px; height:34px; background:conic-gradient(var(--success) 0 92%, var(--border-faint) 92% 100%)">
+                <div class="ring" style="width:24px; height:24px; background:var(--surface)"></div>
+              </div>
+              <div class="who"><b>Fiabilité</b><span>À l'heure sur 12 de vos 13 tours</span></div>
+              <span class="chip ok">Fiable</span>
+            </div>
+          </div>
+          <div class="ov" style="margin-top:.5rem">Compte</div>
+          <div class="card" style="margin-top:.3rem">
+            <div class="row"><div class="who"><b style="font-size:.74rem">📱 Numéro WhatsApp</b></div><span class="chip ok">Vérifié ✓</span><span class="mut">›</span></div>
+            <div class="row"><div class="who"><b style="font-size:.74rem">💻 Appareils connectés</b></div><span class="chip out">2</span><span class="mut">›</span></div>
+            <div class="row"><div class="who"><b style="font-size:.74rem">🔔 Notifications</b></div><span class="sml mut">Rappels 2 j avant</span><span class="mut">›</span></div>
+          </div>
+          <div class="ov" style="margin-top:.5rem">Partager</div>
+          <div class="card" style="margin-top:.3rem">
+            <div class="row"><div class="who"><b style="font-size:.74rem">Inviter un proche</b><span>Faites entrer votre njangi dans l'appli.</span></div><span class="mut">›</span></div>
+          </div>
+          <div class="pill-btn ghost" style="display:block; text-align:center; margin-top:.7rem">Se déconnecter</div>
+          <div class="sml plc" style="text-align:center; margin-top:.3rem">Pas de frais. Votre argent ne passe jamais par l'appli. · v1.4</div>
+        </div>
+        <div class="label">profil · identité + fiabilité</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Round 2 · 2026-07-03 · audit code + Mobbin par surface · maquettes en tokens réels de l'app (light ; le dark suit les tokens)<br>
+  Bonus trouvés par l'audit, à corriger quoi qu'on décide : tri de l'onglet Groupe cassé, rangées calendrier non tappables, badge d'onglet rouge hors tokens, «déclaré» et «contesté» même fond en mode clair.</footer>
+</main>
+</body>
+</html>

@@ -47,6 +47,24 @@ export function groupAccent(seed: number, dark: boolean): string {
     : `hsl(${seed % 360}, 55%, 40%)`;
 }
 
+/**
+ * Faint fill for hue-themed chips/pills — pairs with groupAccent() text.
+ * Group-tab cards flow the group hue through their controls (user decision
+ * 2026-07-03), so chip backgrounds come from here, not accent tokens.
+ */
+export function groupTint(seed: number, dark: boolean): string {
+  return dark
+    ? `hsl(${seed % 360}, 32%, 24%)`
+    : `hsl(${seed % 360}, 48%, 92%)`;
+}
+
+/** Solid readable fill for a hue-themed button; white label on top. */
+export function groupSolid(seed: number, dark: boolean): string {
+  return dark
+    ? `hsl(${seed % 360}, 48%, 46%)`
+    : `hsl(${seed % 360}, 52%, 38%)`;
+}
+
 /** Initials for the avatar disc: « Njangi Famille » → « NF ». */
 export function groupInitials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);

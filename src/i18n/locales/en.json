@@ -287,7 +287,31 @@
     },
     "card": {
       "roundOf": "{{done}}/{{total}} rounds",
-      "nextDue": "next {{date}}"
+      "nextDue": "next {{date}}",
+      "upToDate": "All paid",
+      "pendingCount_one": "{{count}} pending",
+      "pendingCount_other": "{{count}} pending",
+      "paidOfMembers": "{{paid}}/{{total}} paid this round",
+      "beneficiary": "Receiver: {{name}}",
+      "myTurn": "It’s your turn",
+      "setupLine": "Invite members to get started",
+      "betweenLine": "Cycle finished · plan the next draw",
+      "contribute": "Contribute · {{amount}}"
+    },
+    "tab": {
+      "sectionOngoing": "Ongoing",
+      "sectionDone": "Finished",
+      "activeCount_one": "{{count}} ongoing",
+      "activeCount_other": "{{count}} ongoing",
+      "pausedCount_one": "{{count}} paused",
+      "pausedCount_other": "{{count}} paused",
+      "doneCount_one": "{{count}} finished",
+      "doneCount_other": "{{count}} finished",
+      "addAction": "Create or join",
+      "create": "Create a njangi",
+      "join": "Join with a code",
+      "emptyTitle": "No njangi yet",
+      "emptyBody": "Create your own, or join your association’s with an invite code."
     }
   },
   "round": {
