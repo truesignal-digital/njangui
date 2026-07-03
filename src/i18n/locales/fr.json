@@ -500,5 +500,13 @@
     "youReceiveShort": "vous recevez {{amount}}",
     "receivesShort": "{{name}} reçoit",
     "handOf": "main {{n}}/{{total}}"
+  },
+  "errors": {
+    "network": "Pas de connexion. Vos données sont en sécurité — réessayez une fois en ligne."
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "Ce lien ne mène plus nulle part — il est peut-être ancien ou l'élément a été supprimé.",
+    "cta": "Retour à l'accueil"
   }
 }

@@ -7,6 +7,7 @@ import { membershipRoleValidator, membershipStatusValidator } from './schema';
 import { logActivityEvent } from './utils/activity';
 import { getCurrentUser, getCurrentUserOrNull, requireMembership, requireRole } from './utils/auth';
 import { isValidE164, normalizePhone } from './utils/phone';
+import { groupLink } from './lib/appLinks';
 
 // Hard cap on active + pending memberships per group (02 §a, 05 Week 6
 // DECISION). Both approval and direct add are rejected above it; the
@@ -414,7 +415,7 @@ export const addMemberByUsername = mutation({
       titleEn: `Added to "${group.name}"`,
       bodyFr: `${actor.displayName} vous a ajouté(e) à ce njangi.`,
       bodyEn: `${actor.displayName} added you to this njangi.`,
-      url: `/groups/${args.groupId}`,
+      url: groupLink(args.groupId),
     });
     if (user.email !== undefined) {
       await ctx.scheduler.runAfter(0, internal.email.sendMemberAdded, {
@@ -511,7 +512,7 @@ export const assignPresident = mutation({
       titleEn: `You are the president of "${group.name}"`,
       bodyFr: `${actor.displayName} vous a nommé(e) président(e). Vous pouvez définir l'ordre de rotation et démarrer le cycle.`,
       bodyEn: `${actor.displayName} named you president. You can set the rotation order and start the cycle.`,
-      url: `/groups/${args.groupId}`,
+      url: groupLink(args.groupId),
     });
 
     return null;

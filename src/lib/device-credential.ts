@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
+import { storageKeys } from './storage-keys';
 
 /**
  * Device credential storage (auth spec, device-bind): the 256-bit bearer
@@ -16,9 +17,9 @@ import * as SecureStore from 'expo-secure-store';
  * ungated write so device-login still works in development.
  */
 
-const KEYCHAIN_SERVICE = 'njangi.device';
-const KEY_SECRET = 'njangi-device-secret';
-const KEY_DEVICE_ID = 'njangi-device-id';
+const KEYCHAIN_SERVICE = storageKeys.deviceKeychainService;
+const KEY_SECRET = storageKeys.deviceSecret;
+const KEY_DEVICE_ID = storageKeys.deviceId;
 
 export async function getOrCreateDeviceId(): Promise<string> {
   const existing = await SecureStore.getItemAsync(KEY_DEVICE_ID, {

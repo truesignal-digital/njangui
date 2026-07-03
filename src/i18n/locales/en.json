@@ -500,5 +500,13 @@
     "youReceiveShort": "you receive {{amount}}",
     "receivesShort": "{{name}} receives",
     "handOf": "hand {{n}}/{{total}}"
+  },
+  "errors": {
+    "network": "No connection. Your data is safe — try again once you're back online."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "This link no longer points anywhere — it may be old or the item was removed.",
+    "cta": "Back to home"
   }
 }

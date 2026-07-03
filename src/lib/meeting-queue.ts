@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storageKeys } from './storage-keys';
 
 /**
  * Meeting Mode's durable tap queue — THE one offline exception in the app
@@ -16,7 +17,7 @@ export interface QueuedTap {
   queuedAt: number;
 }
 
-const keyFor = (roundId: string) => `njangi-meeting-queue-${roundId}`;
+const keyFor = storageKeys.meetingQueue;
 
 export async function loadQueue(roundId: string): Promise<QueuedTap[]> {
   try {

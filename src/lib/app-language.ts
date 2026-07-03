@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 import { isAppLocale, type AppLocale } from './app-locale';
+import { storageKeys } from './storage-keys';
 
 /**
  * Persisted FR/EN choice (docs/03 B10 — the toggle survives app restarts).
@@ -8,7 +9,7 @@ import { isAppLocale, type AppLocale } from './app-locale';
  * small async get/set module pattern. SecureStore is already a dependency
  * (Clerk token cache), so no extra storage package is needed.
  */
-const STORAGE_KEY = 'njangi-language';
+const STORAGE_KEY = storageKeys.language;
 
 export async function getStoredAppLanguage(): Promise<AppLocale | null> {
   try {

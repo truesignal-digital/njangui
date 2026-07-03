@@ -6,6 +6,21 @@ import { router } from 'expo-router';
 import { useConvexAuth, useMutation } from 'convex/react';
 
 import { api } from '../lib/convex-api';
+import { DEVICE_PLATFORM } from '../lib/env';
+
+/*
+ * Allowlist of deep-link path prefixes the app will route from a push tap.
+ * Must mirror the builders in convex/lib/appLinks.ts — a URL the backend
+ * can send but the client won't route is a silent dead tap.
+ */
+const PUSH_LINK_PREFIXES = ['/payments/', '/groups/'] as const;
+
+function routePushUrl(url: unknown) {
+  if (typeof url !== 'string') return;
+  if (!PUSH_LINK_PREFIXES.some((prefix) => url.startsWith(prefix))) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  router.push(url as any);
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -57,7 +72,7 @@ export function usePushNotifications() {
         if (!cancelled && token) {
           await savePushToken({
             token,
-            platform: Platform.OS === 'ios' ? 'ios' : 'android',
+            platform: DEVICE_PLATFORM,
           });
         }
       } catch {
@@ -71,13 +86,17 @@ export function usePushNotifications() {
   }, [isAuthenticated, savePushToken]);
 
   useEffect(() => {
+    /*
+     * Cold start: the tap that LAUNCHED the app never reaches the response
+     * listener below, so replay the last response once on mount.
+     */
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      routePushUrl(response?.notification.request.content.data?.url);
+    });
+
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        const url = response.notification.request.content.data?.url;
-        if (typeof url === 'string' && url.startsWith('/')) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          router.push(url as any);
-        }
+        routePushUrl(response.notification.request.content.data?.url);
       }
     );
     return () => subscription.remove();

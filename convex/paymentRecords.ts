@@ -30,6 +30,7 @@ import {
 import { logActivityEvent } from './utils/activity';
 import { notifyMemberships } from './push';
 import { getCurrentUserOrNull, requireMembership } from './utils/auth';
+import { paymentLink } from './lib/appLinks';
 
 /** `10 000 F` — push copy uses the same paper-ledger format as the UI. */
 function formatXAF(amount: number): string {
@@ -619,7 +620,7 @@ export const claim = mutation({
         titleEn: 'Payment declared',
         bodyFr: `${membership.displayName} déclare avoir payé ${formatXAF(amount)} — confirmez la réception`,
         bodyEn: `${membership.displayName} declares they paid ${formatXAF(amount)} — confirm receipt`,
-        url: `/payments/${record._id}`,
+        url: paymentLink(record._id),
       });
     } else {
       // Row 3: push to payer "…a enregistré {amount} reçu de vous —
@@ -638,7 +639,7 @@ export const claim = mutation({
         titleEn: 'Payment recorded',
         bodyFr: `${membership.displayName} a enregistré ${formatXAF(amount)} reçu de vous — confirmez ou signalez`,
         bodyEn: `${membership.displayName} recorded ${formatXAF(amount)} received from you — confirm or flag it`,
-        url: `/payments/${record._id}`,
+        url: paymentLink(record._id),
       });
     }
 
@@ -769,7 +770,7 @@ export const confirm = mutation({
       titleEn: 'Confirmed ✓',
       bodyFr: `${membership.displayName} a confirmé ${formatXAF(record.amount)}`,
       bodyEn: `${membership.displayName} confirmed ${formatXAF(record.amount)}`,
-      url: `/payments/${record._id}`,
+      url: paymentLink(record._id),
     });
 
     await afterConfirmed(ctx, record);
@@ -874,7 +875,7 @@ export const dispute = mutation({
         titleEn: 'Dispute opened',
         bodyFr: `Litige ouvert sur ${formatXAF(record.amount)} par ${membership.displayName}`,
         bodyEn: `Dispute opened on ${formatXAF(record.amount)} by ${membership.displayName}`,
-        url: `/payments/${record._id}`,
+        url: paymentLink(record._id),
       });
     }
 

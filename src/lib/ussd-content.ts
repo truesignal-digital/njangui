@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useConvexAuth, useQuery } from 'convex/react';
 
 import { api } from './convex-api';
+import { storageKeys } from './storage-keys';
 
 /**
  * USSD instruction content — three-tier priority (docs/03 §C/§D, hard
@@ -105,7 +106,7 @@ export const BUNDLED_USSD_CONTENT: Record<
 };
 
 const cacheKey = (method: UssdMethod, language: UssdLanguage) =>
-  `njangi-ussd-${method}-${language}`;
+  storageKeys.ussdContent(method, language);
 
 export function interpolateUssdStep(
   step: string,
