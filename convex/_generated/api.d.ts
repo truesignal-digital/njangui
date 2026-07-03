@@ -17,6 +17,7 @@ import type * as devices from "../devices.js";
 import type * as email from "../email.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
+import type * as lib_appLinks from "../lib/appLinks.js";
 import type * as lib_cycleMath from "../lib/cycleMath.js";
 import type * as lib_paymentStateMachine from "../lib/paymentStateMachine.js";
 import type * as lib_roundMath from "../lib/roundMath.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   email: typeof email;
   groups: typeof groups;
   http: typeof http;
+  "lib/appLinks": typeof lib_appLinks;
   "lib/cycleMath": typeof lib_cycleMath;
   "lib/paymentStateMachine": typeof lib_paymentStateMachine;
   "lib/roundMath": typeof lib_roundMath;

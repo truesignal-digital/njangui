@@ -185,7 +185,7 @@ function HomeHeader({ groups }: { groups: GroupListItem[] }) {
       {/* Net-position hero — the amount to pay leads, receiving is the delta line */}
       <View className="pt-lg">
         <Text className="font-body-semi text-overline uppercase text-muted">
-          {t('home.hero.thisWeek')}
+          {t('home.hero.due')}
         </Text>
         <Text className="pt-1 font-mono-bold text-stat-lg text-foreground">
           {formatCurrencyXAF(-totalDue)}

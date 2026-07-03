@@ -95,8 +95,8 @@
     "haveLink": "J'ai un code d'invitation",
     "greeting": "Bonjour",
     "hero": {
-      "thisWeek": "Cette semaine",
-      "toReceive": "+{{amount}} à recevoir {{date}}"
+      "toReceive": "+{{amount}} à recevoir {{date}}",
+      "due": "À cotiser"
     },
     "actions": {
       "contribute": "Cotiser",

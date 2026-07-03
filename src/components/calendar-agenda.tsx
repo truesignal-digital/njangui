@@ -224,14 +224,17 @@ export function CalendarAgenda({
   );
 
   // Current-month in/out from the events already subscribed — no extra
-  // query; whole-month totals (past rounds included), unlike the
-  // upcoming-only agenda rows below.
+  // query. Same upcoming-only scope as the rows below: the cells and the
+  // month section header must never show two different "July" numbers.
   const monthSummary = useMemo(() => {
     if (!showMonthSummary || !events) return null;
     const now = new Date();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
     let out = 0;
     let incoming = 0;
     for (const event of events) {
+      if (event.date < todayStart.getTime()) continue;
       const d = new Date(event.date);
       if (
         d.getFullYear() !== now.getFullYear() ||

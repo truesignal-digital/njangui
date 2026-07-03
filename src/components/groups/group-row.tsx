@@ -46,7 +46,9 @@ export const GroupRow = memo(function GroupRow({ group }: { group: GroupListItem
       done: group.cycleProgress.done,
       total: group.cycleProgress.total,
     });
-    if (group.nextDueAt !== null) {
+    // An overdue round would read « next <past date> » — the round count
+    // alone is truer than a "next" in the past.
+    if (group.nextDueAt !== null && group.nextDueAt >= Date.now()) {
       statusLine += ` · ${t('groups.card.nextDue', { date: shortDate(group.nextDueAt) })}`;
     }
   } else {

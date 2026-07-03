@@ -95,8 +95,8 @@
     "haveLink": "I have an invite code",
     "greeting": "Hello",
     "hero": {
-      "thisWeek": "This week",
-      "toReceive": "+{{amount}} to receive {{date}}"
+      "toReceive": "+{{amount}} to receive {{date}}",
+      "due": "To contribute"
     },
     "actions": {
       "contribute": "Contribute",
