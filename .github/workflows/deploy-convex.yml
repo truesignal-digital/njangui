@@ -1,0 +1,54 @@
+name: Deploy Convex
+
+on:
+  push:
+    branches: [main]
+    # package.json/bun.lock/convex.json included: the deployed bundle carries
+    # node_modules deps (svix, convex itself) — a dep bump must deploy too,
+    # not ride silently on the next unrelated convex/ edit.
+    paths:
+      - 'convex/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'convex.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: convex-prod-deploy
+  cancel-in-progress: false # never cancel a half-finished backend deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Flip the repo variable CONVEX_DEPLOY_ENABLED to 'true' once the
+    # CONVEX_DEPLOY_KEY secret exists (Settings → Secrets and variables).
+    # Until then this workflow is a no-op instead of a red X on every merge.
+    if: vars.CONVEX_DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.6
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - run: bun install --frozen-lockfile
+
+      # Gate the deploy on the money-math suite and typecheck at the MERGED
+      # commit. Two individually-green PRs can merge into a broken main;
+      # `convex deploy` only typechecks functions — it never runs tests.
+      # This is ledger math shipping to prod in minutes; 0.5s of tests is free.
+      - run: bun run test
+      - run: bun run typecheck
+
+      - run: bunx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}

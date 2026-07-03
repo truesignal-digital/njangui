@@ -23,6 +23,7 @@
     "eas:build:preview:android": "npx eas-cli@latest build -p android --profile preview",
     "eas:run:ios": "npx eas-cli@latest build:run -p ios --latest",
     "eas:run:android": "npx eas-cli@latest build:run -p android --latest",
+    "test": "bun test convex/lib",
     "typecheck": "tsc --noEmit",
     "lint:design": "bun scripts/lint-design-system.ts",
     "doctor": "npx expo-doctor"

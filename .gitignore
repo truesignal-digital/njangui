@@ -16,7 +16,6 @@ e2e/.auth/
 
 # Expo / React Native
 .expo/
-expo-env.d.ts
 ios/
 android/
 web-build/
