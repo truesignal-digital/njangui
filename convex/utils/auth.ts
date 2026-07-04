@@ -91,8 +91,9 @@ export async function requireMembership(ctx: QueryCtx | MutationCtx, groupId: Id
 
   /*
    * NOT .unique(): a user can hold two memberships in one group (added
-   * manually AND linked by phone — see linkMembershipsByPhone), and
-   * .unique() would throw a Server Error at every read for that user.
+   * manually AND linked by phone in the retired OTP phone-link era — such
+   * rows persist), and .unique() would throw a Server Error at every read
+   * for that user.
    * Deterministic pick: active first, then the oldest row (the original
    * member record, which is the one locked into rotations).
    */

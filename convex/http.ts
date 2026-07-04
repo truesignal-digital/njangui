@@ -68,10 +68,9 @@ http.route({
     const eventType = normalizeWebhookEventType(eventData.type);
     const userData = eventData.data;
 
-    // 🔒 linkGuard: the webhook forwards name/avatar ONLY. The Clerk phone
-    // is NOT possession-verified by anything Clerk did once OTP delivery
-    // moved to WhatsApp — users.phone is set exclusively by
-    // internal.users.setVerifiedPhone after a fresh OTP proof.
+    // 🔒 linkGuard: the webhook forwards name/avatar (+ username/email
+    // below) ONLY. The Clerk phone is never trusted — nothing writes
+    // users.phone since the OTP phone-link system was removed.
     const name =
       [userData?.first_name, userData?.last_name].filter(Boolean).join(' ') || undefined;
     const avatarUrl = userData?.image_url || undefined;

@@ -11,10 +11,9 @@ import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { api } from '../lib/convex-api';
-import { useAuth } from '../lib/clerk-client';
-import { getAppTheme, useShadow } from '../lib/theme';
-import { useDeviceLogin } from '../hooks/use-device-login';
+import { api } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { getAppTheme, useShadow } from '@/lib/theme';
 import { CredentialsAuthForm } from './credentials-auth-form';
 import { LanguageToggle } from './language-toggle';
 
@@ -28,10 +27,7 @@ function needsOnboarding(user: { name: string; phone?: string }): boolean {
 }
 
 /**
- * Auth screen: 1) silent device-login first — biometric-gated device
- * secret → Clerk ticket (phone-verified users skip typing anything);
- * 2) fall back to username+password (Clerk password strategy). The
- * OPTIONAL phone is attached later from the profile via WhatsApp OTP.
+ * Auth screen: username+password (Clerk password strategy) + Google SSO.
  * Wrapped with the Njangi tagline, FR/EN toggle and the custody-free
  * trust line.
  */
@@ -41,19 +37,13 @@ export function ClerkAuthScreen({ mode: _mode = 'signInOrUp' }: { mode?: AuthMod
   const shadow = useShadow();
   const colorScheme = useColorScheme();
   const theme = getAppTheme(colorScheme === 'dark' ? 'dark' : 'light');
-  const { isLoaded: isClerkLoaded, isSignedIn } = useAuth({
+  const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
   const { isAuthenticated, isLoading } = useConvexAuth();
   const currentUser = useQuery(api.users.current, isAuthenticated ? {} : 'skip');
   const getOrCreateCurrentUser = useMutation(api.users.getOrCreateCurrentUser);
   const syncAttemptedRef = useRef(false);
-
-  // Device-bind re-auth — runs once when signed out; 'failed' reveals the
-  // OTP form (one WhatsApp re-enrollment, never a crash).
-  const deviceLoginStatus = useDeviceLogin(
-    isClerkLoaded === true && isSignedIn === false
-  );
 
   useEffect(() => {
     if (!isSignedIn || isLoading || !isAuthenticated || currentUser === undefined || currentUser)
@@ -71,7 +61,7 @@ export function ClerkAuthScreen({ mode: _mode = 'signInOrUp' }: { mode?: AuthMod
     return <Redirect href={needsOnboarding(currentUser) ? '/onboarding' : '/'} />;
   }
 
-  if ((isSignedIn && !isAuthenticated) || deviceLoginStatus === 'trying') {
+  if (isSignedIn && !isAuthenticated) {
     return (
       <View className="flex-1 justify-center bg-background px-xl">
         <View

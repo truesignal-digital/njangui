@@ -236,8 +236,10 @@ export const rejectMember = mutation({
  * Direct add by treasurer/president (02 §a: the champion onboards 15–30
  * members) — name + E.164 phone, Membership `active` immediately, no
  * approval step. `userId` stays absent (`hasAccount: false`) unless a user
- * already holds that phone, in which case the membership is linked at once;
- * later Clerk sign-ups link via phone match (users.linkMembershipsByPhone).
+ * already holds that phone (legacy OTP-verified rows), in which case the
+ * membership is linked at once. Automatic phone-match linking at sign-up
+ * was removed with the OTP system: a feature-phone member who later signs
+ * up gets attached by an officer re-adding them, never automatically.
  */
 export const addFeaturePhoneMember = mutation({
   args: {

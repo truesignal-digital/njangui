@@ -7,12 +7,8 @@
 export const storageKeys = {
   /** SecureStore — src/lib/app-language.ts */
   language: 'njangi-language',
-  /** SecureStore keychain service — src/lib/device-credential.ts */
-  deviceKeychainService: 'njangi.device',
-  /** SecureStore — src/lib/device-credential.ts */
-  deviceSecret: 'njangi-device-secret',
-  /** SecureStore — src/lib/device-credential.ts */
-  deviceId: 'njangi-device-id',
+  // 'njangi.device' / 'njangi-device-secret' / 'njangi-device-id' were the
+  // retired OTP device credential (removed 2026-07) — never repurpose them.
   /** AsyncStorage, per round — src/lib/meeting-queue.ts */
   meetingQueue: (roundId: string) => `njangi-meeting-queue-${roundId}`,
   /** AsyncStorage, per method+language — src/lib/ussd-content.ts */

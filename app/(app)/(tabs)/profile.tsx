@@ -1,22 +1,16 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
-import { useConvexAuth, useMutation, useQuery } from 'convex/react';
+import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { api } from '../../../src/lib/convex-api';
-import { useAuth, useClerk } from '../../../src/lib/clerk-client';
-import {
-  clearDeviceSecret,
-  getOrCreateDeviceId,
-} from '../../../src/lib/device-credential';
-import { useAppTheme } from '../../../src/lib/theme';
-import { AppButton } from '../../../src/components/ui/button';
-import { DeviceList } from '../../../src/components/device-list';
-import { LanguageToggle } from '../../../src/components/language-toggle';
-import { PhoneLinkSection } from '../../../src/components/phone-link';
-import { Skeleton } from '../../../src/components/skeleton';
+import { api } from '@/lib/convex-api';
+import { useAuth, useClerk } from '@/lib/clerk-client';
+import { useAppTheme } from '@/lib/theme';
+import { AppButton } from '@/components/ui/button';
+import { LanguageToggle } from '@/components/language-toggle';
+import { Skeleton } from '@/components/skeleton';
 
 /**
  * Profil tab — minimal (Slice 3 stub; the fuller profile is roadmap #13):
@@ -31,23 +25,11 @@ export default function ProfileScreen() {
   const { isAuthenticated } = useConvexAuth();
   const { signOut } = useClerk();
   const me = useQuery(api.users.current, isAuthenticated ? {} : 'skip');
-  const revokeDevice = useMutation(api.devices.revokeDevice);
   const [busy, setBusy] = useState(false);
 
   const handleSignOut = async () => {
     setBusy(true);
     try {
-      // Kill this device's credential — server row first (while still
-      // authed), then the local secret — or the silent device-login on the
-      // auth screen signs the user straight back in and sign-out is a no-op.
-      try {
-        const deviceId = await getOrCreateDeviceId();
-        await revokeDevice({ deviceId });
-      } catch {
-        // Never device-bound (or offline) — the local burn below still
-        // forces a WhatsApp code on the next open.
-      }
-      await clearDeviceSecret();
       await signOut();
     } finally {
       setBusy(false);
@@ -95,10 +77,6 @@ export default function ProfileScreen() {
         ) : null}
 
         <LanguageToggle />
-
-        <PhoneLinkSection />
-
-        <DeviceList />
 
         <AppButton
           variant="outline"

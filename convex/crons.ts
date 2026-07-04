@@ -240,13 +240,6 @@ const crons = cronJobs();
 // 02 "Global timer constants": ONE cron, every 15 minutes, evaluates every
 // round and record timer. All constants live in convex/lib/paymentStateMachine.ts.
 crons.interval(
-  'otp challenge sweep (auth spec)',
-  { minutes: 30 },
-  internal.otp.sweepExpired,
-  {}
-);
-
-crons.interval(
   'lifecycle tick (02 timer table)',
   { minutes: 15 },
   internal.crons.tick,

@@ -24,7 +24,7 @@ Njangi is a mobile app for running njangi groups (rotating savings circles): mem
 - expo-router (file-based routes, `experiments.typedRoutes` on)
 - NativeWind 4 (Tailwind classes; custom token palette, default palette removed)
 - Convex backend (reactive queries ARE the cache; no TanStack Query)
-- Clerk auth via `@clerk/expo` (username + password; phone optional via WhatsApp OTP link)
+- Clerk auth via `@clerk/expo` (email/username + password, Google SSO)
 - i18next with **fr (default/fallback) + en** static JSON catalogs
 - react-native-reanimated 4 for animation, sonner-native for toasts
 - **bun** as package manager and test runner (`bun`, `bunx` — never npm/pnpm/yarn)
@@ -142,7 +142,7 @@ Convex `useQuery` subscriptions are the cache — no TanStack layer, no manual i
 
 Global state is Convex reactive queries + Clerk session + i18next. Do NOT add client-state libraries or new React contexts for data Convex can serve reactively.
 
-- **Persisted storage**: every device-local key is declared in `src/lib/storage-keys.ts` and owned by one small module under `src/lib/` (see `app-language.ts`, `device-credential.ts`, `meeting-queue.ts`, `ussd-content.ts`). Never inline an AsyncStorage/SecureStore key in a screen or hook.
+- **Persisted storage**: every device-local key is declared in `src/lib/storage-keys.ts` and owned by one small module under `src/lib/` (see `app-language.ts`, `meeting-queue.ts`, `ussd-content.ts`). Never inline an AsyncStorage/SecureStore key in a screen or hook.
 - **Validate at the storage boundary**: never `JSON.parse(raw) as T`. Guard the shape with a predicate and fall back to a typed default (bundled content, empty queue, device locale). `src/lib/app-language.ts` (isAppLocale check) and `src/lib/ussd-content.ts` (bundled floor + version-gated cache) are the house patterns.
 - **Evolve persisted shapes additively**: new fields optional with a runtime fallback; never repurpose a key. If the payload is replayed later (like the meeting tap queue) or remotely overridden, carry a `version` field.
 - **Multi-await async flows** (auth linking, queue replay): check a `live`/aborted flag after *every* await before setting state — copy the replay effect in `app/(app)/groups/[groupId]/rounds/[roundId]/meeting.tsx`. The meeting tap queue must be written *before* the mutation fires and dequeued only on server ack or a terminal verdict.
@@ -153,7 +153,7 @@ Global state is Convex reactive queries + Clerk session + i18next. Do NOT add cl
 
 This domain is clean — keep it that way:
 
-- No `Platform.OS` in JSX or screens (`app/`): put platform checks in `src/lib` or a hook and consume the result. Current legitimate sites: `src/hooks/use-push-notifications.ts` (Android channel), `src/components/phone-link.tsx` (payload field).
+- No `Platform.OS` in JSX or screens (`app/`): put platform checks in `src/lib` or a hook and consume the result. Current legitimate site: `src/hooks/use-push-notifications.ts` (Android channel).
 - Backend payloads needing `'ios' | 'android'` use `DEVICE_PLATFORM` from `src/lib/env.ts` — never re-derive `Platform.OS === 'ios' ? 'ios' : 'android'` inline.
 - Module-scope platform guards use the compile-time env var, like `src/lib/haptics.ts`: `process.env.EXPO_OS !== 'web'`.
 - If a module's IMPORTS diverge by platform, use a Metro file split with identical export lists, modeled on `src/lib/clerk-client.{ts,native.ts,web.ts}` — never wrap platform-only imports in a runtime branch.

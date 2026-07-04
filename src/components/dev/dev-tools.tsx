@@ -4,14 +4,13 @@ import { router, useGlobalSearchParams } from 'expo-router';
 import { useAction, useConvexAuth, useMutation } from 'convex/react';
 import { toast } from 'sonner-native';
 
-import { api, type Id } from '../../lib/convex-api';
-import { useClerk, useSignIn } from '../../lib/clerk-client';
-import { clearDeviceSecret } from '../../lib/device-credential';
+import { api, type Id } from '@/lib/convex-api';
+import { useClerk, useSignIn } from '@/lib/clerk-client';
 
 // Test phones (555-01XX block). Slots mirror convex/dev.ts DEV_TEST_PHONES:
 // the seed puts .treasurer/.member on real memberships, so signing in as
-// them links those memberships by phone — the two-sided handshake is
-// drivable in the sim.
+// them attaches those memberships — the two-sided handshake is drivable
+// in the sim.
 const TEST_USERS = [
   { label: 'P', phone: '+12015550100', hint: 'président' },
   { label: 'T', phone: '+12015550101', hint: 'trésorier' },
@@ -19,12 +18,11 @@ const TEST_USERS = [
 ] as const;
 
 /**
- * DEV-only auto sign-in. User-facing auth is username+password now, so the
- * pills call devLoginTicket — the server composes the REAL OTP machinery
- * (fresh consumed challenge → setVerifiedPhone → linkGuard fires exactly
- * like production) and returns a Clerk ticket. Double env-gated server-side
- * (DEV_SEED_ENABLED + dev OTP provider with its load-time prod throw).
- * One tap per identity.
+ * DEV-only auto sign-in. User-facing auth is username+password + Google
+ * SSO, so the pills call devLoginTicket — the server resolves/creates the
+ * dev Clerk user, provisions the Convex row (test phone + seeded-membership
+ * attach) and returns a short-TTL Clerk ticket. Env-gated server-side
+ * (DEV_SEED_ENABLED). One tap per identity.
  */
 export function DevAuthButton() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -39,9 +37,7 @@ export function DevAuthButton() {
     try {
       const minted = await devLoginTicket({ phone });
       if (!minted.ok || !minted.ticket) {
-        throw new Error(
-          `throttled — retry in ${Math.ceil((minted.retryAfterMs ?? 0) / 1000)}s`
-        );
+        throw new Error('dev ticket mint failed');
       }
       const attempt = await signIn.create({
         strategy: 'ticket',
@@ -136,9 +132,6 @@ export function DevSeedButton() {
   const switchUser = async () => {
     setBusy('switch');
     try {
-      // Burn the device credential too — otherwise the silent device-login
-      // immediately re-signs-in the SAME identity on the auth screen.
-      await clearDeviceSecret();
       await signOut();
     } finally {
       setBusy(null);
