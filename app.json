@@ -2,6 +2,7 @@
   "expo": {
     "name": "Njangi",
     "slug": "njangi",
+    "owner": "dev-5304s-organization",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -27,7 +28,10 @@
         "monochromeImage": "./assets/adaptive-icon-monochrome.png",
         "backgroundColor": "#0C1222"
       },
-      "package": "com.truesignal.njangi"
+      "package": "com.truesignal.njangi",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-dev-client",
@@ -78,7 +82,10 @@
       "onDemandFilesystem": false
     },
     "extra": {
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "e03e6f99-4977-406b-906f-4b601729b64d"
+      }
     }
   }
 }
