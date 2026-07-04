@@ -56,6 +56,13 @@ function isUsernameTaken(err: unknown): boolean {
   );
 }
 
+// signUp.update({ username }) collisions come back as form_identifier_exists
+// but WITHOUT meta.param_name — and username is the only identifier that
+// call submits, so the bare code is enough to retry on.
+function isIdentifierExists(err: unknown): boolean {
+  return (err as ClerkError)?.errors?.[0]?.code === 'form_identifier_exists';
+}
+
 /**
  * Username/email + password auth. Sign-up asks for the person's NAME, not
  * a username — the unique username is generated from it (prenom.nom, with
@@ -280,7 +287,7 @@ export function CredentialsAuthForm() {
             }
             break;
           } catch (err) {
-            if (isUsernameTaken(err) && i < 4) continue;
+            if (isIdentifierExists(err) && i < 4) continue;
             throw err;
           }
         }
