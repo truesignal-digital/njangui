@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ship from Trunk — the deployment model, explained</title>
+<style>
+  :root {
+    --bg: #ffffff; --ink: #1a1d23; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #0f6b4f; --accent-soft: #e7f3ee; --warn: #92400e; --warn-soft: #fdf3e3;
+    --code-bg: #f6f7f9; --card: #fafbfc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101318; --ink: #e8eaee; --muted: #9aa2af; --line: #262c35;
+      --accent: #4ecca0; --accent-soft: #12261e; --warn: #e0b268; --warn-soft: #241c10;
+      --code-bg: #1a1f27; --card: #151a21;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .5rem; letter-spacing: -.02em; }
+  .sub { color: var(--muted); margin: 0 0 3rem; font-size: 1.05rem; }
+  h2 { font-size: 1.3rem; margin: 3rem 0 .75rem; letter-spacing: -.01em; }
+  h2 .no { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: .5rem; }
+  h3 { font-size: 1.02rem; margin: 1.75rem 0 .5rem; }
+  p { margin: 0 0 1rem; }
+  strong { font-weight: 650; }
+  code {
+    font: .84em/1.5 "SF Mono", ui-monospace, Menlo, monospace;
+    background: var(--code-bg); padding: .1em .35em; border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 1rem 1.25rem; overflow-x: auto; font-size: .82rem; line-height: 1.7;
+  }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.5rem; font-size: .92rem; }
+  th { text-align: left; font-weight: 650; padding: .5rem .75rem .5rem 0; border-bottom: 2px solid var(--line); }
+  td { padding: .55rem .75rem .55rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .pill {
+    display: inline-block; font-size: .78rem; font-weight: 600; padding: .1rem .55rem;
+    border-radius: 99px; background: var(--accent-soft); color: var(--accent); white-space: nowrap;
+  }
+  .note {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    padding: .75rem 1rem; border-radius: 0 8px 8px 0; margin: 1.25rem 0; font-size: .95rem;
+  }
+  .trap {
+    border-left: 3px solid var(--warn); background: var(--warn-soft);
+    padding: .75rem 1rem; border-radius: 0 8px 8px 0; margin: 1.25rem 0; font-size: .95rem;
+  }
+  .trap b { color: var(--warn); }
+  .quiet { color: var(--muted); font-size: .9rem; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 3rem 0; }
+  .diagram {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 1.25rem; margin: 1.25rem 0; overflow-x: auto;
+  }
+  .diagram pre { background: none; border: 0; padding: 0; margin: 0; font-size: .8rem; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1.25rem; margin: 1rem 0 1.5rem; font-size: .95rem; }
+  .kv dt { font-weight: 650; }
+  .kv dd { margin: 0; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Ship from Trunk</h1>
+<p class="sub">One branch, many destinations — the deployment model behind njangi,
+Bluesky, and most modern teams, and how it maps to classic SRE ideas.</p>
+
+<h2><span class="no">1</span>The one idea everything hangs on</h2>
+
+<p><strong>Environments are destinations, not branches.</strong></p>
+
+<p>There is exactly one long-lived branch: <code>main</code> (the "trunk").
+Staging and production are not branches you merge into — they are <em>places
+the same code gets delivered to</em>, in order, with gates in between.</p>
+
+<div class="diagram"><pre>
+ feature branch ──PR──▶ main ──▶ [tests] ──▶ staging ──▶ prod
+                          │
+                          └── the only branch that lives longer than a PR
+</pre></div>
+
+<p>Everything else in this document is a consequence of that idea.</p>
+
+<h2><span class="no">2</span>The alternative, and why it lost</h2>
+
+<p>The older model (GitFlow and friends) gives each environment its own branch:
+<code>develop</code> → <code>staging</code> → <code>master</code>. Promotion means
+merging branch into branch.</p>
+
+<table>
+<tr><th></th><th>Branch-per-environment</th><th>Trunk + destinations</th></tr>
+<tr><td><strong>"What's on prod?"</strong></td><td>Whatever the <code>master</code> branch has drifted to</td><td>A specific commit of <code>main</code></td></tr>
+<tr><td><strong>Hotfix path</strong></td><td>Fix on master, then back-merge to staging and develop — three merges, easy to miss one</td><td>Fix on main, flows outward automatically</td></tr>
+<tr><td><strong>Failure mode</strong></td><td>Drift: branches diverge, cherry-picks pile up, "works on staging" stops meaning anything</td><td>A bad commit — visible, revertable, one place</td></tr>
+<tr><td><strong>Who it fits</strong></td><td>Slow release trains (quarterly firmware, regulated release cycles)</td><td>Continuous delivery — almost everyone else</td></tr>
+</table>
+
+<p>The deep problem with branch-per-environment: it stores <em>deployment state
+in version control</em>. Git is good at recording history, bad at being a
+dashboard. Trunk-based flips it: git records history, the <em>pipeline</em>
+records what is deployed where.</p>
+
+<h2><span class="no">3</span>Deploy ≠ Release</h2>
+
+<p>The most useful distinction in all of release engineering:</p>
+
+<dl class="kv">
+  <dt>Deploy</dt><dd>code is running on servers / sitting on the update CDN</dd>
+  <dt>Release</dt><dd>users actually experience it</dd>
+</dl>
+
+<p>They can be separated — and separating them is what gives you control.
+A backend can deploy ten times a day while users' apps change only when you
+deliberately publish a bundle to their channel. The "release moment" becomes a
+small, cheap, reversible decision instead of a big scary event.</p>
+
+<p>In njangi this shows up as three artifact types, each with its own release
+mechanics and its own speed:</p>
+
+<table>
+<tr><th>Artifact</th><th>Deployed by</th><th>Released when</th><th>Speed</th></tr>
+<tr><td>Convex functions</td><td>merge to main (auto: staging, then prod)</td><td>immediately — server truth</td><td><span class="pill">minutes</span></td></tr>
+<tr><td>JS bundle (OTA)</td><td><code>eas update --channel …</code></td><td>you publish to that channel</td><td><span class="pill">hours</span></td></tr>
+<tr><td>Native binary</td><td><code>eas build</code> + store review</td><td>store approves + user updates</td><td><span class="pill">days</span></td></tr>
+</table>
+
+<div class="note">
+Knowing the speed tier of a fix <em>before you write it</em> changes where you
+put the code. Money math lives in <code>convex/lib</code> partly <b>because</b>
+that's the minutes tier.
+</div>
+
+<h2><span class="no">4</span>Channels: promotion without branches</h2>
+
+<p>A <strong>channel</strong> is a named audience. Each installed build listens to
+exactly one channel; publishing a JS bundle to a channel releases it to that
+audience and no other.</p>
+
+<div class="diagram"><pre>
+                        ┌── channel: development ──▶ your simulator / dev client
+ main ──▶ JS bundle ────┼── channel: preview     ──▶ staging testers
+                        └── channel: production  ──▶ real users
+</pre></div>
+
+<p>Promotion = publishing the <em>same commit</em> to the next channel. No merge,
+no rebuild of source, no drift. Bluesky runs exactly this: every merge
+auto-publishes to their <code>testflight</code> channel (their rolling staging
+audience), and a human manually dispatches the publish to
+<code>production</code>.</p>
+
+<p>This is the mobile version of a classic SRE principle:</p>
+
+<div class="note">
+<b>Build once, promote the artifact.</b> Never rebuild between environments —
+a rebuild is a new, untested artifact wearing the old one's name badge.
+</div>
+
+<h2><span class="no">5</span>Mapping to classic SRE concepts</h2>
+
+<h3>Environments (dev / staging / prod)</h3>
+<p>Same names, same purpose as in server-land. The mobile twist: the client
+<em>build</em> bakes in which backend it talks to, so an "environment" is really a
+matched pair — <span class="quiet">(staging backend + staging-channel build)</span>,
+<span class="quiet">(prod backend + production-channel build)</span>. Mixing tiers
+across the pair is the classic self-inflicted outage.</p>
+
+<h3>Blue-green deployment</h3>
+<p>Server world: run two identical prod environments, cut traffic over
+atomically, cut back to roll back. Convex gives you the spirit of this for
+free — a deploy replaces all functions atomically; there is no half-deployed
+state. What it doesn't give you is instant traffic-shifting rollback: you roll
+back by redeploying the previous commit (still minutes).</p>
+
+<h3>Canary release</h3>
+<p>Server world: send 1% of traffic to the new version, watch, ramp up.
+Mobile equivalent: <strong>staged OTA rollout</strong> — publish an update at 10%,
+watch Sentry, ramp to 100%. Note njangi's deliberate exception: critical money
+fixes ship at 100% immediately, because a canary of a ledger fix means 90% of
+users keep the bug on purpose.</p>
+
+<h3>Feature flags</h3>
+<p>Flags decouple release from deploy <em>within one artifact</em>: code ships
+dark, a flag turns it on per-user/per-percent. They compose with channels —
+channels choose <em>which bundle</em> an audience gets, flags choose <em>which
+code paths run</em> inside it. Cost: every flag doubles the states you must
+test. Rule of thumb for a small team: use channels until a change genuinely
+needs per-user gradual exposure, then reach for a flag — and delete it after.</p>
+
+<h3>Rollback & MTTR</h3>
+<p>Every tier needs a rollback story <em>before</em> you need it:</p>
+<table>
+<tr><th>Tier</th><th>Rollback</th><th>Cost</th></tr>
+<tr><td>Convex</td><td>redeploy previous commit</td><td>minutes</td></tr>
+<tr><td>OTA</td><td>republish previous update to the channel</td><td>minutes–hours</td></tr>
+<tr><td>Native binary</td><td>there isn't one — store review again</td><td>days</td></tr>
+</table>
+<p>That bottom row is why the <strong>additive evolution rule</strong> exists
+(never break a public function signature or persisted shape in one step): the
+one artifact you cannot recall is the one installed on someone's phone. The
+server must stay compatible with every binary still in the wild.</p>
+
+<h3>Gates vs approvals</h3>
+<p>A <strong>gate</strong> is automated (tests must pass, staging deploy must
+succeed). An <strong>approval</strong> is a human saying "go". Mature pipelines are
+gates almost everywhere with <em>one</em> deliberate human step at the point of
+highest blast radius. In njangi today that human step is publishing OTA to the
+production channel. When real users arrive, a second one appears in front of the
+prod backend deploy (the "promotion flip").</p>
+
+<h3>DORA metrics — how you'd measure this machine</h3>
+<table>
+<tr><th>Metric</th><th>Meaning</th><th>This pipeline</th></tr>
+<tr><td>Deploy frequency</td><td>how often code reaches prod</td><td>every merge (backend), on demand (client)</td></tr>
+<tr><td>Lead time</td><td>commit → running in prod</td><td>~3 min backend</td></tr>
+<tr><td>Change-failure rate</td><td>% of deploys causing a failure</td><td>what the gates + staging exist to push down</td></tr>
+<tr><td>MTTR</td><td>time to recover from a bad change</td><td>the fix-speed table above <em>is</em> your MTTR budget</td></tr>
+</table>
+<p class="quiet">The research finding worth internalizing: speed and safety are
+not a trade-off. The four metrics improve together, because small frequent
+changes are easier to test, review, and undo than big rare ones.</p>
+
+<h2><span class="no">6</span>Common traps</h2>
+
+<div class="trap"><b>Staging drift.</b> Staging config quietly diverges from prod
+(different env vars, stale schema, missing webhook) and green-on-staging stops
+predicting green-on-prod. Defense: staging deploys the <em>same commit
+automatically</em> — only credentials and data may differ.</div>
+
+<div class="trap"><b>The forgotten promotion.</b> Every manual step in a pipeline
+is a step someone will skip on a Friday. Each human approval must be one
+obvious action with an obvious owner — or it should be a gate instead.</div>
+
+<div class="trap"><b>Rebuilding between environments.</b> "It's the same code" —
+it isn't; it's a new build with new dependency resolution. Promote artifacts
+(or redeploy the exact commit), never re-create them.</div>
+
+<div class="trap"><b>Version state in git.</b> Release branches, version-bump
+commits, environment branches — all store pipeline state in version control.
+Let git hold history; let the pipeline (channels, deployments, dashboards) hold
+"what is where".</div>
+
+<h2><span class="no">7</span>The njangi pipeline on one screen</h2>
+
+<div class="diagram"><pre>
+              ┌─────────────────────────── every PR ────────────────────────────┐
+              │  typecheck · design-lint · money-math tests · CodeRabbit review │
+              └────────────────────────────────┬────────────────────────────────┘
+                                        merge to main
+                                                │
+              ┌──── backend (if convex/ touched) ────┐        ┌───── client (manual) ─────┐
+              │ tests → deploy STAGING → deploy PROD │        │ eas update --channel …    │
+              │        (auto, gate between)          │        │ eas build (native change) │
+              └──────────────────────────────────────┘        └───────────────────────────┘
+
+   dev        =  dev Convex        + dev Clerk   + simulator
+   staging    =  benevolent-gopher + dev Clerk   + preview-channel builds   (disposable data)
+   prod       =  fantastic-zebra   + prod Clerk  + production-channel builds (real money)
+
+   crash loop =  Sentry (via the logger seam)  ·  funnel metrics computed server-side
+</pre></div>
+
+<p class="quiet">Current human release moments: publishing OTA to
+<code>production</code>, and triggering store builds. Planned at launch: a human
+approval in front of the prod backend deploy.</p>
+
+<h2><span class="no">8</span>Control on a trunk: "what if I don't want it in prod?"</h2>
+
+<p>Auto-deploy sounds like losing control. It's actually <em>relocating</em>
+control: on a trunk, <strong>the merge is the release decision</strong> for the
+backend. Three mechanisms replace the old "hold it on a branch" habit:</p>
+
+<h3>1 · Don't merge it</h3>
+<p>The PR is the holding area. CI, review, and your own judgment run <em>before</em>
+the code can reach any environment. If something isn't ready for prod, it isn't
+ready for main — that sentence is the whole model. Corollary: PRs stay small,
+because a small PR is a small release decision.</p>
+
+<h3>2 · Ship it dark</h3>
+<p>Merge code that <em>runs nowhere</em>: a new Convex function nothing calls yet,
+a screen no navigation reaches, a component behind a flag that's off. The code
+deploys — dark — and integration pain surfaces early while users see nothing.
+This is how large features land on trunk in twenty small PRs instead of one
+six-week branch that no longer merges. (Long-lived feature branches are just
+hidden inventory; dark shipping is inventory you can see and test.)</p>
+
+<h3>3 · Revert first, investigate second</h3>
+<p>When something bad does land: <code>git revert</code> the merge commit, merge
+the revert, and the pipeline un-ships it in the same ~3 minutes it shipped.
+Revert is not an admission of failure — it's the cheapest MTTR move that exists.
+Debug on your own time, on a branch, with prod already healthy. Roll
+<em>forward</em> (fix instead of revert) only when the revert itself is riskier —
+e.g. a migration already ran.</p>
+
+<div class="note">
+Notice what these three have in common: none of them involve a staging branch,
+a release manager, or asking permission. Control lives in <b>small merges,
+dark code, and fast reverts</b> — not in process ceremony.
+</div>
+
+<h2><span class="no">9</span>Knowing what is where</h2>
+
+<p>A pipeline you can't interrogate breeds fear, and fear breeds ceremony. The
+antidote is a <strong>release manifest</strong>: one command that answers "what
+exactly is in prod?" from the pipeline's own sources of truth — never from
+memory or local state.</p>
+
+<pre><code>bun run release:status</code></pre>
+
+<div class="diagram"><pre>
+main            eaf3fb5  feat(ci): staging Convex deploy gates prod
+backend prod    2b32f97  success  2026-07-04 06:12Z
+ota production  nothing published yet
+ota preview     runtime e19b3fc  "fix: retry sso username collisions"
+build           IOS     preview  FINISHED  eaf3fb5
+build           ANDROID preview  FINISHED  eaf3fb5
+</pre></div>
+
+<p>Each line has exactly one source of truth:</p>
+
+<table>
+<tr><th>Question</th><th>Source of truth</th></tr>
+<tr><td>What commit is prod's backend?</td><td>last green <code>Deploy Convex</code> run on main</td></tr>
+<tr><td>What JS do users run?</td><td>last update published to the <code>production</code> channel</td></tr>
+<tr><td>What binaries exist?</td><td>EAS build list (per profile, per platform)</td></tr>
+<tr><td>Is anything broken right now?</td><td>Sentry — the pipeline's feedback loop, not part of the pipeline itself</td></tr>
+</table>
+
+<p class="quiet">SRE framing: this is <em>observability of the delivery system
+itself</em>. The same discipline you apply to the app (server truth over
+optimism) applies to the pipeline — never trust a human's memory of what was
+deployed when a machine records it.</p>
+
+<hr>
+
+<p class="quiet">Further reading, in order of usefulness: Google SRE Book
+ch. "Release Engineering" · Accelerate (Forsgren, Humble, Kim) for the DORA
+research · trunkbaseddevelopment.com · Bluesky's
+<code>bundle-deploy-eas-update.yml</code> as a worked example of auto-OTA with a
+human production gate.</p>
+
+</main>
+</body>
+</html>
