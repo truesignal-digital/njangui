@@ -2,7 +2,7 @@
   "expo": {
     "name": "Njangi",
     "slug": "njangi",
-    "owner": "dev-5304s-organization",
+    "owner": "dev-5304",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -84,7 +84,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "e03e6f99-4977-406b-906f-4b601729b64d"
+        "projectId": "649b5443-414d-4e91-96fb-67800f3dd917"
       }
     }
   }
