@@ -3,9 +3,10 @@ import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner-native';
 
-import { useSignIn, useSignUp, useSSO } from '../lib/clerk-client';
-import { haptics } from '../lib/haptics';
-import { generateUsername } from '../lib/username';
+import { useSignIn, useSignUp, useSSO } from '@/lib/clerk-client';
+import { haptics } from '@/lib/haptics';
+import { logger } from '@/lib/logger';
+import { generateUsername } from '@/lib/username';
 import { AppButton } from './ui/button';
 import { TextField } from './ui/text-field';
 
@@ -236,6 +237,8 @@ export function CredentialsAuthForm() {
   // A Google account arrives with name+email but no username; the instance
   // requires one (it's the login + the add-member search key), so the
   // signup completes with a generated username exactly like the form path.
+  // SSO failures surface as toasts, never through `error` — that state
+  // renders under the password field, which the Google path doesn't touch.
   const submitGoogle = async () => {
     setBusy(true);
     setError(null);
@@ -244,6 +247,7 @@ export function CredentialsAuthForm() {
         createdSessionId,
         setActive: setActiveSSO,
         signUp: ssoSignUp,
+        authSessionResult,
       } = await startSSOFlow({
         // Clerk derives the AuthSession redirect URL itself; passing our own
         // would import expo-auth-session at module load, which hard-crashes
@@ -253,6 +257,10 @@ export function CredentialsAuthForm() {
       if (createdSessionId && setActiveSSO) {
         haptics.success();
         await setActiveSSO({ session: createdSessionId });
+        return;
+      }
+      // Closing the browser is a choice, not a failure — no error UI.
+      if (authSessionResult && authSessionResult.type !== 'success') {
         return;
       }
       if (ssoSignUp && ssoSignUp.status === 'missing_requirements') {
@@ -277,9 +285,15 @@ export function CredentialsAuthForm() {
           }
         }
       }
-      setError(t('common.error'));
+      logger.error('Auth: google sso incomplete', {
+        signUpStatus: ssoSignUp?.status ?? null,
+      });
+      haptics.error();
+      toast.error(t('auth.googleFailed'));
     } catch (err) {
-      setError(t(clerkErrorKey(err)));
+      logger.error('Auth: google sso failed', { error: err });
+      haptics.error();
+      toast.error(t(clerkErrorKey(err)));
     } finally {
       setBusy(false);
     }

@@ -62,6 +62,7 @@
     "backToSignIn": "Retour à la connexion",
     "resetSuccess": "Mot de passe changé ✓",
     "continueWithGoogle": "Continuer avec Google",
+    "googleFailed": "La connexion Google n'a pas abouti. Réessayez ou utilisez votre mot de passe.",
     "orDivider": "ou",
     "newDeviceHeading": "Confirmez que c'est bien vous",
     "newDeviceDesc": "Nouvel appareil détecté — un code a été envoyé à votre email."
