@@ -340,6 +340,46 @@ itself</em>. The same discipline you apply to the app (server truth over
 optimism) applies to the pipeline — never trust a human's memory of what was
 deployed when a machine records it.</p>
 
+<h2><span class="no">10</span>The release ritual</h2>
+
+<p>Merging is automatic delivery to staging. Releasing to users is a
+<em>ritual</em> — four steps, always the same, so that "did I mean to do this?"
+is never in doubt:</p>
+
+<pre><code># 1 · stand on exactly what you intend to ship
+git checkout main && git pull
+
+# 2 · know the gap — read the commits that would go out
+bun run release:status
+git log --oneline &lt;last-released-commit&gt;..main
+
+# 3 · the choosing — this command IS the release
+npx eas-cli@latest update --channel production --environment production \
+  --message "what this release is, in one line"
+
+# 4 · confirm reality changed the way you meant
+bun run release:status</code></pre>
+
+<p>Three details carry the weight:</p>
+
+<table>
+<tr><td><strong><code>--environment</code></strong></td><td>bakes that environment's
+<code>EXPO_PUBLIC_*</code> values into the bundle. Publishing a prod-channel update
+with staging env vars is the cross-tier mixing from §5 — the flag is not
+optional.</td></tr>
+<tr><td><strong><code>--message</code></strong></td><td>your release note to future-you.
+It appears in <code>release:status</code> and the dashboard forever; write it like
+you'll be reading it during an incident, because you will.</td></tr>
+<tr><td><strong>runtime match</strong></td><td>an OTA only applies to builds whose
+fingerprint matches. If anything native changed since the last build, the update
+silently reaches nobody — the mismatch in <code>release:status</code> is the tell,
+and the answer is a new build, not a louder publish.</td></tr>
+</table>
+
+<p class="quiet">Same ritual, lower stakes: replace <code>production</code> with
+<code>preview</code> to release to staging testers. Practice the muscle where
+mistakes are free.</p>
+
 <hr>
 
 <p class="quiet">Further reading, in order of usefulness: Google SRE Book
