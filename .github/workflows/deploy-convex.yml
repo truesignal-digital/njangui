@@ -16,15 +16,17 @@ permissions:
   contents: read
 
 concurrency:
-  group: convex-prod-deploy
+  group: convex-deploy
   cancel-in-progress: false # never cancel a half-finished backend deploy
 
 jobs:
-  deploy:
+  # Staging (benevolent-gopher-102) deploys first and gates prod: a broken
+  # push dies where preview builds point, not where money lives.
+  deploy-staging:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Flip the repo variable CONVEX_DEPLOY_ENABLED to 'true' once the
-    # CONVEX_DEPLOY_KEY secret exists (Settings → Secrets and variables).
+    # deploy-key secrets exist (Settings → Secrets and variables).
     # Until then this workflow is a no-op instead of a red X on every merge.
     if: vars.CONVEX_DEPLOY_ENABLED == 'true'
     steps:
@@ -48,6 +50,29 @@ jobs:
       # This is ledger math shipping to prod in minutes; 0.5s of tests is free.
       - run: bun run test
       - run: bun run typecheck
+
+      - run: bunx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_STAGING_DEPLOY_KEY }}
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [deploy-staging]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.6
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - run: bun install --frozen-lockfile
 
       - run: bunx convex deploy
         env:
