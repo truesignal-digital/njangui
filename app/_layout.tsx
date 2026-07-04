@@ -26,8 +26,22 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 import { Toaster } from 'sonner-native';
 
-import { AppProviders } from '../src/providers/app-providers';
-import { getAppTheme } from '../src/lib/theme';
+import * as Sentry from '@sentry/react-native';
+
+import { AppProviders } from '@/providers/app-providers';
+import { getAppTheme } from '@/lib/theme';
+
+Sentry.init({
+  // DSN is a public identifier, safe in source.
+  dsn: 'https://0204131df81d36de66f0ad72ac4f296d@o4510739308019712.ingest.us.sentry.io/4511675500396544',
+  // Dev crashes stay in the terminal; only built apps report.
+  enabled: !__DEV__,
+  // Tiny user base — capture every error until volume forces sampling.
+  sampleRate: 1.0,
+  // Money app: no IP/device identifiers attached to events.
+  sendDefaultPii: false,
+  enableLogs: false,
+});
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -98,7 +112,7 @@ function AppNavigation() {
   );
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
@@ -110,4 +124,4 @@ export default function RootLayout() {
       </KeyboardProvider>
     </GestureHandlerRootView>
   );
-}
+});
