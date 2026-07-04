@@ -62,6 +62,7 @@
     "backToSignIn": "Back to sign in",
     "resetSuccess": "Password changed ✓",
     "continueWithGoogle": "Continue with Google",
+    "googleFailed": "Google sign-in didn't complete. Try again or use your password.",
     "orDivider": "or",
     "newDeviceHeading": "Confirm it's you",
     "newDeviceDesc": "New device detected — a code was sent to your email."
