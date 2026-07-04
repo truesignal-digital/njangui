@@ -4,6 +4,8 @@ Custody-free njangi/tontine ledger for Cameroon — the njangi operating system 
 
 **Custody-free in one line:** the app NEVER moves, holds, or instructs movement of member money via any payment API — money moves wallet-to-wallet on MTN MoMo / Orange Money or as physical cash; the app is scheduler + ledger + proof + reminders.
 
+> **Deploying?** → [docs/release-runbook.md](docs/release-runbook.md) (actions only) · [deployment model](docs/deployment-model.html) (the why)
+
 ## Mobile-only (locked decision, 2026-06-11)
 
 Njangi is an **Expo (React Native) app targeting Android and iOS from day one** via EAS. There is no web frontend. WhatsApp shares are plain text + store/deep link (`njangi://` scheme now, `https` universal links later). Push notifications use `expo-notifications`. USSD instructions deep-link the dialer (`tel:` URL with encoded `#`). The Convex backend (`convex/`) is unchanged and framework-agnostic.
