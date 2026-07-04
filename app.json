@@ -8,6 +8,13 @@
     "icon": "./assets/icon.png",
     "scheme": "njangi",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/649b5443-414d-4e91-96fb-67800f3dd917",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.truesignal.njangi",

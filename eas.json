@@ -6,7 +6,8 @@
     "development": {
       "environment": "development",
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "development-simulator": {
       "environment": "development",
@@ -14,14 +15,16 @@
       "distribution": "internal",
       "ios": {
         "simulator": true
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "environment": "preview",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "preview"
     },
     "e2e-test": {
       "environment": "preview",
@@ -35,7 +38,8 @@
     },
     "production": {
       "environment": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "channel": "production"
     }
   }
 }
