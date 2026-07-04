@@ -12,6 +12,7 @@ import {
 } from './lib/paymentStateMachine';
 import { payoutPrefillAmount } from './lib/roundMath';
 import {
+  expectedForMember,
   refreezeObligationStatus,
   settleRoundAfterPayoutConfirmed,
 } from './rounds';
@@ -29,6 +30,7 @@ import {
 import { logActivityEvent } from './utils/activity';
 import { notifyMemberships } from './push';
 import { getCurrentUserOrNull, requireMembership } from './utils/auth';
+import { paymentLink } from './lib/appLinks';
 
 /** `10 000 F` — push copy uses the same paper-ledger format as the UI. */
 function formatXAF(amount: number): string {
@@ -154,7 +156,13 @@ async function expectedObligationAmount(
 ): Promise<number | null> {
   if (record.kind === 'contribution' && record.roundId !== undefined) {
     const round = await ctx.db.get(record.roundId);
-    return round ? round.expectedAmountPerMember : null;
+    if (!round) return null;
+    // Hands-aware (02 §b « deux mains ») — a 2-hand member claiming 1×
+    // must leave a 1× remainder, not a silently-satisfied obligation.
+    const cycle = await ctx.db.get(round.cycleId);
+    return cycle
+      ? expectedForMember(cycle, round, record.payerMembershipId)
+      : round.expectedAmountPerMember;
   }
   if (record.kind === 'fine' && record.fineId !== undefined) {
     const fine = await ctx.db.get(record.fineId);
@@ -260,15 +268,21 @@ async function ensureObligationRemainder(
         .filter((r) => r.state !== 'cancelled')
         .map((r) => r.payerMembershipId)
     );
+    // Σ per-payer expected (hands-aware, 02 §b) — payers × base amount
+    // undercounts multi-hand members.
+    const cycle = await ctx.db.get(round.cycleId);
+    const prefill = cycle
+      ? [...obligatedPayerIds].reduce(
+          (sum, id) => sum + expectedForMember(cycle, round, id),
+          0
+        )
+      : payoutPrefillAmount(obligatedPayerIds.size, round.expectedAmountPerMember);
     await ctx.db.insert('paymentRecords', {
       groupId: record.groupId,
       roundId,
       kind: 'payout',
       state: 'pending',
-      amount: payoutPrefillAmount(
-        obligatedPayerIds.size,
-        round.expectedAmountPerMember
-      ),
+      amount: prefill,
       payerMembershipId: record.payerMembershipId,
       payeeMembershipId: record.payeeMembershipId,
       proofType: 'none',
@@ -441,6 +455,23 @@ export async function applyAutoDispute(
 // ============================================================================
 
 /**
+ * Short-lived upload URL for a proof photo (03 B4). The storage id the
+ * client gets back is only ever attached through `claim`, which re-checks
+ * membership and the state machine — an orphaned upload grants nothing.
+ */
+export const generateProofUploadUrl = mutation({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx) => {
+    const auth = await getCurrentUserOrNull(ctx);
+    if (!auth) {
+      throw new Error('Not authenticated');
+    }
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/**
  * Claim (02 §c rows 2–3): payer-side « j'ai envoyé », or payee-side receipt
  * (Meeting Mode tick / beneficiary « j'ai reçu ») — the side is derived
  * from WHO is calling, never from an argument. Self-records (payer = payee)
@@ -589,7 +620,7 @@ export const claim = mutation({
         titleEn: 'Payment declared',
         bodyFr: `${membership.displayName} déclare avoir payé ${formatXAF(amount)} — confirmez la réception`,
         bodyEn: `${membership.displayName} declares they paid ${formatXAF(amount)} — confirm receipt`,
-        url: `/payments/${record._id}`,
+        url: paymentLink(record._id),
       });
     } else {
       // Row 3: push to payer "…a enregistré {amount} reçu de vous —
@@ -608,7 +639,7 @@ export const claim = mutation({
         titleEn: 'Payment recorded',
         bodyFr: `${membership.displayName} a enregistré ${formatXAF(amount)} reçu de vous — confirmez ou signalez`,
         bodyEn: `${membership.displayName} recorded ${formatXAF(amount)} received from you — confirm or flag it`,
-        url: `/payments/${record._id}`,
+        url: paymentLink(record._id),
       });
     }
 
@@ -739,7 +770,7 @@ export const confirm = mutation({
       titleEn: 'Confirmed ✓',
       bodyFr: `${membership.displayName} a confirmé ${formatXAF(record.amount)}`,
       bodyEn: `${membership.displayName} confirmed ${formatXAF(record.amount)}`,
-      url: `/payments/${record._id}`,
+      url: paymentLink(record._id),
     });
 
     await afterConfirmed(ctx, record);
@@ -844,7 +875,7 @@ export const dispute = mutation({
         titleEn: 'Dispute opened',
         bodyFr: `Litige ouvert sur ${formatXAF(record.amount)} par ${membership.displayName}`,
         bodyEn: `Dispute opened on ${formatXAF(record.amount)} by ${membership.displayName}`,
-        url: `/payments/${record._id}`,
+        url: paymentLink(record._id),
       });
     }
 
@@ -1182,6 +1213,7 @@ const paymentRecordDetailValidator = v.object({
   method: v.optional(paymentMethodValidator),
   proofType: proofTypeValidator,
   momoTxnId: v.optional(v.string()),
+  screenshotUrl: v.union(v.string(), v.null()),
   isArrears: v.optional(v.boolean()),
   claimedBySide: v.optional(paymentSideValidator),
   claimedAt: v.optional(v.number()),
@@ -1300,6 +1332,9 @@ export const getPaymentRecord = query({
       method: record.method,
       proofType: record.proofType,
       momoTxnId: record.momoTxnId,
+      screenshotUrl: record.screenshotStorageId
+        ? await ctx.storage.getUrl(record.screenshotStorageId)
+        : null,
       isArrears: record.isArrears,
       claimedBySide: record.claimedBySide,
       claimedAt: record.claimedAt,

@@ -14,14 +14,57 @@
   "auth": {
     "tagline": "Le carnet de votre tontine (njangi), noir sur blanc.",
     "signInHeading": "Se connecter",
-    "signInDesc": "Entrez votre numéro de téléphone. Un code vous arrive par SMS.",
+    "signInDesc": "Entrez votre identifiant (ou email) et votre mot de passe.",
     "signUpHeading": "Créer un compte",
-    "signUpDesc": "Votre numéro de téléphone suffit. Un code vous arrive par SMS.",
+    "signUpDesc": "Votre nom, un mot de passe — et un email si vous en avez un (il sert à récupérer le compte).",
     "custodyNote": "Pas de frais. Votre argent ne passe jamais par l'appli.",
     "finishingSignInTitle": "Finalisation de la connexion…",
     "finishingSignInBody": "Connexion de votre compte en cours. Cela ne prend qu’un instant.",
     "nativeBuildRequiredTitle": "Build natif requis",
-    "nativeBuildRequiredBody": "La connexion nécessite le module natif Clerk. Lancez un build de développement (bun run ios / android) au lieu d’Expo Go."
+    "nativeBuildRequiredBody": "La connexion nécessite le module natif Clerk. Lancez un build de développement (bun run ios / android) au lieu d’Expo Go.",
+    "codeLabel": "Code de vérification",
+    "verifyCta": "Vérifier",
+    "codeInvalid": "Code incorrect. Réessayez.",
+    "codeExpired": "Code expiré — demandez-en un nouveau.",
+    "usernameLabel": "Nom d'utilisateur",
+    "passwordLabel": "Mot de passe",
+    "signInCta": "Se connecter",
+    "signUpCta": "Créer mon compte",
+    "switchToSignUp": "Pas de compte ? Créez-en un",
+    "switchToSignIn": "J'ai déjà un compte",
+    "showPassword": "Afficher",
+    "hidePassword": "Masquer",
+    "userNotFound": "Nom d'utilisateur introuvable.",
+    "badPassword": "Mot de passe incorrect.",
+    "usernameTaken": "Ce nom d'utilisateur est déjà pris.",
+    "usernameInvalid": "Nom d'utilisateur invalide — 4 caractères min., lettres, chiffres, _ ou -.",
+    "passwordTooShort": "Mot de passe trop court (8 caractères min.).",
+    "passwordPwned": "Ce mot de passe a fuité en ligne — choisissez-en un autre.",
+    "identifierLabel": "Nom d'utilisateur ou email",
+    "firstNameLabel": "Prénom",
+    "lastNameLabel": "Nom",
+    "emailLabel": "Email (optionnel)",
+    "emailOptionalHint": "pour récupérer votre compte",
+    "emailAccountLabel": "Email du compte",
+    "nameRequired": "Entrez votre prénom et votre nom.",
+    "usernameAssigned": "Votre identifiant : {{username}}",
+    "emailTaken": "Cet email est déjà utilisé.",
+    "emailInvalid": "Vérifiez l'adresse email.",
+    "verifyEmailHeading": "Vérifiez votre email",
+    "verifyEmailDesc": "Code envoyé à {{email}}.",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetHeading": "Réinitialiser le mot de passe",
+    "resetDesc": "Entrez l'email de votre compte — un code vous y sera envoyé. Sans email, contactez votre président ou le support.",
+    "resetCodeDesc": "Code envoyé à {{email}}. Choisissez un nouveau mot de passe.",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "resetCta": "Changer le mot de passe",
+    "sendResetCode": "Envoyer le code",
+    "backToSignIn": "Retour à la connexion",
+    "resetSuccess": "Mot de passe changé ✓",
+    "continueWithGoogle": "Continuer avec Google",
+    "orDivider": "ou",
+    "newDeviceHeading": "Confirmez que c'est bien vous",
+    "newDeviceDesc": "Nouvel appareil détecté — un code a été envoyé à votre email."
   },
   "onboarding": {
     "title": "Comment le groupe vous appelle-t-il ?",
@@ -38,7 +81,27 @@
     "emptyBody": "Créez le vôtre ou demandez le lien d'invitation à votre président.",
     "emptyCreate": "Créer un njangi",
     "emptyHaveLink": "J'ai un code",
-    "haveLink": "J'ai un code d'invitation"
+    "haveLink": "J'ai un code d'invitation",
+    "greeting": "Bonjour",
+    "hero": {
+      "toReceive": "+{{amount}} à recevoir {{date}}",
+      "due": "À cotiser"
+    },
+    "actions": {
+      "contribute": "Cotiser",
+      "join": "Rejoindre",
+      "new": "Nouveau",
+      "calendar": "Calendrier"
+    },
+    "inOut": {
+      "toPay": "À payer",
+      "toReceive": "À recevoir"
+    },
+    "groupsSection": "Mes njangis · {{count}}",
+    "row": {
+      "due": "{{amount}} dus · {{date}}",
+      "receiving": "je reçois · {{date}}"
+    }
   },
   "groups": {
     "memberCount_one": "{{count}} membre",
@@ -110,7 +173,10 @@
       "creating": "Création…",
       "inviteTitle": "Invitez le groupe",
       "inviteHint": "Envoyez le code dans le groupe WhatsApp de votre njangi. Vous pourrez aussi ajouter des membres vous-même.",
-      "finish": "Terminer ✓"
+      "finish": "Terminer ✓",
+      "targetLabel": "Combien serez-vous ? (optionnel)",
+      "targetPlaceholder": "ex. 10",
+      "potPreview": "Pot estimé par tour : {{amount}}"
     },
     "detail": {
       "membersTitle": "Membres",
@@ -141,7 +207,16 @@
       "collection": "Circulation de l'argent",
       "perMember": "{{amount}} / membre",
       "notFound": "Groupe introuvable.",
-      "backHome": "Retour à l'accueil"
+      "backHome": "Retour à l'accueil",
+      "addByUsername": "Par identifiant",
+      "addByPhone": "Sans smartphone",
+      "addByUsernameDesc": "Pour les membres qui ont déjà l'appli : entrez leur identifiant exact — ils seront prévenus.",
+      "usernameNotFound": "Aucun compte avec cet identifiant.",
+      "makePresident": "Nommer président(e)",
+      "presidentAssignedToast": "{{name}} est maintenant président(e) ✓",
+      "noPresidentBanner": "Ce groupe n'a pas encore de président(e) — nommez-en un(e) ci-dessous pour pouvoir démarrer le cycle.",
+      "alreadyMember": "Déjà membre",
+      "alreadyMemberError": "Cette personne est déjà membre du groupe."
     },
     "invite": {
       "title": "Inviter des membres",
@@ -186,7 +261,53 @@
       "roundN": "Tour {{n}}",
       "locked": "fixé",
       "thisRound": "CE TOUR",
-      "noApp": "sans appli"
+      "noApp": "sans appli",
+      "addHand": "Ajouter une main (deux noms)",
+      "removeHand": "Retirer cette main",
+      "handBadge": "main {{n}}"
+    },
+    "readiness": {
+      "title": "Prêt à démarrer ?",
+      "membersOfTarget": "{{count}} membres sur {{target}}",
+      "minMembers": "2 minimum",
+      "toAssign": "à désigner",
+      "presidentHint": "nommez-en un(e) ci-dessous",
+      "projection": "{{count}} tours · du ~{{start}} au ~{{end}} (estimation)"
+    },
+    "card": {
+      "roundOf": "{{done}}/{{total}} tours",
+      "nextDue": "proch. {{date}}",
+      "upToDate": "À jour",
+      "pendingCount_one": "{{count}} en attente",
+      "pendingCount_other": "{{count}} en attente",
+      "paidOfMembers": "{{paid}}/{{total}} ont cotisé ce tour",
+      "beneficiary": "Bénéficiaire : {{name}}",
+      "myTurn": "C’est votre tour",
+      "setupLine": "Invitez des membres pour démarrer",
+      "betweenLine": "Cycle terminé · prochain tirage à planifier",
+      "contribute": "Cotiser · {{amount}}",
+      "dueChip": "{{amount}} dus",
+      "yourTurn": "Votre tour 🎁",
+      "upToDateInline": "à jour ✓"
+    },
+    "tab": {
+      "sectionOngoing": "En cours",
+      "sectionDone": "Terminés",
+      "activeCount_one": "{{count}} en cours",
+      "activeCount_other": "{{count}} en cours",
+      "pausedCount_one": "{{count}} en pause",
+      "pausedCount_other": "{{count}} en pause",
+      "doneCount_one": "{{count}} terminé",
+      "doneCount_other": "{{count}} terminés",
+      "addAction": "Créer ou rejoindre",
+      "create": "Créer un njangi",
+      "join": "Rejoindre avec un code",
+      "emptyTitle": "Aucun njangi pour l’instant",
+      "emptyBody": "Créez le vôtre, ou rejoignez celui de votre association avec un code d’invitation.",
+      "circleCount_one": "{{count}} cercle",
+      "circleCount_other": "{{count}} cercles",
+      "actionsCount_one": "{{count}} action attendue",
+      "actionsCount_other": "{{count}} actions attendues"
     }
   },
   "round": {
@@ -205,7 +326,7 @@
     "noObligation": "Pas de cotisation attendue de vous ce tour.",
     "membersTitle": "Cotisations des membres",
     "arrears": "arriéré",
-    "settled": "Cotisation réglée ✓",
+    "settled": "Cotisation réglée",
     "share": "Partager le résumé (WhatsApp)",
     "claimCta": "Je cotise",
     "claimSuccess": "Cotisation déclarée — en attente de confirmation ✓",
@@ -219,11 +340,11 @@
     "cashBody": "Apportez {{amount}} à la prochaine réunion. {{name}} cochera votre nom au Mode réunion.",
     "cashClaimCta": "J'ai déjà remis les espèces → Déclarer",
     "custodyNote": "L'argent va directement de votre compte à celui de {{name}}. L'appli ne touche jamais votre argent.",
-    "banner": "⚠ Les menus *126# / #150# peuvent changer. Vérifiez chaque étape sur l'écran de votre téléphone.",
+    "banner": "Les menus *126# / #150# peuvent changer. Vérifiez chaque étape sur l'écran de votre téléphone.",
     "payeeNumber": "Numéro de {{name}}",
     "amountLabel": "Montant",
     "reference": "Référence (motif)",
-    "dial": "📞 Composer {{code}}",
+    "dial": "Composer {{code}}",
     "copyCode": "Copier le code {{code}}",
     "sent": "J'ai envoyé → Déclarer",
     "claimTitle": "Déclarer mon paiement",
@@ -234,25 +355,34 @@
     "txnIdHint": "(dans le SMS de {{carrier}})",
     "txnPlaceholder": "ex. 8512345678",
     "paste": "Coller depuis le presse-papiers",
-    "proofNote": "ℹ C'est la confirmation de {{name}} qui rend le paiement officiel — pas la preuve.",
+    "proofNote": "C'est la confirmation de {{name}} qui rend le paiement officiel — pas la preuve.",
     "declareCta": "Déclarer le paiement",
     "declareNoProof": "Déclarer sans preuve",
     "partialWarning": "Il restera {{amount}} à cotiser.",
     "overWarning": "Montant supérieur au reste attendu — déclarez ce que vous avez réellement envoyé.",
     "invalidAmount": "Entrez un montant valide en F.",
-    "declared": "Paiement déclaré — {{name}} doit confirmer ✓"
+    "declared": "Paiement déclaré — {{name}} doit confirmer ✓",
+    "proofPhotoLabel": "Preuve de paiement (photo)",
+    "takePhoto": "Prendre une photo",
+    "chooseImage": "Choisir une image",
+    "removePhoto": "Retirer la photo",
+    "photoHint": "Capture d'écran du SMS ou photo du reçu — facultatif mais recommandé.",
+    "uploadFailed": "Échec de l'envoi de la photo — réessayez.",
+    "cameraDenied": "Accès à l'appareil photo refusé — autorisez-le dans Réglages."
   },
   "tabs": {
     "home": "Accueil",
     "group": "Groupe",
     "inbox": "À confirmer",
-    "profile": "Profil"
+    "profile": "Profil",
+    "calendar": "Calendrier"
   },
   "inbox": {
     "title": "À confirmer ({{count}})",
-    "empty": "Rien à confirmer. ✓",
+    "empty": "Rien à confirmer",
     "claimedByPayer": "{{name}} déclare avoir payé — confirmez la réception",
-    "claimedByPayee": "{{name}} a enregistré votre paiement — confirmez ou signalez"
+    "claimedByPayee": "{{name}} a enregistré votre paiement — confirmez ou signalez",
+    "emptyHint": "Quand un membre déclare un paiement qui vous concerne, il apparaît ici."
   },
   "payment": {
     "notFound": "Paiement introuvable.",
@@ -268,7 +398,7 @@
       "fine": "Amende",
       "assistance": "Assistance"
     },
-    "confirmCta": "✓ Reçu — c'est exact",
+    "confirmCta": "Reçu — c'est exact",
     "disputeCta": "Pas reçu / Contester",
     "cancelCta": "Retirer ma déclaration",
     "confirmGuard": "Êtes-vous sûr(e) ? Vous confirmez avoir reçu {{amount}} de {{name}}. Une confirmation est définitive et ne peut pas être annulée.",
@@ -292,10 +422,15 @@
     "disputeTitle": "Litige",
     "disputeAuto": "Ouvert automatiquement — paiement non confirmé dans les délais",
     "disputeBy": "Ouvert par {{name}}",
-    "resolution": "Résolution"
+    "resolution": "Résolution",
+    "proofImage": "Preuve jointe",
+    "proofImageNote": "La preuve aide à vérifier — c'est la confirmation qui rend le paiement officiel.",
+    "proofImageOpen": "Agrandir la preuve",
+    "proofImageTapHint": "Touchez pour agrandir et zoomer"
   },
   "profile": {
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "usernameHint": "Votre identifiant de connexion"
   },
   "payout": {
     "title": "Remise du pot",
@@ -359,7 +494,9 @@
       "order_change": "Ordre modifié par {{actor}} — {{note}}",
       "member_approved": "{{actor}} a approuvé un membre",
       "role_reassigned": "Rôle réattribué — {{note}}"
-    }
+    },
+    "seeAll": "Voir toute l'activité",
+    "fullTitle": "Activité du groupe"
   },
   "payments": {
     "state": {
@@ -375,5 +512,31 @@
       "orange_money": "Orange Money",
       "bank": "banque"
     }
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "seeCalendar": "Voir le calendrier",
+    "youReceive": "Tour {{n}} — vous recevez {{amount}}",
+    "receives": "Tour {{n}} — {{name}} reçoit",
+    "contribution": "Cotisation {{amount}}",
+    "hands": "({{count}} mains)",
+    "estimated": "(estimation)",
+    "monthSummaryBoth": "vous cotisez {{contrib}} · vous recevez {{receive}}",
+    "monthSummaryContrib": "vous cotisez {{contrib}}",
+    "empty": "Aucune échéance — les dates apparaissent dès qu'un cycle démarre (ou en estimation pendant la préparation).",
+    "roundLabel": "Tour {{n}}",
+    "youReceiveShort": "vous recevez {{amount}}",
+    "receivesShort": "{{name}} reçoit",
+    "handOf": "main {{n}}/{{total}}",
+    "monthOut": "Sorties {{month}}",
+    "monthIn": "Entrées {{month}}"
+  },
+  "errors": {
+    "network": "Pas de connexion. Vos données sont en sécurité — réessayez une fois en ligne."
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "Ce lien ne mène plus nulle part — il est peut-être ancien ou l'élément a été supprimé.",
+    "cta": "Retour à l'accueil"
   }
 }

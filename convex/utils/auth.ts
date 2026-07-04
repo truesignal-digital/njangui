@@ -89,10 +89,28 @@ export async function getCurrentUserOrNull(ctx: QueryCtx | MutationCtx) {
 export async function requireMembership(ctx: QueryCtx | MutationCtx, groupId: Id<'groups'>) {
   const { identity, user } = await getCurrentUser(ctx);
 
-  const membership = await ctx.db
+  /*
+   * NOT .unique(): a user can hold two memberships in one group (added
+   * manually AND linked by phone in the retired OTP phone-link era — such
+   * rows persist), and .unique() would throw a Server Error at every read
+   * for that user.
+   * Deterministic pick: active first, then the oldest row (the original
+   * member record, which is the one locked into rotations).
+   */
+  const rows = await ctx.db
     .query('memberships')
     .withIndex('by_group_and_user', (q) => q.eq('groupId', groupId).eq('userId', user._id))
-    .unique();
+    .collect();
+  const membership =
+    rows
+      .sort((a, b) =>
+        a.status === 'active' && b.status !== 'active'
+          ? -1
+          : b.status === 'active' && a.status !== 'active'
+            ? 1
+            : a._creationTime - b._creationTime
+      )
+      .at(0) ?? null;
 
   if (
     !membership ||

@@ -14,14 +14,57 @@
   "auth": {
     "tagline": "Your njangi (tontine) ledger, in black and white.",
     "signInHeading": "Sign in",
-    "signInDesc": "Enter your phone number. A code arrives by SMS.",
+    "signInDesc": "Enter your username (or email) and your password.",
     "signUpHeading": "Create an account",
-    "signUpDesc": "Your phone number is enough. A code arrives by SMS.",
+    "signUpDesc": "Your name, a password — and an email if you have one (it recovers your account).",
     "custodyNote": "No fees. Your money never passes through the app.",
     "finishingSignInTitle": "Finishing sign-in…",
     "finishingSignInBody": "Connecting your account. This only takes a moment.",
     "nativeBuildRequiredTitle": "Native build required",
-    "nativeBuildRequiredBody": "Sign-in needs the Clerk native module. Run a development build (bun run ios / android) instead of Expo Go."
+    "nativeBuildRequiredBody": "Sign-in needs the Clerk native module. Run a development build (bun run ios / android) instead of Expo Go.",
+    "codeLabel": "Verification code",
+    "verifyCta": "Verify",
+    "codeInvalid": "Wrong code. Try again.",
+    "codeExpired": "Code expired — request a new one.",
+    "usernameLabel": "Username",
+    "passwordLabel": "Password",
+    "signInCta": "Sign in",
+    "signUpCta": "Create my account",
+    "switchToSignUp": "No account? Create one",
+    "switchToSignIn": "I already have an account",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "userNotFound": "Username not found.",
+    "badPassword": "Wrong password.",
+    "usernameTaken": "That username is already taken.",
+    "usernameInvalid": "Invalid username — min 4 chars: letters, numbers, _ or -.",
+    "passwordTooShort": "Password too short (min 8 characters).",
+    "passwordPwned": "That password has leaked online — pick another one.",
+    "identifierLabel": "Username or email",
+    "firstNameLabel": "First name",
+    "lastNameLabel": "Last name",
+    "emailLabel": "Email (optional)",
+    "emailOptionalHint": "to recover your account",
+    "emailAccountLabel": "Account email",
+    "nameRequired": "Enter your first and last name.",
+    "usernameAssigned": "Your login name: {{username}}",
+    "emailTaken": "That email is already in use.",
+    "emailInvalid": "Check the email address.",
+    "verifyEmailHeading": "Verify your email",
+    "verifyEmailDesc": "Code sent to {{email}}.",
+    "forgotPassword": "Forgot password?",
+    "resetHeading": "Reset your password",
+    "resetDesc": "Enter your account email — a code will be sent there. No email on the account? Contact your president or support.",
+    "resetCodeDesc": "Code sent to {{email}}. Pick a new password.",
+    "newPasswordLabel": "New password",
+    "resetCta": "Change the password",
+    "sendResetCode": "Send the code",
+    "backToSignIn": "Back to sign in",
+    "resetSuccess": "Password changed ✓",
+    "continueWithGoogle": "Continue with Google",
+    "orDivider": "or",
+    "newDeviceHeading": "Confirm it's you",
+    "newDeviceDesc": "New device detected — a code was sent to your email."
   },
   "onboarding": {
     "title": "What does the group call you?",
@@ -38,7 +81,27 @@
     "emptyBody": "Create your own, or ask your president for the invite link.",
     "emptyCreate": "Create a njangi",
     "emptyHaveLink": "I have a code",
-    "haveLink": "I have an invite code"
+    "haveLink": "I have an invite code",
+    "greeting": "Hello",
+    "hero": {
+      "toReceive": "+{{amount}} to receive {{date}}",
+      "due": "To contribute"
+    },
+    "actions": {
+      "contribute": "Contribute",
+      "join": "Join",
+      "new": "New",
+      "calendar": "Calendar"
+    },
+    "inOut": {
+      "toPay": "To pay",
+      "toReceive": "To receive"
+    },
+    "groupsSection": "My njangis · {{count}}",
+    "row": {
+      "due": "{{amount}} due · {{date}}",
+      "receiving": "I receive · {{date}}"
+    }
   },
   "groups": {
     "memberCount_one": "{{count}} member",
@@ -110,7 +173,10 @@
       "creating": "Creating…",
       "inviteTitle": "Invite the group",
       "inviteHint": "Send the code in your njangi's WhatsApp group. You can also add members yourself.",
-      "finish": "Done ✓"
+      "finish": "Done ✓",
+      "targetLabel": "How many will you be? (optional)",
+      "targetPlaceholder": "e.g. 10",
+      "potPreview": "Estimated pot per round: {{amount}}"
     },
     "detail": {
       "membersTitle": "Members",
@@ -141,7 +207,16 @@
       "collection": "How the money moves",
       "perMember": "{{amount}} / member",
       "notFound": "Group not found.",
-      "backHome": "Back to home"
+      "backHome": "Back to home",
+      "addByUsername": "By username",
+      "addByPhone": "No smartphone",
+      "addByUsernameDesc": "For members who already have the app: enter their exact username — they'll be notified.",
+      "usernameNotFound": "No account with this username.",
+      "makePresident": "Make president",
+      "presidentAssignedToast": "{{name}} is now the president ✓",
+      "noPresidentBanner": "This group has no president yet — name one below to be able to start the cycle.",
+      "alreadyMember": "Already a member",
+      "alreadyMemberError": "This person is already a member of this group."
     },
     "invite": {
       "title": "Invite members",
@@ -186,7 +261,53 @@
       "roundN": "Round {{n}}",
       "locked": "fixed",
       "thisRound": "THIS ROUND",
-      "noApp": "no app"
+      "noApp": "no app",
+      "addHand": "Add a hand (two names)",
+      "removeHand": "Remove this hand",
+      "handBadge": "hand {{n}}"
+    },
+    "readiness": {
+      "title": "Ready to start?",
+      "membersOfTarget": "{{count}} of {{target}} members",
+      "minMembers": "minimum 2",
+      "toAssign": "to assign",
+      "presidentHint": "name one below",
+      "projection": "{{count}} rounds · ~{{start}} to ~{{end}} (estimate)"
+    },
+    "card": {
+      "roundOf": "{{done}}/{{total}} rounds",
+      "nextDue": "next {{date}}",
+      "upToDate": "All paid",
+      "pendingCount_one": "{{count}} pending",
+      "pendingCount_other": "{{count}} pending",
+      "paidOfMembers": "{{paid}}/{{total}} paid this round",
+      "beneficiary": "Receiver: {{name}}",
+      "myTurn": "It’s your turn",
+      "setupLine": "Invite members to get started",
+      "betweenLine": "Cycle finished · plan the next draw",
+      "contribute": "Contribute · {{amount}}",
+      "dueChip": "{{amount}} due",
+      "yourTurn": "Your turn 🎁",
+      "upToDateInline": "all paid ✓"
+    },
+    "tab": {
+      "sectionOngoing": "Ongoing",
+      "sectionDone": "Finished",
+      "activeCount_one": "{{count}} ongoing",
+      "activeCount_other": "{{count}} ongoing",
+      "pausedCount_one": "{{count}} paused",
+      "pausedCount_other": "{{count}} paused",
+      "doneCount_one": "{{count}} finished",
+      "doneCount_other": "{{count}} finished",
+      "addAction": "Create or join",
+      "create": "Create a njangi",
+      "join": "Join with a code",
+      "emptyTitle": "No njangi yet",
+      "emptyBody": "Create your own, or join your association’s with an invite code.",
+      "circleCount_one": "{{count}} circle",
+      "circleCount_other": "{{count}} circles",
+      "actionsCount_one": "{{count}} action waiting",
+      "actionsCount_other": "{{count}} actions waiting"
     }
   },
   "round": {
@@ -205,7 +326,7 @@
     "noObligation": "No contribution expected from you this round.",
     "membersTitle": "Members' contributions",
     "arrears": "arrears",
-    "settled": "Contribution settled ✓",
+    "settled": "Contribution settled",
     "claimCta": "I contribute",
     "claimSuccess": "Contribution declared — awaiting confirmation ✓",
     "claimSelfSuccess": "Contribution recorded — auto (same person) ✓",
@@ -219,11 +340,11 @@
     "cashBody": "Bring {{amount}} to the next meeting. {{name}} will tick your name in Meeting Mode.",
     "cashClaimCta": "I already handed over the cash → Declare",
     "custodyNote": "The money goes directly from your account to {{name}}'s. The app never touches your money.",
-    "banner": "⚠ The *126# / #150# menus can change. Verify each step against what your phone shows.",
+    "banner": "The *126# / #150# menus can change. Verify each step against what your phone shows.",
     "payeeNumber": "{{name}}'s number",
     "amountLabel": "Amount",
     "reference": "Reference (reason)",
-    "dial": "📞 Dial {{code}}",
+    "dial": "Dial {{code}}",
     "copyCode": "Copy the code {{code}}",
     "sent": "I've sent it → Declare",
     "claimTitle": "Declare my payment",
@@ -234,25 +355,34 @@
     "txnIdHint": "(in the {{carrier}} SMS)",
     "txnPlaceholder": "e.g. 8512345678",
     "paste": "Paste from clipboard",
-    "proofNote": "ℹ {{name}}'s confirmation is what makes the payment official — not the proof.",
+    "proofNote": "{{name}}'s confirmation is what makes the payment official — not the proof.",
     "declareCta": "Declare the payment",
     "declareNoProof": "Declare without proof",
     "partialWarning": "{{amount}} will remain to contribute.",
     "overWarning": "Amount above what remains expected — declare what you actually sent.",
     "invalidAmount": "Enter a valid amount in F.",
-    "declared": "Payment declared — {{name}} must confirm ✓"
+    "declared": "Payment declared — {{name}} must confirm ✓",
+    "proofPhotoLabel": "Payment proof (photo)",
+    "takePhoto": "Take a photo",
+    "chooseImage": "Choose an image",
+    "removePhoto": "Remove photo",
+    "photoHint": "Screenshot of the SMS or a photo of the receipt — optional but recommended.",
+    "uploadFailed": "Photo upload failed — try again.",
+    "cameraDenied": "Camera access denied — allow it in Settings."
   },
   "tabs": {
     "home": "Home",
     "group": "Group",
     "inbox": "To confirm",
-    "profile": "Profile"
+    "profile": "Profile",
+    "calendar": "Calendar"
   },
   "inbox": {
     "title": "To confirm ({{count}})",
-    "empty": "Nothing to confirm. ✓",
+    "empty": "Nothing to confirm",
     "claimedByPayer": "{{name}} declares they paid — confirm receipt",
-    "claimedByPayee": "{{name}} recorded your payment — confirm or flag it"
+    "claimedByPayee": "{{name}} recorded your payment — confirm or flag it",
+    "emptyHint": "When a member declares a payment that involves you, it shows up here."
   },
   "payment": {
     "notFound": "Payment not found.",
@@ -268,7 +398,7 @@
       "fine": "Fine",
       "assistance": "Assistance"
     },
-    "confirmCta": "✓ Received — that's right",
+    "confirmCta": "Received — that's right",
     "disputeCta": "Not received / Dispute",
     "cancelCta": "Withdraw my declaration",
     "confirmGuard": "Are you sure? You confirm you received {{amount}} from {{name}}. A confirmation is final and cannot be undone.",
@@ -292,10 +422,15 @@
     "disputeTitle": "Dispute",
     "disputeAuto": "Opened automatically — payment not confirmed in time",
     "disputeBy": "Opened by {{name}}",
-    "resolution": "Resolution"
+    "resolution": "Resolution",
+    "proofImage": "Attached proof",
+    "proofImageNote": "Proof helps verify — confirmation is what makes the payment official.",
+    "proofImageOpen": "Enlarge proof",
+    "proofImageTapHint": "Tap to enlarge and zoom"
   },
   "profile": {
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "usernameHint": "Your login name"
   },
   "payout": {
     "title": "Pot handover",
@@ -359,7 +494,9 @@
       "order_change": "Order changed by {{actor}} — {{note}}",
       "member_approved": "{{actor}} approved a member",
       "role_reassigned": "Role reassigned — {{note}}"
-    }
+    },
+    "seeAll": "See all activity",
+    "fullTitle": "Group activity"
   },
   "payments": {
     "state": {
@@ -375,5 +512,31 @@
       "orange_money": "Orange Money",
       "bank": "bank"
     }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "seeCalendar": "See the calendar",
+    "youReceive": "Round {{n}} — you receive {{amount}}",
+    "receives": "Round {{n}} — {{name}} receives",
+    "contribution": "Contribution {{amount}}",
+    "hands": "({{count}} hands)",
+    "estimated": "(estimate)",
+    "monthSummaryBoth": "you contribute {{contrib}} · you receive {{receive}}",
+    "monthSummaryContrib": "you contribute {{contrib}}",
+    "empty": "No dates yet — they appear as soon as a cycle starts (or as estimates during setup).",
+    "roundLabel": "Round {{n}}",
+    "youReceiveShort": "you receive {{amount}}",
+    "receivesShort": "{{name}} receives",
+    "handOf": "hand {{n}}/{{total}}",
+    "monthOut": "Outgoing {{month}}",
+    "monthIn": "Incoming {{month}}"
+  },
+  "errors": {
+    "network": "No connection. Your data is safe — try again once you're back online."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "This link no longer points anywhere — it may be old or the item was removed.",
+    "cta": "Back to home"
   }
 }

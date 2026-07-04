@@ -1,10 +1,12 @@
 import { v } from 'convex/values';
-import { mutation } from './_generated/server';
+import { internal } from './_generated/api';
+import { action, internalMutation, mutation } from './_generated/server';
 import { performStartCycle } from './cycles';
 import { generateUniqueInviteCode } from './groups';
 import { openRoundForTick } from './rounds';
 import { logActivityEvent } from './utils/activity';
 import { getCurrentUser, requireRole } from './utils/auth';
+import { isValidE164, normalizePhone } from './utils/phone';
 
 // ============================================================================
 // DEV-ONLY seed helpers — for driving VERIFY (running the app hands-free)
@@ -22,17 +24,215 @@ function assertDevSeedEnabled() {
   }
 }
 
-// Clerk dev-instance test phones (reserved 555-01XX block, fixed OTP 424242,
-// no SMS). Slot 0 is the DevAuthButton default (président); slots 1–2 are
-// seeded onto the treasurer / first member memberships so signing in as them
-// links those memberships via the production linkMembershipsByPhone path —
-// the two-sided claim→confirm handshake becomes drivable with real
+// Test phones for the reserved 555-01XX block. Slot 0 is the DevAuthButton
+// default (président); slots 1–2 are seeded onto the treasurer / first
+// member memberships so signing in as them attaches those memberships —
+// the two-sided claim→confirm handshake stays drivable with real
 // identities and zero backend special-casing.
 export const DEV_TEST_PHONES = {
   president: '+12015550100',
   treasurer: '+12015550101',
   member: '+12015550102',
 } as const;
+
+// ── Clerk Backend API helpers (dev harness only) ─────────────────────────
+
+function clerkHeaders(): Record<string, string> {
+  const key = process.env.CLERK_SECRET_KEY;
+  if (!key) {
+    throw new Error('CLERK_SECRET_KEY not configured in Convex env');
+  }
+  return {
+    Authorization: `Bearer ${key}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+async function clerkResolveUserByUsername(username: string): Promise<string | null> {
+  const response = await fetch(
+    `https://api.clerk.com/v1/users?username=${encodeURIComponent(username)}`,
+    { headers: clerkHeaders() }
+  );
+  if (!response.ok) {
+    throw new Error(`Clerk username lookup failed: ${response.status}`);
+  }
+  const users = (await response.json()) as { id: string }[];
+  return users[0]?.id ?? null;
+}
+
+/**
+ * Deterministic synthetic username per test phone — a retried create 422s
+ * (username taken) and resolves to the same identity. The password is a
+ * discarded 256-bit random: sessions only ever come from sign-in tickets.
+ */
+async function clerkCreateDevUser(username: string): Promise<string> {
+  const password = [...crypto.getRandomValues(new Uint8Array(32))]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  const response = await fetch('https://api.clerk.com/v1/users', {
+    method: 'POST',
+    headers: clerkHeaders(),
+    body: JSON.stringify({ username, password }),
+  });
+  if (response.status === 422) {
+    const existing = await clerkResolveUserByUsername(username);
+    if (existing) return existing;
+  }
+  if (!response.ok) {
+    throw new Error(`Clerk dev user create failed: ${response.status}`);
+  }
+  const data = (await response.json()) as { id: string };
+  return data.id;
+}
+
+async function clerkMintTicket(clerkUserId: string): Promise<string> {
+  const response = await fetch('https://api.clerk.com/v1/sign_in_tokens', {
+    method: 'POST',
+    headers: clerkHeaders(),
+    body: JSON.stringify({
+      user_id: clerkUserId,
+      expires_in_seconds: 120, // single-use, short-TTL
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Clerk sign-in token mint failed: ${response.status}`);
+  }
+  const data = (await response.json()) as { token: string };
+  return data.token;
+}
+
+/**
+ * DEV-ONLY user provisioning for the sim pills: ensure a users row for the
+ * Clerk identity, stamp the test phone on it, and attach any unclaimed
+ * seeded memberships carrying that phone. This is a HARNESS-ONLY stand-in
+ * for the removed production phone-link path (linkMembershipsByPhone died
+ * with the OTP possession proof) — it must never gain a public caller;
+ * every entry point is behind assertDevSeedEnabled().
+ */
+export const devEnsureUserWithPhone = internalMutation({
+  args: { clerkId: v.string(), phone: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    const phone = normalizePhone(args.phone);
+
+    let user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))
+      .unique();
+    if (!user) {
+      const userId = await ctx.db.insert('users', {
+        clerkId: args.clerkId,
+        name: '',
+        language: 'fr',
+      });
+      user = await ctx.db.get(userId);
+    }
+    if (!user) {
+      throw new Error('User row could not be resolved');
+    }
+    if (user.phone !== phone) {
+      await ctx.db.patch(user._id, { phone });
+    }
+
+    // Attach seeded feature-phone memberships (dupe-safe: never a second
+    // membership for the same user in one group).
+    const matches = await ctx.db
+      .query('memberships')
+      .withIndex('by_phone', (q) => q.eq('phone', phone))
+      .collect();
+    for (const membership of matches) {
+      if (membership.userId !== undefined) continue;
+      const alreadyMember = await ctx.db
+        .query('memberships')
+        .withIndex('by_group_and_user', (q) =>
+          q.eq('groupId', membership.groupId).eq('userId', user._id)
+        )
+        .first();
+      if (alreadyMember) continue;
+      await ctx.db.patch(membership._id, { userId: user._id });
+    }
+    return null;
+  },
+});
+
+/**
+ * One-tap sim sign-in for the DEV pills. User-facing auth is
+ * username+password + Google SSO; the pills resolve/create a Clerk user
+ * with a deterministic dev username, provision the Convex row (test phone +
+ * seeded-membership attach, dev harness only), and mint a short-TTL Clerk
+ * ticket. Gated by DEV_SEED_ENABLED — never enable on production.
+ */
+export const devLoginTicket = action({
+  args: { phone: v.string() },
+  returns: v.object({
+    ok: v.boolean(),
+    ticket: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    const phone = normalizePhone(args.phone);
+    if (!isValidE164(phone)) {
+      throw new Error('Invalid phone');
+    }
+    const username = `phone_${phone.replace('+', '')}`;
+    let clerkUserId = await clerkResolveUserByUsername(username);
+    if (!clerkUserId) {
+      clerkUserId = await clerkCreateDevUser(username);
+    }
+    await ctx.runMutation(internal.dev.devEnsureUserWithPhone, {
+      clerkId: clerkUserId,
+      phone,
+    });
+    const ticket = await clerkMintTicket(clerkUserId);
+    return { ok: true, ticket };
+  },
+});
+
+/**
+ * One-shot mirror backfill: pull username/email for existing Clerk users
+ * into Convex rows (new signups sync via the webhook; rows created before
+ * the mirror existed don't). Reuses updateUserFromClerk so the write path
+ * stays single.
+ */
+export const devBackfillClerkIdentifiers = action({
+  args: {},
+  returns: v.object({ updated: v.number() }),
+  handler: async (ctx): Promise<{ updated: number }> => {
+    assertDevSeedEnabled();
+    const key = process.env.CLERK_SECRET_KEY;
+    if (!key) throw new Error('CLERK_SECRET_KEY not configured');
+    const response = await fetch('https://api.clerk.com/v1/users?limit=100', {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!response.ok) {
+      throw new Error(`Clerk user list failed: ${response.status}`);
+    }
+    const users = (await response.json()) as {
+      id: string;
+      username: string | null;
+      email_addresses: { id: string; email_address: string }[];
+      primary_email_address_id: string | null;
+    }[];
+    let updated = 0;
+    for (const u of users) {
+      const email =
+        u.email_addresses.find((e) => e.id === u.primary_email_address_id)
+          ?.email_address ?? u.email_addresses[0]?.email_address;
+      if (!u.username && !email) continue;
+      const patched: string | null = await ctx.runMutation(
+        internal.users.updateUserFromClerk,
+        {
+          clerkId: u.id,
+          ...(u.username ? { username: u.username } : {}),
+          ...(email ? { email } : {}),
+        }
+      );
+      if (patched !== null) updated++;
+    }
+    return { updated };
+  },
+});
 
 const SEED_NAMES = [
   'Awa Ndip',
@@ -99,10 +299,10 @@ export const devSeed = mutation({
     });
 
     // The first member is the treasurer so startCycle's treasurer guard
-    // passes. Treasurer + first ordinary member carry Clerk dev test-phone
+    // passes. Treasurer + first ordinary member carry dev test-phone
     // numbers: if that dev user already exists we attach their userId now;
-    // otherwise their first dev sign-in links the membership by phone
-    // (linkMembershipsByPhone). Everyone else stays feature-phone.
+    // otherwise their first dev pill sign-in attaches the membership
+    // (devEnsureUserWithPhone). Everyone else stays feature-phone.
     for (let i = 0; i < count; i++) {
       const phone =
         i === 0

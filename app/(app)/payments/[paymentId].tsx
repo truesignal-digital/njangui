@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import type { FunctionReturnType } from 'convex/server';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import { ChevronLeftIcon } from 'react-native-heroicons/outline';
+import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
 import { api, type Id } from '../../../src/lib/convex-api';
 import { useAuth } from '../../../src/lib/clerk-client';
@@ -14,13 +15,13 @@ import { formatCurrencyXAF } from '../../../src/lib/format-currency';
 import { haptics } from '../../../src/lib/haptics';
 import { useAppTheme, useShadow } from '../../../src/lib/theme';
 import {
-  Badge,
-  PAYMENT_STATE_TONE,
+  PaymentStateBadge,
   type PaymentState,
 } from '../../../src/components/ui/badge';
 import { AppButton } from '../../../src/components/ui/button';
 import { TextField } from '../../../src/components/ui/text-field';
 import { Skeleton } from '../../../src/components/skeleton';
+import { ImagePreviewModal } from '../../../src/components/image-preview-modal';
 
 type DisputeReason = 'not_received' | 'wrong_amount' | 'other';
 
@@ -39,6 +40,7 @@ export default function PaymentDetailScreen() {
   const { paymentId } = useLocalSearchParams<{ paymentId: string }>();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const { isAuthenticated } = useConvexAuth();
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
 
   const record = useQuery(
     api.paymentRecords.getPaymentRecord,
@@ -84,8 +86,6 @@ export default function PaymentDetailScreen() {
     );
   }
 
-  const tone = PAYMENT_STATE_TONE[record.state as PaymentState];
-
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -106,9 +106,9 @@ export default function PaymentDetailScreen() {
           <Text className="font-heading text-headline text-foreground">
             {t(`payment.kind.${record.kind}`)} · {formatCurrencyXAF(record.amount)}
           </Text>
-          <Badge
-            tone={tone.tone}
-            label={`${tone.icon} ${t(`payments.state.${record.state}`)}`}
+          <PaymentStateBadge
+            state={record.state as PaymentState}
+            label={t(`payments.state.${record.state}`)}
           />
         </View>
       </View>
@@ -146,6 +146,41 @@ export default function PaymentDetailScreen() {
           />
         ) : null}
       </Card>
+
+      {/* Proof photo — shown to the confirmer; accepted, never trusted (I-10) */}
+      {record.screenshotUrl ? (
+        <Card>
+          <Text className="pb-xs font-body-semi text-body text-foreground">
+            {t('payment.proofImage')}
+          </Text>
+          <Pressable
+            accessibilityRole="imagebutton"
+            accessibilityLabel={t('payment.proofImageOpen')}
+            onPress={() => setPreviewUri(record.screenshotUrl)}
+          >
+            <Image
+              source={{ uri: record.screenshotUrl }}
+              resizeMode="contain"
+              style={{
+                height: 320,
+                width: '100%',
+                borderRadius: theme.radius.lg,
+                backgroundColor: theme.surfaceMuted,
+              }}
+              accessibilityLabel={t('payment.proofImage')}
+            />
+          </Pressable>
+          <Text className="pt-xs font-body text-caption text-muted">
+            {t('payment.proofImageTapHint')} ·{' '}
+            {t('payment.proofImageNote')}
+          </Text>
+        </Card>
+      ) : null}
+
+      <ImagePreviewModal
+        uri={previewUri}
+        onClose={() => setPreviewUri(null)}
+      />
 
       {/* Dispute thread */}
       {record.dispute ? (
@@ -188,6 +223,7 @@ type RecordDetail = NonNullable<
 
 function PaymentActions({ record }: { record: RecordDetail }) {
   const { t } = useTranslation();
+  const theme = useAppTheme();
   const confirm = useMutation(api.paymentRecords.confirm);
   const dispute = useMutation(api.paymentRecords.dispute);
   const cancel = useMutation(api.paymentRecords.cancel);
@@ -221,6 +257,7 @@ function PaymentActions({ record }: { record: RecordDetail }) {
               <>
                 <AppButton
                   label={t('payment.confirmCta')}
+                  icon={<CheckCircleIcon size={18} color={theme.primaryForeground} />}
                   testID="payment-confirm"
                   onPress={() => setMode('confirming')}
                 />
@@ -296,8 +333,13 @@ function PaymentActions({ record }: { record: RecordDetail }) {
                     : 'min-h-[44px] flex-row items-center rounded-lg border border-border bg-surface px-md'
                 }
               >
-                <Text className="font-body-medium text-body-sm text-foreground">
-                  {reason === r ? '◉' : '○'} {t(`payment.disputeReason.${r}`)}
+                {reason === r ? (
+                  <CheckCircleIcon size={18} color={theme.accent} />
+                ) : (
+                  <View className="h-[16px] w-[16px] rounded-full border-2 border-placeholder" />
+                )}
+                <Text className="pl-xs font-body-medium text-body-sm text-foreground">
+                  {t(`payment.disputeReason.${r}`)}
                 </Text>
               </Pressable>
             ))}

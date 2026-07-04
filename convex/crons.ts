@@ -17,6 +17,7 @@ import {
   openRoundForTick,
 } from './rounds';
 import { logActivityEvent } from './utils/activity';
+import { paymentLink } from './lib/appLinks';
 
 // ============================================================================
 // THE cron — one tick every 15 minutes evaluating 02's global timer table
@@ -166,7 +167,7 @@ export const tick = internalMutation({
               titleEn: 'Reminder — confirm',
               bodyFr: 'Un paiement enregistré pour vous attend votre confirmation',
               bodyEn: 'A payment recorded for you is awaiting your confirmation',
-              url: `/payments/${record._id}`,
+              url: paymentLink(record._id),
             });
           }
           continue;
@@ -200,7 +201,7 @@ export const tick = internalMutation({
             titleEn: 'Reminder — confirm',
             bodyFr: 'Un paiement déclaré attend toujours votre confirmation',
             bodyEn: 'A declared payment is still awaiting your confirmation',
-            url: `/payments/${record._id}`,
+            url: paymentLink(record._id),
           });
         } else if (record.reminder1SentAt === undefined) {
           await ctx.db.patch(record._id, { reminder1SentAt: now });
@@ -216,7 +217,7 @@ export const tick = internalMutation({
             titleEn: 'Reminder — confirm',
             bodyFr: 'Un paiement déclaré attend votre confirmation',
             bodyEn: 'A declared payment is awaiting your confirmation',
-            url: `/payments/${record._id}`,
+            url: paymentLink(record._id),
           });
         }
       }

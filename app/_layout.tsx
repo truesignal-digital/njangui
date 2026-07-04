@@ -86,11 +86,13 @@ function AppNavigation() {
         <Stack.Screen name="(app)" />
         <Stack.Screen name="(auth)" />
       </Stack>
+      {/* 3.5s + close button: FR strings run long and low-end devices render
+          slow — a toast the user can't finish reading is no feedback at all. */}
       <Toaster
         position="top-center"
         theme={theme.isDark ? 'dark' : 'light'}
-        duration={2000}
-        closeButton={false}
+        duration={3500}
+        closeButton
       />
     </NavThemeProvider>
   );

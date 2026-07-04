@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router, useGlobalSearchParams } from 'expo-router';
-import { useSignIn, useSignUp } from '@clerk/expo/legacy';
-import { useConvexAuth, useMutation } from 'convex/react';
+import { useAction, useConvexAuth, useMutation } from 'convex/react';
 import { toast } from 'sonner-native';
 
-import { api, type Id } from '../../lib/convex-api';
-import { useClerk } from '../../lib/clerk-client';
+import { api, type Id } from '@/lib/convex-api';
+import { useClerk, useSignIn } from '@/lib/clerk-client';
 
-// Clerk dev-instance test phones (reserved 555-01XX block) → fixed OTP, no
-// SMS. Slots mirror convex/dev.ts DEV_TEST_PHONES: the seed puts .treasurer
-// / .member on real memberships, so signing in as them links those
-// memberships by phone — the two-sided handshake is drivable in the sim.
-const TEST_CODE = '424242';
+// Test phones (555-01XX block). Slots mirror convex/dev.ts DEV_TEST_PHONES:
+// the seed puts .treasurer/.member on real memberships, so signing in as
+// them attaches those memberships — the two-sided handshake is drivable
+// in the sim.
 const TEST_USERS = [
   { label: 'P', phone: '+12015550100', hint: 'président' },
   { label: 'T', phone: '+12015550101', hint: 'trésorier' },
@@ -20,68 +18,36 @@ const TEST_USERS = [
 ] as const;
 
 /**
- * DEV-only auto sign-in. Bypasses the simulator text-input wall by driving
- * Clerk's JS API with a test number programmatically (one tap per identity).
- * Mount under __DEV__ only. Tries sign-in, falls back to sign-up.
+ * DEV-only auto sign-in. User-facing auth is username+password + Google
+ * SSO, so the pills call devLoginTicket — the server resolves/creates the
+ * dev Clerk user, provisions the Convex row (test phone + seeded-membership
+ * attach) and returns a short-TTL Clerk ticket. Env-gated server-side
+ * (DEV_SEED_ENABLED). One tap per identity.
  */
 export function DevAuthButton() {
-  const {
-    isLoaded: signInLoaded,
-    signIn,
-    setActive: setActiveSignIn,
-  } = useSignIn();
-  const {
-    isLoaded: signUpLoaded,
-    signUp,
-    setActive: setActiveSignUp,
-  } = useSignUp();
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const devLoginTicket = useAction(api.dev.devLoginTicket);
   const [busyPhone, setBusyPhone] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
   const run = async (phone: string) => {
-    if (!signInLoaded || !signUpLoaded || !signIn || !signUp) return;
+    if (!isLoaded || !signIn) return;
     setBusyPhone(phone);
-    setStatus('signing in…');
+    setStatus('minting dev ticket…');
     try {
-      try {
-        const attempt = await signIn.create({ identifier: phone });
-        const factor = (attempt.supportedFirstFactors ?? []).find(
-          (f) => f.strategy === 'phone_code'
-        ) as { phoneNumberId: string } | undefined;
-        if (!factor) throw new Error('no phone factor');
-        await signIn.prepareFirstFactor({
-          strategy: 'phone_code',
-          phoneNumberId: factor.phoneNumberId,
-        });
-        const res = await signIn.attemptFirstFactor({
-          strategy: 'phone_code',
-          code: TEST_CODE,
-        });
-        if (res.status === 'complete' && setActiveSignIn) {
-          await setActiveSignIn({ session: res.createdSessionId });
-          return;
-        }
-        throw new Error(`sign-in status ${res.status}`);
-      } catch {
-        // Fresh test user → sign up instead. The Clerk dev instance
-        // requires a password on sign-up; fixed throwaway for test users.
-        setStatus('signing up…');
-        await signUp.create({
-          phoneNumber: phone,
-          password: `dev-Njangi-${TEST_CODE}`,
-        });
-        await signUp.preparePhoneNumberVerification({ strategy: 'phone_code' });
-        const res = await signUp.attemptPhoneNumberVerification({
-          code: TEST_CODE,
-        });
-        if (res.status === 'complete' && setActiveSignUp) {
-          await setActiveSignUp({ session: res.createdSessionId });
-          return;
-        }
-        throw new Error(
-          `sign-up status ${res.status} — missing: ${JSON.stringify(res.missingFields)} unverified: ${JSON.stringify(res.unverifiedFields)}`
-        );
+      const minted = await devLoginTicket({ phone });
+      if (!minted.ok || !minted.ticket) {
+        throw new Error('dev ticket mint failed');
       }
+      const attempt = await signIn.create({
+        strategy: 'ticket',
+        ticket: minted.ticket,
+      });
+      if (attempt.status === 'complete' && setActive) {
+        await setActive({ session: attempt.createdSessionId });
+        return;
+      }
+      throw new Error(`ticket sign-in status ${attempt.status}`);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'dev auth failed');
       setBusyPhone(null);

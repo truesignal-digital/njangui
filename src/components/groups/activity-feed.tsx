@@ -12,12 +12,19 @@ import { Skeleton } from '../skeleton';
  * generic fallback so an unmapped kind renders honestly instead of
  * disappearing. Auto-events (no actor) render without a name.
  */
-export function ActivityFeed({ groupId }: { groupId: Id<'groups'> }) {
+export function ActivityFeed({
+  groupId,
+  compact = false,
+}: {
+  groupId: Id<'groups'>;
+  /** Group-screen preview: few items, no load-more (the page has both). */
+  compact?: boolean;
+}) {
   const { t, i18n } = useTranslation();
   const { results, status, loadMore } = usePaginatedQuery(
     api.activity.listGroupFeed,
     { groupId },
-    { initialNumItems: 15 }
+    { initialNumItems: compact ? 5 : 25 }
   );
 
   if (status === 'LoadingFirstPage') {
@@ -76,12 +83,12 @@ export function ActivityFeed({ groupId }: { groupId: Id<'groups'> }) {
           </View>
         );
       })}
-      {status === 'CanLoadMore' ? (
+      {!compact && status === 'CanLoadMore' ? (
         <AppButton
           variant="ghost"
           size="sm"
           label={t('feed.loadMore')}
-          onPress={() => loadMore(15)}
+          onPress={() => loadMore(25)}
         />
       ) : null}
     </View>

@@ -68,12 +68,21 @@ http.route({
     const eventType = normalizeWebhookEventType(eventData.type);
     const userData = eventData.data;
 
-    // Njangi users table (docs/01-domain-model.md): clerkId, name, phone
-    // (E.164), language ('fr' default), avatarUrl. Identity is phone-first.
+    // 🔒 linkGuard: the webhook forwards name/avatar (+ username/email
+    // below) ONLY. The Clerk phone is never trusted — nothing writes
+    // users.phone since the OTP phone-link system was removed.
     const name =
       [userData?.first_name, userData?.last_name].filter(Boolean).join(' ') || undefined;
-    const phone = userData?.phone_numbers?.[0]?.phone_number || undefined;
     const avatarUrl = userData?.image_url || undefined;
+    // Clerk-owned identifiers mirrored for member search / email notify —
+    // NOT the phone (linkGuard): username/email carry no membership grant.
+    const username = userData?.username || undefined;
+    const email =
+      userData?.email_addresses?.find(
+        (e: { id: string }) => e.id === userData?.primary_email_address_id
+      )?.email_address ??
+      userData?.email_addresses?.[0]?.email_address ??
+      undefined;
 
     console.log(
       `Received Clerk webhook: raw=${JSON.stringify(rawEventType)} normalized=${JSON.stringify(eventType)}`
@@ -84,9 +93,10 @@ http.route({
         case 'user.created':
           await ctx.runMutation(internal.users.createUserFromClerk, {
             clerkId: userData.id,
-            name: name ?? phone ?? '',
-            phone,
+            name: name ?? '',
             avatarUrl,
+            username,
+            email,
           });
           break;
 
@@ -94,8 +104,9 @@ http.route({
           await ctx.runMutation(internal.users.updateUserFromClerk, {
             clerkId: userData.id,
             name,
-            phone,
             avatarUrl,
+            username,
+            email,
           });
           break;
 

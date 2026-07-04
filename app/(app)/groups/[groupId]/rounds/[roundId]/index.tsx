@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import { ChevronLeftIcon } from 'react-native-heroicons/outline';
+import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
 import { api, type Id } from '../../../../../../src/lib/convex-api';
 import { useAuth } from '../../../../../../src/lib/clerk-client';
@@ -21,10 +22,13 @@ import { useAppTheme, useShadow } from '../../../../../../src/lib/theme';
 import { TextField } from '../../../../../../src/components/ui/text-field';
 import {
   Badge,
-  PAYMENT_STATE_TONE,
+  PaymentStateBadge,
   type PaymentState,
 } from '../../../../../../src/components/ui/badge';
 import { AppButton } from '../../../../../../src/components/ui/button';
+import { PotProgress } from '../../../../../../src/components/ui/pot-progress';
+import { SectionCard } from '../../../../../../src/components/ui/section-card';
+import { resolveSeed } from '../../../../../../src/lib/group-colors';
 import { Skeleton } from '../../../../../../src/components/skeleton';
 
 /**
@@ -163,6 +167,7 @@ export default function RoundDetailScreen() {
               expectedTotal={round.expectedTotal}
               inFlightTotal={round.inFlightTotal}
               custodianName={round.custodianName}
+              colorSeed={resolveSeed(group?.colorSeed ?? null, round.groupId)}
             />
           </SectionCard>
 
@@ -249,56 +254,10 @@ type PaymentRow = FunctionReturnType<
   typeof api.rounds.listRoundPayments
 >[number];
 
-function PotProgress({
-  confirmedTotal,
-  expectedTotal,
-  inFlightTotal,
-  custodianName,
-}: {
-  confirmedTotal: number;
-  expectedTotal: number;
-  inFlightTotal: number;
-  custodianName: string;
-}) {
-  const { t } = useTranslation();
-  const theme = useAppTheme();
-  const pct =
-    expectedTotal > 0
-      ? Math.min(100, Math.round((confirmedTotal / expectedTotal) * 100))
-      : 0;
-
-  return (
-    <View className="gap-xs">
-      <Text className="font-body-semi text-body text-foreground">
-        {t('round.pot.custody', {
-          confirmed: formatCurrencyXAF(confirmedTotal),
-          expected: formatCurrencyXAF(expectedTotal),
-          name: custodianName,
-        })}
-      </Text>
-      <View className="h-[8px] overflow-hidden rounded-pill bg-surface-muted">
-        <View
-          className="h-full rounded-pill"
-          style={{ width: `${pct}%`, backgroundColor: theme.accent }}
-        />
-      </View>
-      {inFlightTotal > 0 ? (
-        <Text className="font-body text-caption text-muted">
-          {t('round.inFlight', { amount: formatCurrencyXAF(inFlightTotal) })}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
 function PaymentStateChip({ state }: { state: PaymentState }) {
   const { t } = useTranslation();
-  const toneEntry = PAYMENT_STATE_TONE[state];
   return (
-    <Badge
-      tone={toneEntry.tone}
-      label={`${toneEntry.icon} ${t(`payments.state.${state}`)}`}
-    />
+    <PaymentStateBadge state={state} label={t(`payments.state.${state}`)} />
   );
 }
 
@@ -317,6 +276,7 @@ function MyContributionBlock({
   roundId: string;
 }) {
   const { t } = useTranslation();
+  const theme = useAppTheme();
   const pendingRecord = row.records.find((r) => r.state === 'pending');
 
   return (
@@ -344,9 +304,12 @@ function MyContributionBlock({
       ))}
 
       {row.isSettled ? (
-        <Text className="font-body-medium text-body-sm text-success-dark">
-          {t('round.settled')}
-        </Text>
+        <View className="flex-row items-center gap-xs">
+          <CheckCircleIcon size={16} color={theme.successDark} />
+          <Text className="font-body-medium text-body-sm text-success-dark">
+            {t('round.settled')}
+          </Text>
+        </View>
       ) : null}
 
       {pendingRecord ? (
@@ -574,17 +537,3 @@ function MemberPaymentRow({ row, isMe }: { row: PaymentRow; isMe: boolean }) {
   );
 }
 
-function SectionCard({ title, children }: { title: string; children: ReactNode }) {
-  const shadow = useShadow();
-  return (
-    <View
-      className="mt-lg rounded-xl border border-border-subtle bg-surface p-lg"
-      style={shadow('card')}
-    >
-      <Text className="pb-sm font-body-semi text-title text-foreground">
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}

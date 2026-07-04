@@ -1,12 +1,20 @@
 import { useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
+import * as ImagePicker from 'expo-image-picker';
+// Legacy API on purpose: uploadAsync streams the file natively — RN fetch
+// cannot build a Blob from a file:// URI (ArrayBuffer blobs unsupported).
+import * as FileSystem from 'expo-file-system/legacy';
 import { useMutation } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
-import { ChevronLeftIcon } from 'react-native-heroicons/outline';
+import {
+  CameraIcon,
+  ChevronLeftIcon,
+  InformationCircleIcon,
+  PhotoIcon,
+} from 'react-native-heroicons/outline';
 
 import { api, type Id } from '../../../../../../../src/lib/convex-api';
 import { formatCurrencyXAF } from '../../../../../../../src/lib/format-currency';
@@ -17,14 +25,16 @@ import { usePayFlow } from '../../../../../../../src/hooks/use-pay-flow';
 import { AppButton } from '../../../../../../../src/components/ui/button';
 import { TextField } from '../../../../../../../src/components/ui/text-field';
 import { Skeleton } from '../../../../../../../src/components/skeleton';
+import { ImagePreviewModal } from '../../../../../../../src/components/image-preview-modal';
 
 /**
  * Pay flow step 3 — claim (docs/03 B4): amount prefilled with the remaining
  * obligation and EDITABLE (02 edge case 7 — under/over warns, never
- * blocks); txn ID is the nudged proof with a clipboard « Coller »;
- * « Déclarer sans preuve » stays allowed (decision 3). Confirmation — not
- * proof — is what makes the payment official (decision 2 microcopy).
- * Screenshot proof is deferred (needs an image picker — later slice).
+ * blocks); proof is a PHOTO (MoMo SMS / receipt screenshot) uploaded to
+ * Convex storage before the claim, `proofType: 'screenshot'` — accepted,
+ * never trusted (I-10). « Déclarer sans preuve » stays allowed (decision
+ * 3). Confirmation — not proof — is what makes the payment official
+ * (decision 2 microcopy).
  */
 export default function PayClaimScreen() {
   const { t } = useTranslation();
@@ -39,9 +49,16 @@ export default function PayClaimScreen() {
   const payMethod = method === 'orange_money' ? 'orange_money' : 'momo_mtn';
   const flow = usePayFlow(roundId, record);
   const claim = useMutation(api.paymentRecords.claim);
+  const generateProofUploadUrl = useMutation(
+    api.paymentRecords.generateProofUploadUrl
+  );
 
   const [amountText, setAmountText] = useState<string | null>(null); // null ⇒ prefill
-  const [txnId, setTxnId] = useState('');
+  const [proof, setProof] = useState<{
+    uri: string;
+    mimeType: string;
+  } | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const keyRef = useRef<string | null>(null);
 
@@ -63,12 +80,42 @@ export default function PayClaimScreen() {
           ? t('pay.overWarning')
           : null;
 
-  const paste = async () => {
-    const text = (await Clipboard.getStringAsync()).trim();
-    if (text) {
-      setTxnId(text);
+  const pickProof = async (source: 'camera' | 'library') => {
+    if (source === 'camera') {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        toast.error(t('pay.cameraDenied'));
+        return;
+      }
+    }
+    const result =
+      source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ quality: 0.5 })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 0.5,
+          });
+    const asset = result.canceled ? null : result.assets[0];
+    if (asset) {
+      setProof({ uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg' });
       haptics.light();
     }
+  };
+
+  const uploadProof = async (): Promise<Id<'_storage'>> => {
+    const uploadUrl = await generateProofUploadUrl({});
+    const res = await FileSystem.uploadAsync(uploadUrl, proof!.uri, {
+      httpMethod: 'POST',
+      headers: { 'Content-Type': proof!.mimeType },
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    });
+    if (res.status < 200 || res.status >= 300) {
+      throw new Error(t('pay.uploadFailed'));
+    }
+    const { storageId } = JSON.parse(res.body) as {
+      storageId: Id<'_storage'>;
+    };
+    return storageId;
   };
 
   const submit = async (withProof: boolean) => {
@@ -79,14 +126,15 @@ export default function PayClaimScreen() {
     }
     setBusy(true);
     try {
+      const screenshotStorageId =
+        withProof && proof ? await uploadProof() : undefined;
       if (!keyRef.current) keyRef.current = newIdempotencyKey();
-      const trimmedTxn = txnId.trim();
       await claim({
         paymentRecordId: flow.record.paymentRecordId as Id<'paymentRecords'>,
         idempotencyKey: keyRef.current,
         amount,
         method: payMethod,
-        ...(withProof && trimmedTxn ? { momoTxnId: trimmedTxn } : {}),
+        ...(screenshotStorageId !== undefined && { screenshotStorageId }),
       });
       haptics.success();
       toast.success(
@@ -166,31 +214,76 @@ export default function PayClaimScreen() {
           </View>
 
           <View className="gap-xs">
-            <TextField
-              label={`${t('pay.txnId')} ${t('pay.txnIdHint', {
-                carrier: payMethod === 'momo_mtn' ? 'MTN' : 'Orange',
-              })}`}
-              value={txnId}
-              onChangeText={setTxnId}
-              placeholder={t('pay.txnPlaceholder')}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              testID="claim-txn-id"
-            />
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void paste()}
-              className="self-start rounded-md px-xs py-[2px] active:bg-surface-muted"
-            >
-              <Text className="font-body-medium text-body-sm text-accent">
-                {t('pay.paste')}
-              </Text>
-            </Pressable>
+            <Text className="font-body-medium text-body-sm text-foreground">
+              {t('pay.proofPhotoLabel')}
+            </Text>
+            {proof ? (
+              <View className="gap-xs">
+                <Pressable
+                  accessibilityRole="imagebutton"
+                  accessibilityLabel={t('payment.proofImageOpen')}
+                  onPress={() => setPreviewOpen(true)}
+                >
+                  <Image
+                    source={{ uri: proof.uri }}
+                    resizeMode="cover"
+                    style={{
+                      height: 180,
+                      width: '100%',
+                      borderRadius: theme.radius.lg,
+                      backgroundColor: theme.surfaceMuted,
+                    }}
+                    accessibilityLabel={t('pay.proofPhotoLabel')}
+                  />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setProof(null)}
+                  className="self-start rounded-md px-xs py-[2px] active:bg-surface-muted"
+                  testID="claim-remove-photo"
+                >
+                  <Text className="font-body-medium text-body-sm text-destructive">
+                    {t('pay.removePhoto')}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View className="flex-row gap-sm">
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void pickProof('camera')}
+                  className="flex-1 flex-row items-center justify-center gap-xs rounded-lg border border-border bg-surface px-sm py-md active:bg-surface-muted"
+                  testID="claim-take-photo"
+                >
+                  <CameraIcon size={18} color={theme.textMuted} />
+                  <Text className="font-body-medium text-body-sm text-foreground">
+                    {t('pay.takePhoto')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void pickProof('library')}
+                  className="flex-1 flex-row items-center justify-center gap-xs rounded-lg border border-border bg-surface px-sm py-md active:bg-surface-muted"
+                  testID="claim-choose-image"
+                >
+                  <PhotoIcon size={18} color={theme.textMuted} />
+                  <Text className="font-body-medium text-body-sm text-foreground">
+                    {t('pay.chooseImage')}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+            <Text className="font-body text-caption text-muted">
+              {t('pay.photoHint')}
+            </Text>
           </View>
 
-          <Text className="font-body text-body-sm text-muted">
-            {t('pay.proofNote', { name: flow.payee?.displayName ?? '—' })}
-          </Text>
+          <View className="flex-row items-start gap-xs">
+            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Text className="flex-1 font-body text-body-sm text-muted">
+              {t('pay.proofNote', { name: flow.payee?.displayName ?? '—' })}
+            </Text>
+          </View>
 
           <AppButton
             label={t('pay.declareCta')}
@@ -212,6 +305,11 @@ export default function PayClaimScreen() {
           </Pressable>
         </View>
       )}
+
+      <ImagePreviewModal
+        uri={previewOpen && proof ? proof.uri : null}
+        onClose={() => setPreviewOpen(false)}
+      />
     </ScrollView>
   );
 }

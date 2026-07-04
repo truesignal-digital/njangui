@@ -14,9 +14,12 @@ import { Badge, GROUP_STATUS_TONE } from '../../../../src/components/ui/badge';
 import { AppButton } from '../../../../src/components/ui/button';
 import { Skeleton } from '../../../../src/components/skeleton';
 import { ActivityFeed } from '../../../../src/components/groups/activity-feed';
+import { ReadinessCard } from '../../../../src/components/groups/readiness-card';
 import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
 import { RotationSection } from '../../../../src/components/groups/rotation-section';
+import { GroupAvatar } from '../../../../src/components/ui/group-identity';
+import { SectionCard } from '../../../../src/components/ui/section-card';
 
 /**
  * Group home shell (docs/03 B2, Week 1 slice): roster with roles + status
@@ -91,6 +94,104 @@ export default function GroupHomeScreen() {
   }));
   const pendingMembers = roster.filter((m) => m.status === 'pending_approval');
   const activeMembers = roster.filter((m) => m.status === 'active');
+  // Treasurer-created groups start president-less (02 §a: the creator picks
+  // their real role) but the cycle lock REQUIRES a president — until one is
+  // named, the treasurer sees a banner + a per-member action.
+  const hasPresident = activeMembers.some((m) => m.role === 'president');
+  const canAssignPresident =
+    members !== undefined && !hasPresident && group.viewerRole === 'treasurer';
+
+  const cycleRunning = group.status === 'active' || group.status === 'paused';
+
+  const membersSection = (
+    <SectionCard
+      title={
+        members
+          ? `${t('groups.detail.membersTitle')} · ${t('groups.memberCount', {
+              count: activeMembers.length,
+            })}`
+          : t('groups.detail.membersTitle')
+      }
+    >
+      {members === undefined ? (
+        <View className="gap-sm">
+          <Skeleton className="h-[48px] rounded-md" />
+          <Skeleton className="h-[48px] rounded-md" />
+          <Skeleton className="h-[48px] rounded-md" />
+        </View>
+      ) : (
+        <MemberList
+          members={activeMembers}
+          canManage={canManage}
+          canAssignPresident={canAssignPresident}
+          groupId={group._id}
+        />
+      )}
+      {canManage ? (
+        <AppButton
+          variant="outline"
+          label={t('groups.detail.addMember')}
+          icon={<PlusIcon size={18} color={theme.accent} />}
+          className="mt-sm"
+          onPress={() =>
+            router.push({
+              pathname: '/groups/[groupId]/add-member',
+              params: { groupId: group._id },
+            })
+          }
+        />
+      ) : null}
+    </SectionCard>
+  );
+
+  const inviteSection = canManage ? (
+    <SectionCard title={t('groups.invite.title')}>
+      <InviteShare inviteCode={group.inviteCode} groupName={group.name} />
+    </SectionCard>
+  ) : null;
+
+  const rotationSection = (
+    <SectionCard title={t('groups.detail.rotationTitle')}>
+      <RotationSection
+        groupId={group._id}
+        groupStatus={group.status}
+        viewerRole={group.viewerRole}
+        activeMemberCount={activeMembers.length}
+      />
+      <AppButton
+        variant="ghost"
+        size="sm"
+        label={t('calendar.seeCalendar')}
+        onPress={() =>
+          router.push({
+            pathname: '/groups/[groupId]/calendar',
+            params: { groupId: group._id },
+          })
+        }
+        testID="see-group-calendar"
+      />
+    </SectionCard>
+  );
+
+  // 5-item preview; the full immutable ledger lives on its own paginated
+  // page (decision 6: the history IS the product).
+  const activitySection = (
+    <SectionCard title={t('feed.title')}>
+      <ActivityFeed groupId={group._id} compact />
+      <AppButton
+        variant="ghost"
+        size="sm"
+        label={t('feed.seeAll')}
+        onPress={() =>
+          router.push({
+            pathname: '/groups/[groupId]/activity',
+            params: { groupId: group._id },
+          })
+        }
+        testID="see-all-activity"
+      />
+    </SectionCard>
+  );
 
   return (
     <ScrollView
@@ -110,6 +211,12 @@ export default function GroupHomeScreen() {
         >
           <ChevronLeftIcon size={22} color={theme.textMuted} />
         </Pressable>
+        <GroupAvatar
+          name={group.name}
+          colorSeed={group.colorSeed}
+          groupId={group._id}
+          size={40}
+        />
         <View className="min-w-0 flex-1 gap-xs">
           <Text
             numberOfLines={1}
@@ -124,13 +231,17 @@ export default function GroupHomeScreen() {
         </View>
       </View>
 
-      {/* Setup banner (docs/03 B2 setup state) */}
-      {group.status === 'setup' && activeMembers.length > 0 ? (
-        <View className="mt-lg rounded-lg border border-accent-muted bg-accent-faint p-sm">
-          <Text className="font-body text-body-sm text-foreground">
-            {t('groups.detail.setupBanner', { count: activeMembers.length })}
-          </Text>
-        </View>
+      {/* Setup readiness — the lock guards made visible, plus the projected
+          season so "do we wait for one more member?" has a visible cost */}
+      {group.status === 'setup' && members !== undefined ? (
+        <ReadinessCard
+          activeMemberCount={activeMembers.length}
+          targetMemberCount={group.targetMemberCount}
+          hasPresident={hasPresident}
+          hasTreasurer={activeMembers.some((m) => m.role === 'treasurer')}
+          schedule={group.schedule}
+          meetingDayOfWeek={group.meetingDayOfWeek}
+        />
       ) : null}
 
       {/* Pending approvals — problems float up (president/treasurer only) */}
@@ -142,62 +253,25 @@ export default function GroupHomeScreen() {
         </SectionCard>
       ) : null}
 
-      {/* Member roster */}
-      <SectionCard
-        title={
-          members
-            ? `${t('groups.detail.membersTitle')} · ${t('groups.memberCount', {
-                count: activeMembers.length,
-              })}`
-            : t('groups.detail.membersTitle')
-        }
-      >
-        {members === undefined ? (
-          <View className="gap-sm">
-            <Skeleton className="h-[48px] rounded-md" />
-            <Skeleton className="h-[48px] rounded-md" />
-            <Skeleton className="h-[48px] rounded-md" />
-          </View>
-        ) : (
-          <MemberList members={activeMembers} canManage={canManage} />
-        )}
-        {canManage ? (
-          <AppButton
-            variant="outline"
-            label={t('groups.detail.addMember')}
-            icon={<PlusIcon size={18} color={theme.accent} />}
-            className="mt-sm"
-            onPress={() =>
-              router.push({
-                pathname: '/groups/[groupId]/add-member',
-                params: { groupId: group._id },
-              })
-            }
-          />
-        ) : null}
-      </SectionCard>
-
-      {/* Invite (president/treasurer) */}
-      {canManage ? (
-        <SectionCard title={t('groups.invite.title')}>
-          <InviteShare inviteCode={group.inviteCode} groupName={group.name} />
-        </SectionCard>
-      ) : null}
-
-      {/* Rotation / rounds — state-driven (setup → start CTA, active → live order) */}
-      <SectionCard title={t('groups.detail.rotationTitle')}>
-        <RotationSection
-          groupId={group._id}
-          groupStatus={group.status}
-          viewerRole={group.viewerRole}
-          activeMemberCount={activeMembers.length}
-        />
-      </SectionCard>
-
-      {/* Activity feed — immutable who-paid-who-when (decision 6) */}
-      <SectionCard title={t('feed.title')}>
-        <ActivityFeed groupId={group._id} />
-      </SectionCard>
+      {/* Section order answers the user's actual question. Cycle running →
+          « what happens next » (rotation/round, then the feed) leads;
+          setup/between-cycles → roster and invite lead (building the group
+          IS the task). */}
+      {cycleRunning ? (
+        <>
+          {rotationSection}
+          {activitySection}
+          {membersSection}
+          {inviteSection}
+        </>
+      ) : (
+        <>
+          {membersSection}
+          {inviteSection}
+          {rotationSection}
+          {activitySection}
+        </>
+      )}
 
       {/* Group rules */}
       <SectionCard title={t('groups.detail.rulesTitle')}>
@@ -225,28 +299,6 @@ export default function GroupHomeScreen() {
         </View>
       </SectionCard>
     </ScrollView>
-  );
-}
-
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  const shadow = useShadow();
-
-  return (
-    <View
-      className="mt-lg rounded-xl border border-border-subtle bg-surface p-lg"
-      style={shadow('card')}
-    >
-      <Text className="pb-sm font-body-semi text-title text-foreground">
-        {title}
-      </Text>
-      {children}
-    </View>
   );
 }
 

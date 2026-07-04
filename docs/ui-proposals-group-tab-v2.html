@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Njangi — Groupe tab, take 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3f4f0; --surface:#fff; --ink:#1b2420; --muted:#6c7a72; --placeholder:#9aa69f;
+    --border:#e4e7e1; --success:#1e7f4f; --warn:#b07a1e; --warn-bg:#f7ecd8;
+  }
+  *{box-sizing:border-box; margin:0}
+  body{background:var(--paper); color:var(--ink); font-family:"Plus Jakarta Sans",sans-serif; line-height:1.6; padding:3rem 1.5rem 6rem}
+  main{max-width:1100px; margin:0 auto}
+  h1{font-size:1.8rem; font-weight:800; letter-spacing:-.02em}
+  .sub{color:var(--muted); margin:.5rem 0 2rem; max-width:66ch}
+  .sub a{color:var(--success)}
+  .options{display:flex; gap:2rem; flex-wrap:wrap; align-items:flex-start}
+  .opt{background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:1.6rem; flex:1; min-width:340px}
+  .opt h2{font-size:1.1rem; font-weight:800; display:flex; gap:.5rem; align-items:center}
+  .tag{font-size:.62rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; padding:.2rem .6rem; border-radius:99px; background:#e4f2ea; color:var(--success)}
+  .opt p{font-size:.9rem; margin:.6rem 0; color:#3d4741; max-width:46ch}
+  .src{font-size:.8rem; color:var(--muted)}
+  .src a{color:var(--success)}
+  .phone{width:290px; height:600px; background:var(--paper); border-radius:38px; overflow:hidden; margin:1.2rem auto 0;
+    box-shadow:0 16px 40px rgba(27,36,32,.16), inset 0 0 0 2px #dfe2dc; display:flex; flex-direction:column; position:relative}
+  .statusbar{display:flex; justify-content:space-between; padding:.7rem 1.2rem .1rem; font-size:.68rem; font-weight:700; color:var(--muted)}
+  .screen{flex:1; padding:.4rem 1rem 2rem; overflow:hidden}
+  .hdr{display:flex; justify-content:space-between; align-items:center; padding:.2rem 0 .1rem}
+  .hdr b{font-size:1.15rem; font-weight:800}
+  .plus{width:32px; height:32px; border-radius:50%; background:var(--surface); border:1px solid var(--border); display:grid; place-items:center; font-weight:700}
+  .sml{font-size:.7rem} .mut{color:var(--muted)}
+  .label{position:absolute; inset:auto 0 0 0; text-align:center; font-size:.64rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); background:rgba(243,244,240,.95); padding:.32rem 0; font-weight:700; border-top:1px solid var(--border)}
+
+  /* A — gradient tile grid */
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:.7rem; margin-top:.7rem}
+  .tile{border-radius:22px; padding:.85rem; min-height:150px; display:flex; flex-direction:column; justify-content:space-between;
+    box-shadow:0 6px 16px rgba(27,36,32,.10); position:relative; overflow:hidden}
+  .tile .initials{width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.85); display:grid; place-items:center;
+    font-size:.72rem; font-weight:800}
+  .tile .ring{position:absolute; top:10px; left:10px; width:46px; height:46px; border-radius:50%}
+  .tile .nm{font-size:.82rem; font-weight:800; line-height:1.25; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.18)}
+  .tile .fact{font-size:.66rem; font-weight:700; color:rgba(255,255,255,.92)}
+  .tile .chip{position:absolute; top:12px; right:12px; font-size:.56rem; font-weight:800; background:rgba(255,255,255,.92);
+    border-radius:99px; padding:.16rem .5rem}
+  .tile.quiet{background:#e9ebe6 !important; box-shadow:none}
+  .tile.quiet .nm{color:var(--ink); text-shadow:none}
+  .tile.quiet .fact{color:var(--muted)}
+
+  /* B — big-disc rows */
+  .rowcard{background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:.7rem .8rem; margin-top:.6rem;
+    display:flex; align-items:center; gap:.75rem; box-shadow:0 2px 8px rgba(27,36,32,.05)}
+  .bigdisc{width:52px; height:52px; border-radius:50%; display:grid; place-items:center; color:#fff; font-weight:800; font-size:.8rem; flex-shrink:0}
+  .who{flex:1; min-width:0}
+  .who b{display:block; font-size:.85rem; font-weight:800}
+  .who span{display:block; font-size:.68rem; color:var(--muted)}
+  .chevron{color:var(--placeholder)}
+  .chip2{font-size:.58rem; font-weight:800; padding:.18rem .55rem; border-radius:99px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Groupe tab — take 2</h1>
+  <p class="sub">Le v1 était trop dense : quatre rangées d'infos + chips sur une carte blanche. Ici la couleur du groupe <b>est</b> la carte (votre demande hue-flow, prise au pied de la lettre). Source principale regardée : <a href="https://mobbin.com/screens/81d47f2c-da59-4bd8-b238-01eda717addf">Vivid — Pockets en grille de tuiles dégradées</a> · <a href="https://mobbin.com/screens/0fac642b-528b-431f-8bd2-6ce50ddf484f">IRL — rangées à grand disque</a>. Une seule info-clé par groupe, le reste vit dans la fiche.</p>
+
+  <div class="options">
+    <!-- OPTION A -->
+    <div class="opt">
+      <h2>A · Grille de tuiles dégradées <span class="tag">recommandé</span></h2>
+      <p>Chaque njangi = une tuile 2-colonnes dans SON dégradé (les deux teintes analogues déjà stockées, saturation relevée). Initiales sur pastille blanche, nom en blanc, UNE ligne de fait : « Tour 4/12 · sam. 12 » ou « 10 000 F dus » ou « C'est votre tour 🎁 ». Chip blanc «À jour ✓» quand tout le monde a payé. Pause/terminé = tuile grise éteinte. Le + est une tuile fantôme en fin de grille.</p>
+      <p class="src">La couleur porte l'identité, la typo porte l'info — zéro chips empilés, zéro avatars minuscules.</p>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div class="hdr"><b>Mes njangis</b><span class="plus">＋</span></div>
+          <div class="sml mut">5 cercles · 2 actions attendues</div>
+          <div class="grid">
+            <div class="tile" style="background:linear-gradient(150deg, hsl(158 52% 46%), hsl(193 55% 38%))">
+              <span class="chip" style="color:hsl(158 50% 30%)">À jour ✓</span>
+              <div class="initials" style="color:hsl(158 50% 32%)">FB</div>
+              <div><div class="nm">Famille Bayere</div><div class="fact">Tour 4/12 · sam. 12 juil.</div></div>
+            </div>
+            <div class="tile" style="background:linear-gradient(150deg, hsl(280 45% 52%), hsl(315 48% 44%))">
+              <div class="initials" style="color:hsl(280 45% 36%)">CQ</div>
+              <div><div class="nm">Collègues Quartier</div><div class="fact">C'est votre tour 🎁 · jeu. 9</div></div>
+            </div>
+            <div class="tile" style="background:linear-gradient(150deg, hsl(24 60% 50%), hsl(59 55% 42%))">
+              <span class="chip" style="color:hsl(24 60% 34%)">10 000 F dus</span>
+              <div class="initials" style="color:hsl(24 60% 34%)">NT</div>
+              <div><div class="nm">Njangi Test</div><div class="fact">Tour 1/5 · jeu. 9 juil.</div></div>
+            </div>
+            <div class="tile" style="background:linear-gradient(150deg, hsl(200 50% 46%), hsl(235 45% 42%))">
+              <div class="initials" style="color:hsl(200 50% 32%)">AV</div>
+              <div><div class="nm">Anciens du village</div><div class="fact">Tour 2/8 · dim. 19 juil.</div></div>
+            </div>
+            <div class="tile quiet">
+              <div class="initials" style="color:var(--muted); background:#dfe2dc">MJ</div>
+              <div><div class="nm">Mamans de Japoma</div><div class="fact">En pause · reprend en août</div></div>
+            </div>
+            <div class="tile" style="background:transparent; border:1.6px dashed var(--border); box-shadow:none; align-items:center; justify-content:center">
+              <div style="text-align:center; color:var(--muted)"><div style="font-size:1.2rem">＋</div><div class="sml" style="font-weight:700">Créer ou<br>rejoindre</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="label">A · grille vivid — la couleur est la carte</div>
+      </div>
+    </div>
+
+    <!-- OPTION B -->
+    <div class="opt">
+      <h2>B · Rangées à grand disque</h2>
+      <p>Ultra-minimal : disque dégradé 52 px (avec le ring de cycle existant), nom en gras, UNE sous-ligne, chevron. Un seul chip à droite quand une action m'attend («10 000 F dus» en warn, «Votre tour» en teinte du groupe). Aucune tuile colorée — pour garder l'app très calme.</p>
+      <p class="src">Même info-clé que A, posture plus sobre. Moins de « wow », plus de lisibilité 60-ans-au-village.</p>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+        <div class="screen">
+          <div class="hdr"><b>Mes njangis</b><span class="plus">＋</span></div>
+          <div class="sml mut">5 cercles · 2 actions attendues</div>
+          <div class="rowcard">
+            <div class="bigdisc" style="background:linear-gradient(140deg, hsl(158 52% 48%), hsl(193 55% 38%)); outline:3px solid hsl(158 45% 60%); outline-offset:2px">FB</div>
+            <div class="who"><b>Famille Bayere</b><span>Tour 4/12 · sam. 12 juil. · à jour ✓</span></div>
+            <span class="chevron">›</span>
+          </div>
+          <div class="rowcard">
+            <div class="bigdisc" style="background:linear-gradient(140deg, hsl(280 45% 54%), hsl(315 48% 44%))">CQ</div>
+            <div class="who"><b>Collègues Quartier</b><span>Tour 7/10 · jeu. 9 juil.</span></div>
+            <span class="chip2" style="background:hsl(280 45% 93%); color:hsl(280 45% 38%)">Votre tour 🎁</span>
+          </div>
+          <div class="rowcard">
+            <div class="bigdisc" style="background:linear-gradient(140deg, hsl(24 60% 52%), hsl(59 55% 42%))">NT</div>
+            <div class="who"><b>Njangi Test</b><span>Tour 1/5 · jeu. 9 juil.</span></div>
+            <span class="chip2" style="background:var(--warn-bg); color:var(--warn)">10 000 F dus</span>
+          </div>
+          <div class="rowcard">
+            <div class="bigdisc" style="background:linear-gradient(140deg, hsl(200 50% 48%), hsl(235 45% 42%))">AV</div>
+            <div class="who"><b>Anciens du village</b><span>Tour 2/8 · dim. 19 juil.</span></div>
+            <span class="chevron">›</span>
+          </div>
+          <div class="rowcard" style="opacity:.6">
+            <div class="bigdisc" style="background:#dfe2dc; color:var(--muted)">MJ</div>
+            <div class="who"><b>Mamans de Japoma</b><span>En pause · reprend en août</span></div>
+            <span class="chevron">›</span>
+          </div>
+        </div>
+        <div class="label">B · rangées calmes à grand disque</div>
+      </div>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:2rem">Les deux réutilisent les données déjà en place (roundHealth/receiver restés au backend). Dites A ou B — ou pointez ce qui cloche et j'itère la maquette avant de coder.</p>
+</main>
+</body>
+</html>

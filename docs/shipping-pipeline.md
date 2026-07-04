@@ -46,8 +46,8 @@ Activation checklist:
 
 - [ ] Create prod deployment in the Convex dashboard; generate a **production deploy key** → GitHub secret `CONVEX_DEPLOY_KEY`
 - [ ] Set repo variable `CONVEX_DEPLOY_ENABLED=true`
-- [ ] Set prod server env vars in the Convex dashboard: `CLERK_JWT_ISSUER_DOMAIN`, `CLERK_WEBHOOK_SECRET`, `CLERK_SECRET_KEY`, `RESEND_API_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`, `OTP_GLOBAL_DAILY_BUDGET`
-- [ ] Safety: `DEV_SEED_ENABLED` unset, `DEV_OTP_PROVIDER` unset. The guard at `convex/otp.ts` is a module-scope throw when `DEV_OTP_PROVIDER` is set without `DEPLOYMENT_TIER=dev` — verify by attempting a deploy with `DEV_OTP_PROVIDER=log` set and confirming the push fails.
+- [ ] Set prod server env vars in the Convex dashboard: `CLERK_JWT_ISSUER_DOMAIN`, `CLERK_WEBHOOK_SECRET`, `CLERK_SECRET_KEY`, `RESEND_API_KEY`
+- [ ] Safety: `DEV_SEED_ENABLED` unset (the WhatsApp-OTP system and its `DEV_OTP_PROVIDER`/`TWILIO_*` env vars were removed 2026-07).
 
 **Preview deploys per PR: skipped.** They are a Convex **Pro** feature, and the mobile client would need `EXPO_PUBLIC_CONVEX_URL` repointed per preview — awkward on device builds. Adopt when a backend PR is risky enough to need exercising from a real client pre-merge AND the team is on Pro.
 

@@ -1,10 +1,13 @@
 import { v } from 'convex/values';
+import type { Id } from './_generated/dataModel';
 import { mutation, type MutationCtx, query } from './_generated/server';
 import {
   GRACE_DAYS_DEFAULT,
   GRACE_DAYS_MAX,
   GRACE_DAYS_MIN,
 } from './lib/paymentStateMachine';
+import { computePotProgress } from './lib/roundMath';
+import { expectedForMember, expectedPotTotal } from './rounds';
 import {
   appLanguageValidator,
   collectionModeValidator,
@@ -137,6 +140,7 @@ const groupDetailValidator = v.object({
   meetingDayOfWeek: v.optional(v.number()),
   meetingTime: v.optional(v.string()),
   contributionAmount: v.number(),
+  targetMemberCount: v.optional(v.number()),
   graceDays: v.number(),
   finesEnabled: v.boolean(),
   lateFineAmount: v.optional(v.number()),
@@ -145,6 +149,7 @@ const groupDetailValidator = v.object({
   inviteCode: v.string(),
   status: groupStatusValidator,
   language: v.optional(appLanguageValidator),
+  colorSeed: v.union(v.number(), v.null()),
   memberCount: v.number(), // active memberships
   pendingCount: v.number(), // pending_approval memberships
   viewerMembershipId: v.id('memberships'),
@@ -162,7 +167,50 @@ const myGroupItemValidator = v.object({
   membershipId: v.id('memberships'),
   role: membershipRoleValidator,
   membershipStatus: membershipStatusValidator,
+  colorSeed: v.union(v.number(), v.null()),
+  // Active-cycle card facts — null when no cycle is running.
+  cycleProgress: v.union(
+    v.object({ done: v.number(), total: v.number() }),
+    v.null()
+  ),
+  nextDueAt: v.union(v.number(), v.null()),
+  // Viewer money position (money-hero home) — server-computed so the client
+  // never does cross-group money math. `myDue` = what the viewer still owes
+  // on the round currently collecting (expectedForMember minus confirmed +
+  // in-flight); `receiving` = the full expected pot of the next
+  // non-completed round when the viewer is its beneficiary.
+  myDue: v.union(
+    v.object({
+      roundId: v.id('rounds'),
+      amount: v.number(),
+      dueAt: v.number(),
+    }),
+    v.null()
+  ),
+  receiving: v.union(
+    v.object({ amount: v.number(), date: v.number() }),
+    v.null()
+  ),
+  // Group-tab roster health (round-2 §2): who has fully paid the round
+  // currently collecting. Counted per member against expectedForMember —
+  // never per record, so partial-claim splits don't inflate the tally.
+  roundHealth: v.union(
+    v.object({ confirmed: v.number(), expected: v.number() }),
+    v.null()
+  ),
+  // Up to 5 active members for the card's avatar stack. Initials only —
+  // no extra doc reads beyond the memberships already collected.
+  memberPreview: v.array(v.object({ initials: v.string(), paid: v.boolean() })),
+  currentReceiverName: v.union(v.string(), v.null()),
 });
+
+/** « Mariam Ndip » → « MN » — server twin of the client's groupInitials. */
+function personInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '·';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
 
 const inviteCodeResultValidator = v.object({
   inviteCode: v.string(),
@@ -188,6 +236,7 @@ export const createGroup = mutation({
     meetingDayOfWeek: v.optional(v.number()),
     meetingTime: v.optional(v.string()),
     contributionAmount: v.number(),
+    targetMemberCount: v.optional(v.number()), // informational goal, never a guard
     graceDays: v.optional(v.number()), // default 2 — the ONLY group-configurable timer (02)
     finesEnabled: v.optional(v.boolean()), // default false — fines are opt-in (02 §f)
     lateFineAmount: v.optional(v.number()),
@@ -225,6 +274,11 @@ export const createGroup = mutation({
       meetingDayOfWeek: args.meetingDayOfWeek,
       meetingTime: args.meetingTime,
       contributionAmount: args.contributionAmount,
+      ...(args.targetMemberCount !== undefined &&
+        args.targetMemberCount >= 2 && {
+          targetMemberCount: Math.floor(args.targetMemberCount),
+        }),
+      colorSeed: Math.floor(Math.random() * 360), // group identity hue — shared by all members
       graceDays,
       finesEnabled: args.finesEnabled ?? false,
       lateFineAmount: args.lateFineAmount,
@@ -274,6 +328,7 @@ export const updateGroupSettings = mutation({
     meetingDayOfWeek: v.optional(v.number()),
     meetingTime: v.optional(v.string()),
     contributionAmount: v.optional(v.number()),
+    targetMemberCount: v.optional(v.number()),
     graceDays: v.optional(v.number()),
     finesEnabled: v.optional(v.boolean()),
     lateFineAmount: v.optional(v.number()),
@@ -324,6 +379,12 @@ export const updateGroupSettings = mutation({
       ...(args.meetingTime !== undefined && { meetingTime: args.meetingTime }),
       ...(args.contributionAmount !== undefined && {
         contributionAmount: args.contributionAmount,
+      }),
+      ...(args.targetMemberCount !== undefined && {
+        targetMemberCount:
+          args.targetMemberCount >= 2
+            ? Math.floor(args.targetMemberCount)
+            : undefined,
       }),
       ...(args.graceDays !== undefined && { graceDays: args.graceDays }),
       ...(args.finesEnabled !== undefined && {
@@ -428,6 +489,7 @@ export const getGroup = query({
       meetingDayOfWeek: group.meetingDayOfWeek,
       meetingTime: group.meetingTime,
       contributionAmount: group.contributionAmount,
+      targetMemberCount: group.targetMemberCount,
       graceDays: group.graceDays,
       finesEnabled: group.finesEnabled,
       lateFineAmount: group.lateFineAmount,
@@ -436,6 +498,7 @@ export const getGroup = query({
       inviteCode: group.inviteCode,
       status: group.status,
       language: group.language,
+      colorSeed: group.colorSeed ?? null,
       memberCount: memberships.filter((m) => m.status === 'active').length,
       pendingCount: memberships.filter((m) => m.status === 'pending_approval')
         .length,
@@ -472,6 +535,140 @@ export const listMyGroups = query({
             .query('memberships')
             .withIndex('by_group', (q) => q.eq('groupId', m.groupId))
             .collect();
+
+          // Card facts for a running cycle: ring progress + next due date.
+          let cycleProgress: { done: number; total: number } | null = null;
+          let nextDueAt: number | null = null;
+          let myDue: {
+            roundId: Id<'rounds'>;
+            amount: number;
+            dueAt: number;
+          } | null = null;
+          let receiving: { amount: number; date: number } | null = null;
+          let roundHealth: { confirmed: number; expected: number } | null =
+            null;
+          let memberPreview: { initials: string; paid: boolean }[] = [];
+          let currentReceiverName: string | null = null;
+          if (group.status === 'active') {
+            const cycle = await ctx.db
+              .query('cycles')
+              .withIndex('by_group_and_status', (q) =>
+                q.eq('groupId', group._id).eq('status', 'active')
+              )
+              .first();
+            if (cycle) {
+              const rounds = await ctx.db
+                .query('rounds')
+                .withIndex('by_cycle', (q) => q.eq('cycleId', cycle._id))
+                .collect();
+              const live = rounds.filter((r) => r.status !== 'cancelled');
+              const done = live.filter((r) => r.status === 'completed').length;
+              cycleProgress = { done, total: live.length };
+              const upcoming = live
+                .filter((r) => r.status !== 'completed')
+                .sort((a, b) => a.dueAt - b.dueAt);
+              nextDueAt = upcoming[0]?.dueAt ?? null;
+
+              // The round currently collecting (open/grace) drives both the
+              // viewer's due and the card's roster health. One bounded
+              // indexed read (that round's contribution records); expected
+              // amounts ONLY via expectedForMember (hands-aware).
+              const collecting = upcoming.find(
+                (r) => r.status === 'open' || r.status === 'grace'
+              );
+              /** payerMembershipId → fully paid (confirmed ≥ expected). */
+              const paidByMember = new Map<string, boolean>();
+              if (collecting) {
+                const contributions = await ctx.db
+                  .query('paymentRecords')
+                  .withIndex('by_round_and_kind', (q) =>
+                    q.eq('roundId', collecting._id).eq('kind', 'contribution')
+                  )
+                  .collect();
+                const byPayer = new Map<string, typeof contributions>();
+                for (const record of contributions) {
+                  const rows = byPayer.get(record.payerMembershipId) ?? [];
+                  rows.push(record);
+                  byPayer.set(record.payerMembershipId, rows);
+                }
+                let confirmedCount = 0;
+                for (const [payerId, rows] of byPayer) {
+                  const expected = expectedForMember(
+                    cycle,
+                    collecting,
+                    payerId as Id<'memberships'>
+                  );
+                  if (expected <= 0) continue;
+                  const progress = computePotProgress(
+                    rows.map((r) => ({
+                      state: r.state,
+                      amount: r.amount,
+                      claimedAt: r.claimedAt,
+                    }))
+                  );
+                  const paid = progress.confirmedAmount >= expected;
+                  paidByMember.set(payerId, paid);
+                  if (paid) confirmedCount++;
+                }
+                roundHealth = {
+                  confirmed: confirmedCount,
+                  expected: paidByMember.size,
+                };
+
+                // Viewer's remaining due — an exited member may still sit in
+                // the immutable rotationOrder but owes nothing.
+                if (m.status === 'active') {
+                  const expected = expectedForMember(cycle, collecting, m._id);
+                  if (expected > 0) {
+                    const mine = computePotProgress(
+                      (byPayer.get(m._id) ?? []).map((r) => ({
+                        state: r.state,
+                        amount: r.amount,
+                        claimedAt: r.claimedAt,
+                      }))
+                    );
+                    const remaining =
+                      expected - mine.confirmedAmount - mine.inFlightAmount;
+                    if (remaining > 0) {
+                      myDue = {
+                        roundId: collecting._id,
+                        amount: remaining,
+                        dueAt: collecting.dueAt,
+                      };
+                    }
+                  }
+                }
+              }
+
+              // Card roster stack: first 5 active members, viewer first so
+              // people recognize themselves in their own groups.
+              const activeMembers = groupMemberships
+                .filter((gm) => gm.status === 'active')
+                .sort((a, b) =>
+                  a._id === m._id ? -1 : b._id === m._id ? 1 : 0
+                );
+              memberPreview = activeMembers.slice(0, 5).map((gm) => ({
+                initials: personInitials(gm.displayName),
+                paid: paidByMember.get(gm._id) ?? false,
+              }));
+
+              // Whose turn is the next pot? (name for the card's round line)
+              const next = upcoming[0];
+              if (next) {
+                currentReceiverName =
+                  groupMemberships.find(
+                    (gm) => gm._id === next.beneficiaryMembershipId
+                  )?.displayName ?? null;
+                if (m.status === 'active' && next.beneficiaryMembershipId === m._id) {
+                  receiving = {
+                    amount: expectedPotTotal(cycle, next),
+                    date: next.dueAt,
+                  };
+                }
+              }
+            }
+          }
+
           return {
             groupId: group._id,
             name: group.name,
@@ -483,10 +680,51 @@ export const listMyGroups = query({
             membershipId: m._id,
             role: m.role,
             membershipStatus: m.status,
+            colorSeed: group.colorSeed ?? null,
+            cycleProgress,
+            nextDueAt,
+            myDue,
+            receiving,
+            roundHealth,
+            memberPreview,
+            currentReceiverName,
           };
         })
     );
 
-    return items.filter((item) => item !== null);
+    /*
+     * One row per group. A user can end up with two memberships in the
+     * same group (added manually AND linked by phone) — duplicate rows
+     * would show the group twice and collide list keys client-side.
+     * The rows describe the same person in the same group, so their
+     * money facts MERGE (a due on one twin and a receiving on the other
+     * are both real); the due-bearing row wins as the base because its
+     * myDue.roundId drives the pay flow.
+     */
+    const deduped = new Map<string, NonNullable<(typeof items)[number]>>();
+    for (const item of items) {
+      if (item === null) continue;
+      const existing = deduped.get(item.groupId);
+      if (!existing) {
+        deduped.set(item.groupId, item);
+        continue;
+      }
+      const money = (row: typeof item) =>
+        (row.myDue !== null ? 2 : 0) + (row.receiving !== null ? 1 : 0);
+      const active = (row: typeof item) =>
+        row.membershipStatus === 'active' ? 1 : 0;
+      const winner =
+        money(item) > money(existing) ||
+        (money(item) === money(existing) && active(item) > active(existing))
+          ? item
+          : existing;
+      const loser = winner === item ? existing : item;
+      deduped.set(item.groupId, {
+        ...winner,
+        myDue: winner.myDue ?? loser.myDue,
+        receiving: winner.receiving ?? loser.receiving,
+      });
+    }
+    return [...deduped.values()];
   },
 });

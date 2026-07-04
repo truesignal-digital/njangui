@@ -24,3 +24,5 @@ web-build/
 *.p12
 *.key
 *.mobileprovision
+
+.claude/worktrees/

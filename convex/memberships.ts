@@ -1,10 +1,13 @@
-import { v } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
+import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { mutation, type MutationCtx, query } from './_generated/server';
+import { notifyMemberships } from './push';
 import { membershipRoleValidator, membershipStatusValidator } from './schema';
 import { logActivityEvent } from './utils/activity';
 import { getCurrentUser, getCurrentUserOrNull, requireMembership, requireRole } from './utils/auth';
 import { isValidE164, normalizePhone } from './utils/phone';
+import { groupLink } from './lib/appLinks';
 
 // Hard cap on active + pending memberships per group (02 §a, 05 Week 6
 // DECISION). Both approval and direct add are rejected above it; the
@@ -81,10 +84,12 @@ export const joinViaCode = mutation({
       throw new Error('Invalid invite code');
     }
 
+    // .first(), not .unique() — legacy dupes (manual add + phone link)
+    // must block the re-join, not crash it.
     const existing = await ctx.db
       .query('memberships')
       .withIndex('by_group_and_user', (q) => q.eq('groupId', group._id).eq('userId', user._id))
-      .unique();
+      .first();
 
     if (existing) {
       if (existing.status === 'pending_approval' || existing.status === 'active') {
@@ -231,8 +236,10 @@ export const rejectMember = mutation({
  * Direct add by treasurer/president (02 §a: the champion onboards 15–30
  * members) — name + E.164 phone, Membership `active` immediately, no
  * approval step. `userId` stays absent (`hasAccount: false`) unless a user
- * already holds that phone, in which case the membership is linked at once;
- * later Clerk sign-ups link via phone match (users.linkMembershipsByPhone).
+ * already holds that phone (legacy OTP-verified rows), in which case the
+ * membership is linked at once. Automatic phone-match linking at sign-up
+ * was removed with the OTP system: a feature-phone member who later signs
+ * up gets attached by an officer re-adding them, never automatically.
  */
 export const addFeaturePhoneMember = mutation({
   args: {
@@ -291,7 +298,7 @@ export const addFeaturePhoneMember = mutation({
         .withIndex('by_group_and_user', (q) =>
           q.eq('groupId', args.groupId).eq('userId', existingUser._id)
         )
-        .unique();
+        .first();
       if (existingMembership) {
         throw new Error('This person already has a membership in this group');
       }
@@ -319,6 +326,200 @@ export const addFeaturePhoneMember = mutation({
     });
 
     return { membershipId };
+  },
+});
+
+/**
+ * Add an APP member by their unique username (officer-initiated — the
+ * mirror of join-by-code, which is member-initiated and needs approval).
+ * The username is exact-matched against the Clerk-mirrored directory; the
+ * new member lands `active` immediately and is told by push (+ a courtesy
+ * email when they have one) — being silently inside a money group is the
+ * thing this notification prevents.
+ */
+export const addMemberByUsername = mutation({
+  args: {
+    groupId: v.id('groups'),
+    username: v.string(),
+  },
+  returns: addMemberResultValidator,
+  handler: async (ctx, args) => {
+    const { membership: actor } = await requireRole(ctx, args.groupId, [
+      'president',
+      'treasurer',
+    ]);
+
+    const group = await ctx.db.get(args.groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (group.status === 'archived') {
+      throw new Error('Group is archived');
+    }
+
+    const username = args.username.trim().toLowerCase();
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_username', (q) => q.eq('username', username))
+      .unique();
+    if (!user || user.isDeactivated) {
+      throw new Error('No account with this username');
+    }
+
+    const count = await countActiveAndPending(ctx, args.groupId);
+    if (count >= MEMBERSHIP_CAP) {
+      throw new Error(`Group is at the ${MEMBERSHIP_CAP}-membership cap`);
+    }
+
+    const existingMembership = await ctx.db
+      .query('memberships')
+      .withIndex('by_group_and_user', (q) =>
+        q.eq('groupId', args.groupId).eq('userId', user._id)
+      )
+      .first();
+    if (existingMembership) {
+      // ConvexError so the client can show a real message, not a generic one.
+      throw new ConvexError({ code: 'already_member' });
+    }
+    // A feature-phone row seeded with this user's phone would collide once
+    // they were linked — same guard as the phone-based add.
+    if (user.phone !== undefined) {
+      const samePhone = await ctx.db
+        .query('memberships')
+        .withIndex('by_phone', (q) => q.eq('phone', user.phone))
+        .collect();
+      if (samePhone.some((m) => m.groupId === args.groupId)) {
+        throw new ConvexError({ code: 'already_member' });
+      }
+    }
+
+    const membershipId = await ctx.db.insert('memberships', {
+      groupId: args.groupId,
+      userId: user._id,
+      ...(user.phone !== undefined && { phone: user.phone }),
+      displayName: user.name || user.username || username,
+      role: 'member',
+      status: 'active',
+      ...(group.status === 'active' && { joinedMidCycle: true }),
+      joinedAt: Date.now(),
+    });
+
+    await logActivityEvent(ctx, {
+      groupId: args.groupId,
+      kind: 'member_added',
+      entityTable: 'memberships',
+      entityId: membershipId,
+      toState: 'active',
+      actorMembershipId: actor._id,
+      note: user.name || username,
+    });
+
+    await notifyMemberships(ctx, [membershipId], {
+      titleFr: `Ajouté(e) à « ${group.name} »`,
+      titleEn: `Added to "${group.name}"`,
+      bodyFr: `${actor.displayName} vous a ajouté(e) à ce njangi.`,
+      bodyEn: `${actor.displayName} added you to this njangi.`,
+      url: groupLink(args.groupId),
+    });
+    if (user.email !== undefined) {
+      await ctx.scheduler.runAfter(0, internal.email.sendMemberAdded, {
+        email: user.email,
+        memberName: user.name || username,
+        groupName: group.name,
+        actorName: actor.displayName,
+        language: user.language,
+        membershipId,
+      });
+    }
+
+    return { membershipId };
+  },
+});
+
+/**
+ * Assign / transfer the president role (02 §a: the creator picks their
+ * ACTUAL role, so treasurer-created groups start president-less — yet the
+ * cycle lock requires a president). Rules:
+ * - no president yet → the TREASURER names one (the setup-era creator
+ *   administers the group);
+ * - president exists → only the president can hand the role over (they are
+ *   demoted to member — one president per group).
+ * The target must be an active member WITH the app (02 §a: transferable to
+ * any active hasAccount member) and can't be the treasurer (single role).
+ */
+export const assignPresident = mutation({
+  args: {
+    groupId: v.id('groups'),
+    membershipId: v.id('memberships'), // the new president
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { membership: actor } = await requireRole(ctx, args.groupId, [
+      'president',
+      'treasurer',
+    ]);
+
+    const group = await ctx.db.get(args.groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (group.status === 'archived') {
+      throw new Error('Group is archived');
+    }
+
+    const target = await ctx.db.get(args.membershipId);
+    if (!target || target.groupId !== args.groupId) {
+      throw new Error('Membership not found in this group');
+    }
+    if (target.role === 'president') {
+      return null; // idempotent
+    }
+    if (target.status !== 'active') {
+      throw new Error('The president must be an active member');
+    }
+    if (target.userId === undefined) {
+      throw new Error('The president must have the app');
+    }
+    if (target.role === 'treasurer') {
+      // Mirror of reassignTreasurer's guard: one literal role per membership.
+      throw new Error('The treasurer cannot also hold the president role');
+    }
+
+    const groupMemberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
+      .collect();
+    const currentPresident = groupMemberships.find(
+      (m) => m.role === 'president' && m.status === 'active'
+    );
+    if (currentPresident) {
+      if (actor._id !== currentPresident._id) {
+        throw new Error('Only the president can hand the role over');
+      }
+      await ctx.db.patch(currentPresident._id, { role: 'member' });
+    }
+    // else: president-less group — the treasurer (actor, via requireRole) names one.
+
+    await ctx.db.patch(target._id, { role: 'president' });
+
+    await logActivityEvent(ctx, {
+      groupId: args.groupId,
+      kind: 'role_reassigned',
+      entityTable: 'memberships',
+      entityId: target._id,
+      toState: 'president',
+      actorMembershipId: actor._id,
+      note: target.displayName,
+    });
+    await notifyMemberships(ctx, [target._id], {
+      titleFr: `Vous êtes président(e) de « ${group.name} »`,
+      titleEn: `You are the president of "${group.name}"`,
+      bodyFr: `${actor.displayName} vous a nommé(e) président(e). Vous pouvez définir l'ordre de rotation et démarrer le cycle.`,
+      bodyEn: `${actor.displayName} named you president. You can set the rotation order and start the cycle.`,
+      url: groupLink(args.groupId),
+    });
+
+    return null;
   },
 });
 

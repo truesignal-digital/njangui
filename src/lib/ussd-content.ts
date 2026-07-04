@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useConvexAuth, useQuery } from 'convex/react';
 
 import { api } from './convex-api';
+import { storageKeys } from './storage-keys';
 
 /**
  * USSD instruction content — three-tier priority (docs/03 §C/§D, hard
@@ -50,7 +51,7 @@ export const BUNDLED_USSD_CONTENT: Record<
         'Si MTN demande un motif ou une référence, entrez : {{reference}}.',
         "Vérifiez l'écran : le nom affiché doit être celui de {{name}} et le montant correct.",
         'Entrez votre code PIN MoMo pour confirmer.',
-        "Vous recevez un SMS de MTN avec l'ID de transaction. Gardez-le — vous le collerez à l'étape suivante.",
+        "Vous recevez un SMS de MTN. Faites une capture d'écran — vous la joindrez comme preuve à l'étape suivante.",
       ],
     },
     en: {
@@ -66,7 +67,7 @@ export const BUNDLED_USSD_CONTENT: Record<
         'If MTN asks for a reason/reference, enter {{reference}}.',
         "Check the screen: the name shown must be {{name}}'s and the amount correct.",
         'Enter your MoMo PIN to confirm.',
-        "You'll receive an SMS from MTN with the transaction ID. Keep it — you'll paste it on the next screen.",
+        "You'll receive an SMS from MTN. Take a screenshot — you'll attach it as proof on the next screen.",
       ],
     },
   },
@@ -83,7 +84,7 @@ export const BUNDLED_USSD_CONTENT: Record<
         'Entrez le montant : {{amount}}.',
         "Vérifiez l'écran : nom de {{name}} + montant correct.",
         'Confirmez avec votre code secret Orange Money.',
-        "Vous recevez un SMS d'Orange avec l'ID de transaction. Gardez-le pour l'étape suivante.",
+        "Vous recevez un SMS d'Orange. Faites une capture d'écran pour la joindre à l'étape suivante.",
       ],
     },
     en: {
@@ -98,14 +99,14 @@ export const BUNDLED_USSD_CONTENT: Record<
         'Enter the amount: {{amount}}.',
         "Check the screen: {{name}}'s name + the correct amount.",
         'Confirm with your Orange Money secret code.',
-        "You'll receive an SMS from Orange with the transaction ID. Keep it for the next screen.",
+        "You'll receive an SMS from Orange. Take a screenshot to attach on the next screen.",
       ],
     },
   },
 };
 
 const cacheKey = (method: UssdMethod, language: UssdLanguage) =>
-  `njangi-ussd-${method}-${language}`;
+  storageKeys.ussdContent(method, language);
 
 export function interpolateUssdStep(
   step: string,

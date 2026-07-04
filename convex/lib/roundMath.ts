@@ -165,6 +165,42 @@ export function computeRoundTimes(input: RoundTimesInput): RoundTimes {
 // ─────────────────────────────────────────────────────────────
 
 /**
+ * Hands per membership = occurrences in the LOCKED rotation order (02 §b
+ * « deux mains » : a membership appearing N times holds N positions —
+ * N beneficiary rounds, and N× the contribution each round). The rotation
+ * order is immutable after lock (I-4), so hand counts are stable for the
+ * whole cycle even after order swaps/removals (those re-point rounds, they
+ * never rewrite the order).
+ */
+export function handsByMembership<T extends string>(
+  rotationOrder: readonly T[]
+): Map<T, number> {
+  const hands = new Map<T, number>();
+  for (const id of rotationOrder) {
+    hands.set(id, (hands.get(id) ?? 0) + 1);
+  }
+  return hands;
+}
+
+/**
+ * Per-member expected contribution for one round: base amount × hands
+ * held, minus ONE hand when the member is the round's beneficiary and the
+ * cycle snapshot says the beneficiary sits out their own round — each hand
+ * is a position, so only the benefiting hand rests and the others still
+ * owe (02 §b). 0 ⇒ no obligation this round (the single-hand beneficiary
+ * with beneficiaryContributes:false — exactly today's exclusion).
+ */
+export function expectedContributionAmount(input: {
+  hands: number;
+  isBeneficiary: boolean;
+  beneficiaryContributes: boolean;
+  contributionAmount: number;
+}): number {
+  const resting = input.isBeneficiary && !input.beneficiaryContributes ? 1 : 0;
+  return Math.max(0, input.hands - resting) * input.contributionAmount;
+}
+
+/**
  * Who owes a contribution this round: every active, non-joinedMidCycle
  * member (the caller pre-filters those — 02 §b guard / edge case 4),
  * minus the beneficiary when the cycle snapshot says they sit out their

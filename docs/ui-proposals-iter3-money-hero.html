@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Njangi — Iteration 3 · Dark money-hero direction</title>
+<style>
+  :root{
+    --ink:#141a17; --muted:#68756e; --paper:#f4f3ee; --card:#fff; --line:#e4e2da;
+    --accent:#0e8a63; --warn:#e0a23c; --danger:#e06a50;
+    --d-bg:#0d1210; --d-card:#161d1a; --d-card2:#1c2420; --d-line:#243029;
+    --d-ink:#eef3f0; --d-muted:#8fa098; --d-accent:#3ecf9a;
+  }
+  *{box-sizing:border-box; margin:0}
+  body{background:var(--paper); color:var(--ink); font-family:"Avenir Next","Segoe UI",system-ui,sans-serif; line-height:1.55; padding:3rem 1.5rem 6rem}
+  main{max-width:1180px; margin:0 auto}
+  h1{font-size:1.9rem; letter-spacing:-.02em}
+  .sub{color:var(--muted); margin:.4rem 0 2rem; max-width:64ch}
+  .rationale{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:1.4rem 1.6rem; margin-bottom:2rem; max-width:900px}
+  .rationale h2{font-size:1.05rem; margin-bottom:.5rem}
+  .rationale ul{margin:.4rem 0 0 1.1rem}
+  .rationale li{margin:.35rem 0}
+  .src{font-size:.85rem; color:var(--muted); margin-top:.8rem}
+  .src a{color:var(--accent); text-decoration:none; border-bottom:1px dotted}
+  .phones{display:flex; gap:1.6rem; flex-wrap:wrap; justify-content:center; margin-top:1rem}
+  .phone{width:280px; height:580px; background:var(--d-bg); border:1px solid #222; border-radius:34px; overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; position:relative; color:var(--d-ink)}
+  .phone .label{position:absolute; inset:auto 0 0 0; text-align:center; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--d-muted); background:rgba(13,18,16,.92); padding:.3rem 0; border-top:1px solid var(--d-line)}
+  .statusbar{display:flex; justify-content:space-between; padding:.7rem 1.2rem .2rem; font-size:.7rem; font-weight:600; color:var(--d-muted)}
+  .screen{flex:1; padding:.4rem 1rem 2rem; overflow:hidden}
+  .navrow{display:flex; align-items:center; justify-content:space-between; padding:.5rem .2rem}
+  .navrow .title{font-weight:700; font-size:.95rem}
+  .sml{font-size:.72rem} .muted{color:var(--d-muted)}
+
+  .hero{padding:.8rem .2rem .4rem}
+  .hero .lbl{font-size:.68rem; color:var(--d-muted); font-weight:700; letter-spacing:.05em}
+  .hero .big{font-size:2rem; font-weight:800; letter-spacing:-.03em}
+  .hero .delta{font-size:.72rem; color:var(--d-accent); font-weight:600}
+  .qa{display:flex; gap:.55rem; padding:.8rem 0}
+  .qa .act{flex:1; background:var(--d-card); border:1px solid var(--d-line); border-radius:14px; text-align:center; padding:.7rem .2rem}
+  .qa .act .ic{font-size:1rem}
+  .qa .act .tx{font-size:.62rem; font-weight:700; margin-top:.25rem; color:var(--d-ink)}
+  .qa .act.hot{background:var(--d-accent); border-color:var(--d-accent)}
+  .qa .act.hot .tx, .qa .act.hot .ic{color:#06251a}
+
+  .dcard{background:var(--d-card); border:1px solid var(--d-line); border-radius:16px; padding:.9rem; margin-bottom:.7rem}
+  .dcard .hd{display:flex; justify-content:space-between; align-items:center; font-size:.68rem; color:var(--d-muted); font-weight:700; letter-spacing:.04em}
+  .grow{display:flex; align-items:center; gap:.6rem; padding:.55rem 0; border-bottom:1px solid var(--d-line)}
+  .grow:last-child{border-bottom:0}
+  .dot{width:9px; height:9px; border-radius:50%; flex-shrink:0}
+  .grow .who{flex:1; min-width:0}
+  .grow .who b{display:block; font-size:.78rem}
+  .grow .who span{font-size:.64rem; color:var(--d-muted)}
+  .grow .amt{font-size:.76rem; font-weight:800; text-align:right}
+  .in{color:var(--d-accent)} .out{color:var(--d-ink)} .late{color:var(--danger)}
+  .ring-sm{width:30px; height:30px; border-radius:50%; flex-shrink:0; display:grid; place-items:center;
+    font-size:.56rem; font-weight:800; color:var(--d-ink)}
+  .inout{display:flex; gap:.55rem}
+  .inout .cell{flex:1; background:var(--d-card2); border-radius:12px; padding:.6rem .7rem}
+  .inout .cell .k{font-size:.62rem; color:var(--d-muted); font-weight:700}
+  .inout .cell .v{font-size:.95rem; font-weight:800; margin-top:.1rem}
+  .banner{background:linear-gradient(90deg,#123328,#0e2a21); border:1px solid #1d4635; color:var(--d-accent);
+    border-radius:12px; padding:.6rem .8rem; font-size:.74rem; font-weight:600; margin:.2rem 0 .7rem}
+  .potbar{margin:.5rem 0 .1rem}
+  .potbar .track{height:8px; border-radius:99px; background:#233029; overflow:hidden}
+  .potbar .track i{display:block; height:100%; width:65%; border-radius:99px; background:linear-gradient(90deg, hsl(158 60% 38%), hsl(158 70% 52%))}
+  .potbar .ends{display:flex; justify-content:space-between; font-size:.62rem; color:var(--d-muted); margin-top:.3rem}
+  footer{color:var(--muted); font-size:.85rem; text-align:center; margin-top:3rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Iteration 3 — «&nbsp;Money hero&nbsp;» <span style="font-size:.9rem; color:var(--muted)">(dark-first)</span></h1>
+  <p class="sub">The app answers one question the moment it opens: <b>where does my money stand across all my njangis?</b> A Toss/Ubank-style dark home leads with a net-position hero (owed this week vs. receiving), a quick-action row, then groups as compact dark cards with hue accents reduced to dots and ring strokes. Serious-money tone; group gradients become jewelry, not wallpaper.</p>
+
+  <div class="rationale">
+    <h2>Why this direction</h2>
+    <ul>
+      <li><b>Cross-group aggregation is the gap today:</b> home currently lists groups, but "how much do I owe this week, total?" requires mental math. The hero + In/Out cells answer it instantly (data already fetched by <code>listMyGroups</code>).</li>
+      <li><b>Dark-first suits the market:</b> OLED battery savings and outdoor readability matter on the mid-range Android devices most members carry; light theme remains available.</li>
+      <li><b>Hue discipline:</b> stored colorSeed shrinks to a dot + ring stroke per group — dark surfaces make even small hue accents read strongly, keeping the one-bold-use rule effortlessly.</li>
+      <li><b>Cost:</b> mostly theming + one aggregate section; dark palette must be tokenized once, then screens inherit. Medium effort, no schema change.</li>
+    </ul>
+    <p class="src">Sources: <a href="https://mobbin.com/screens/d8af309c-6543-4750-9acc-77215f009c69">Toss dark stacked money cards</a> · <a href="https://mobbin.com/screens/4053ef4f-c497-4691-b541-b99c55025d22">Ubank spend hero + bill planner + In &amp; Out week</a> · <a href="https://mobbin.com/screens/638c39ce-9851-406d-8e42-4499884c49e4">Base balance hero + quick-action row</a> · <a href="https://mobbin.com/screens/2c485b8f-000c-40b3-b6da-cc043ca22449">Revolut Business total-assets widget</a></p>
+  </div>
+
+  <div class="phones">
+    <!-- Screen 1: dark home -->
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+      <div class="screen">
+        <div class="navrow"><span class="title">Bonjour, Linus</span><span>🔔</span></div>
+        <div class="hero">
+          <div class="lbl">CETTE SEMAINE</div>
+          <div class="big">−35 000 FCFA</div>
+          <div class="delta">+540 000 à recevoir sam 4 juil</div>
+        </div>
+        <div class="qa">
+          <div class="act hot"><div class="ic">↑</div><div class="tx">Cotiser</div></div>
+          <div class="act"><div class="ic">↓</div><div class="tx">Réclamer</div></div>
+          <div class="act"><div class="ic">✉</div><div class="tx">Inviter</div></div>
+          <div class="act"><div class="ic">＋</div><div class="tx">Njangi</div></div>
+        </div>
+        <div class="inout">
+          <div class="cell"><div class="k">À PAYER</div><div class="v">35 000</div></div>
+          <div class="cell"><div class="k">À RECEVOIR</div><div class="v in">540 000</div></div>
+        </div>
+        <div class="dcard" style="margin-top:.7rem">
+          <div class="hd"><span>MES NJANGIS · 3</span><span>tout voir</span></div>
+          <div class="grow">
+            <div class="ring-sm" style="background:conic-gradient(hsl(158 60% 48%) 0 65%, #233029 65% 100%)">4/12</div>
+            <div class="who"><b>Famille Bayere</b><span>25 000 dus · dim 5 juil</span></div>
+            <div class="amt out">−25 000</div>
+          </div>
+          <div class="grow">
+            <div class="ring-sm" style="background:conic-gradient(hsl(262 60% 60%) 0 70%, #233029 70% 100%)">7/10</div>
+            <div class="who"><b>Collègues Quartier</b><span>je reçois · main 2/2</span></div>
+            <div class="amt in">+540 000</div>
+          </div>
+          <div class="grow">
+            <div class="dot" style="background:hsl(24 60% 55%); margin:0 10px"></div>
+            <div class="who"><b>Amis du village</b><span>en pause · reprend en août</span></div>
+            <div class="amt muted">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="label">dark home · net position hero</div>
+    </div>
+
+    <!-- Screen 2: dark group screen -->
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+      <div class="screen">
+        <div class="navrow"><span>←</span><span class="title">Famille Bayere</span><span>⋯</span></div>
+        <div class="hero" style="padding-top:.4rem">
+          <div class="lbl" style="color:hsl(158 50% 60%)">TOUR 4 / 12 · MARIE REÇOIT</div>
+          <div class="big">162 500</div>
+          <div class="potbar">
+            <div class="track"><i></i></div>
+            <div class="ends"><span>4/6 ont cotisé</span><span>reste 87 500</span></div>
+          </div>
+        </div>
+        <div class="banner">⏱ Votre cotisation de 25 000 est attendue avant dim 5 juil</div>
+        <div class="dcard">
+          <div class="hd"><span>COTISATIONS</span></div>
+          <div class="grow"><div class="dot" style="background:var(--d-accent)"></div>
+            <div class="who"><b>Jean N.</b><span>2 juil · Momo</span></div><div class="amt in">25 000 ✓</div></div>
+          <div class="grow"><div class="dot" style="background:var(--d-accent)"></div>
+            <div class="who"><b>Paul K. · 2/2</b><span>1 juil · espèces</span></div><div class="amt in">50 000 ✓</div></div>
+          <div class="grow"><div class="dot" style="background:#3a4a42"></div>
+            <div class="who"><b>Solange B.</b><span>attendu</span></div><div class="amt muted">25 000</div></div>
+          <div class="grow"><div class="dot" style="background:var(--danger)"></div>
+            <div class="who"><b>Emmanuel N.</b><span>en retard · tour 3</span></div><div class="amt late">25 000</div></div>
+        </div>
+      </div>
+      <div class="label">dark group · hue as accent only</div>
+    </div>
+
+    <!-- Screen 3: week planner -->
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span>◧ ⌁ ▮</span></div>
+      <div class="screen">
+        <div class="navrow"><span class="title">Planificateur</span><span>⚙</span></div>
+        <div class="inout" style="margin:.4rem 0 .8rem">
+          <div class="cell"><div class="k">JUILLET · SORTIES</div><div class="v">105 000</div></div>
+          <div class="cell"><div class="k">JUILLET · ENTRÉES</div><div class="v in">540 000</div></div>
+        </div>
+        <div class="dcard">
+          <div class="hd"><span>À VENIR</span></div>
+          <div class="grow"><div class="dot" style="background:hsl(158 60% 48%)"></div>
+            <div class="who"><b>Famille Bayere · tour 4/12</b><span>dim 5 juil · ma cotisation</span></div>
+            <div class="amt out">−25 000</div></div>
+          <div class="grow"><div class="dot" style="background:hsl(262 60% 60%)"></div>
+            <div class="who"><b>Collègues Qtr · tour 7/10</b><span>sam 4 juil · je reçois 🎉</span></div>
+            <div class="amt in">+540 000</div></div>
+          <div class="grow"><div class="dot" style="background:hsl(158 60% 48%)"></div>
+            <div class="who"><b>Famille Bayere · tour 5/12</b><span>dim 19 juil</span></div>
+            <div class="amt out">−25 000</div></div>
+          <div class="grow"><div class="dot" style="background:hsl(24 60% 55%)"></div>
+            <div class="who"><b>Amis du village · tour 2/8</b><span>août · reprise</span></div>
+            <div class="amt muted">−10 000</div></div>
+        </div>
+        <div class="dcard" style="background:var(--d-card2); border-style:dashed">
+          <div class="sml muted" style="text-align:center">Solde net juillet : <b class="in" style="color:var(--d-accent)">+435 000 FCFA</b></div>
+        </div>
+      </div>
+      <div class="label">planner · month in/out</div>
+    </div>
+  </div>
+
+  <footer>Iteration 3 of 3 · Mobbin sweep 2026-07-02 · compare with iter-1 (component upgrades) and iter-2 (communal feed)</footer>
+</main>
+</body>
+</html>

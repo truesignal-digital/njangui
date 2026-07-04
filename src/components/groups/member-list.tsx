@@ -35,14 +35,53 @@ function MemberAvatar({ name }: { name: string }) {
   );
 }
 
-function MemberRow({ member, canManage }: { member: GroupMemberItem; canManage: boolean }) {
+function MemberRow({
+  member,
+  canManage,
+  canAssignPresident,
+  groupId,
+}: {
+  member: GroupMemberItem;
+  canManage: boolean;
+  canAssignPresident?: boolean;
+  groupId?: string;
+}) {
   const { t } = useTranslation();
-  const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
+  const [busy, setBusy] = useState<'approve' | 'reject' | 'president' | null>(null);
 
   const approveMember = useMutation(api.memberships.approveMember);
   const rejectMember = useMutation(api.memberships.rejectMember);
+  const assignPresident = useMutation(api.memberships.assignPresident);
 
   const isPending = member.status === 'pending_approval';
+  // 02 §a: the president must be active, have the app, and hold no other
+  // role (a treasurer can't be president too).
+  const presidentEligible =
+    canAssignPresident === true &&
+    groupId !== undefined &&
+    member.status === 'active' &&
+    member.hasAccount &&
+    member.role === 'member';
+
+  const handleAssignPresident = async () => {
+    if (!groupId) return;
+    setBusy('president');
+    try {
+      await assignPresident({
+        groupId: groupId as Id<'groups'>,
+        membershipId: member.membershipId as Id<'memberships'>,
+      });
+      haptics.success();
+      toast.success(
+        t('groups.detail.presidentAssignedToast', { name: member.displayName })
+      );
+    } catch {
+      haptics.error();
+      toast.error(t('common.error'));
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const handleApprove = async () => {
     setBusy('approve');
@@ -115,6 +154,16 @@ function MemberRow({ member, canManage }: { member: GroupMemberItem; canManage: 
             onPress={() => void handleReject()}
           />
         </View>
+      ) : presidentEligible ? (
+        <AppButton
+          size="sm"
+          variant="outline"
+          label={t('groups.detail.makePresident')}
+          disabled={busy !== null}
+          loading={busy === 'president'}
+          onPress={() => void handleAssignPresident()}
+          testID={`make-president-${member.membershipId}`}
+        />
       ) : null}
     </View>
   );
@@ -123,9 +172,13 @@ function MemberRow({ member, canManage }: { member: GroupMemberItem; canManage: 
 export function MemberList({
   members,
   canManage,
+  canAssignPresident,
+  groupId,
 }: {
   members: GroupMemberItem[];
   canManage: boolean;
+  canAssignPresident?: boolean;
+  groupId?: string;
 }) {
   return (
     <View>
@@ -134,7 +187,12 @@ export function MemberList({
           key={member.membershipId}
           className={index > 0 ? 'border-t border-border-faint' : undefined}
         >
-          <MemberRow member={member} canManage={canManage} />
+          <MemberRow
+            member={member}
+            canManage={canManage}
+            canAssignPresident={canAssignPresident}
+            groupId={groupId}
+          />
         </View>
       ))}
     </View>

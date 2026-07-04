@@ -5,7 +5,11 @@ import { useMutation } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { CheckIcon, ChevronLeftIcon } from 'react-native-heroicons/outline';
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  InformationCircleIcon,
+} from 'react-native-heroicons/outline';
 import { toast } from 'sonner-native';
 
 import { api, type Id } from '../../../src/lib/convex-api';
@@ -43,6 +47,7 @@ export default function GroupCreationWizard() {
   const [schedule, setSchedule] = useState<Schedule>('weekly');
   const [meetingDayOfWeek, setMeetingDayOfWeek] = useState(6); // samedi
   const [amount, setAmount] = useState('');
+  const [targetCount, setTargetCount] = useState('');
   const [collectionMode, setCollectionMode] = useState<CollectionMode>('via_treasurer');
   const [creatorRole, setCreatorRole] = useState<CreatorRole>('treasurer');
   const [creating, setCreating] = useState(false);
@@ -55,6 +60,8 @@ export default function GroupCreationWizard() {
 
   const parsedAmount = Number.parseInt(amount.replace(/[^\d]/g, ''), 10);
   const amountValid = Number.isFinite(parsedAmount) && parsedAmount > 0;
+  const parsedTarget = Number.parseInt(targetCount.replace(/[^\d]/g, ''), 10);
+  const targetValid = Number.isFinite(parsedTarget) && parsedTarget >= 2;
 
   const handleCreate = async () => {
     if (creating) return;
@@ -65,6 +72,7 @@ export default function GroupCreationWizard() {
         schedule,
         meetingDayOfWeek: schedule === 'monthly' ? undefined : meetingDayOfWeek,
         contributionAmount: parsedAmount,
+        ...(targetValid && { targetMemberCount: parsedTarget }),
         collectionMode,
         creatorRole,
       });
@@ -255,6 +263,24 @@ export default function GroupCreationWizard() {
             ) : null}
           </View>
 
+          <View className="gap-xs">
+            <TextField
+              label={t('groups.wizard.targetLabel')}
+              value={targetCount}
+              onChangeText={setTargetCount}
+              placeholder={t('groups.wizard.targetPlaceholder')}
+              keyboardType="number-pad"
+              inputMode="numeric"
+            />
+            {amountValid && targetValid ? (
+              <Text className="font-body text-body-sm text-muted">
+                {t('groups.wizard.potPreview', {
+                  amount: formatCurrencyXAF(parsedAmount * parsedTarget),
+                })}
+              </Text>
+            ) : null}
+          </View>
+
           <AppButton
             label={t('common.continue')}
             disabled={!amountValid}
@@ -318,9 +344,10 @@ export default function GroupCreationWizard() {
           </View>
 
           {/* Custody-free red line (docs/00) — trust feature, not fine print */}
-          <View className="rounded-lg bg-surface-muted p-sm">
-            <Text className="font-body text-body-sm text-muted">
-              ℹ {t('groups.wizard.modeCustodyNote')}
+          <View className="flex-row items-start gap-xs rounded-lg bg-surface-muted p-sm">
+            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Text className="flex-1 font-body text-body-sm text-muted">
+              {t('groups.wizard.modeCustodyNote')}
             </Text>
           </View>
 

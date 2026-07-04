@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import {
+  CalendarDaysIcon,
   CheckCircleIcon,
   HomeIcon,
   UserIcon,
@@ -46,6 +47,15 @@ export default function TabsLayout() {
         options={{
           title: t('tabs.group'),
           tabBarIcon: ({ color, size }) => <UsersIcon color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          title: t('tabs.calendar'),
+          tabBarIcon: ({ color, size }) => (
+            <CalendarDaysIcon color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen

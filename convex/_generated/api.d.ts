@@ -9,14 +9,18 @@
  */
 
 import type * as activity from "../activity.js";
+import type * as calendar from "../calendar.js";
 import type * as crons from "../crons.js";
 import type * as cycles from "../cycles.js";
 import type * as dev from "../dev.js";
+import type * as email from "../email.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
+import type * as lib_appLinks from "../lib/appLinks.js";
 import type * as lib_cycleMath from "../lib/cycleMath.js";
 import type * as lib_paymentStateMachine from "../lib/paymentStateMachine.js";
 import type * as lib_roundMath from "../lib/roundMath.js";
+import type * as lib_scheduleMath from "../lib/scheduleMath.js";
 import type * as memberships from "../memberships.js";
 import type * as paymentRecords from "../paymentRecords.js";
 import type * as push from "../push.js";
@@ -35,14 +39,18 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activity: typeof activity;
+  calendar: typeof calendar;
   crons: typeof crons;
   cycles: typeof cycles;
   dev: typeof dev;
+  email: typeof email;
   groups: typeof groups;
   http: typeof http;
+  "lib/appLinks": typeof lib_appLinks;
   "lib/cycleMath": typeof lib_cycleMath;
   "lib/paymentStateMachine": typeof lib_paymentStateMachine;
   "lib/roundMath": typeof lib_roundMath;
+  "lib/scheduleMath": typeof lib_scheduleMath;
   memberships: typeof memberships;
   paymentRecords: typeof paymentRecords;
   push: typeof push;

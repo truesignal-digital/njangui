@@ -4,7 +4,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeftIcon } from 'react-native-heroicons/outline';
+import {
+  ChevronLeftIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  PhoneIcon,
+} from 'react-native-heroicons/outline';
 
 import { formatCurrencyXAF } from '../../../../../../../src/lib/format-currency';
 import { haptics } from '../../../../../../../src/lib/haptics';
@@ -78,8 +83,9 @@ export default function UssdScreen() {
       </View>
 
       {/* Non-dismissable menu-drift banner (03 §C) */}
-      <View className="mt-md rounded-lg border border-warning-dark bg-warning-bg p-sm">
-        <Text className="font-body-medium text-body-sm text-warning-dark">
+      <View className="mt-md flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
+        <ExclamationTriangleIcon size={16} color={theme.warningDark} />
+        <Text className="flex-1 font-body-medium text-body-sm text-warning-dark">
           {t('pay.banner')}
         </Text>
       </View>
@@ -137,6 +143,7 @@ export default function UssdScreen() {
           <View className="mt-lg gap-sm">
             <AppButton
               label={t('pay.dial', { code: content.code })}
+              icon={<PhoneIcon size={18} color={theme.primaryForeground} />}
               onPress={dial}
               testID="ussd-dial"
             />
@@ -154,10 +161,12 @@ export default function UssdScreen() {
             />
           </View>
 
-          <Text className="mt-lg font-body text-body-sm text-muted">
-            ℹ{' '}
-            {t('pay.custodyNote', { name: flow.payee?.displayName ?? '—' })}
-          </Text>
+          <View className="mt-lg flex-row items-start gap-xs">
+            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Text className="flex-1 font-body text-body-sm text-muted">
+              {t('pay.custodyNote', { name: flow.payee?.displayName ?? '—' })}
+            </Text>
+          </View>
         </>
       )}
     </ScrollView>

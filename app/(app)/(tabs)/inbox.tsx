@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import type { FunctionReturnType } from 'convex/server';
@@ -6,12 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { ChevronRightIcon } from 'react-native-heroicons/outline';
+import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
 import { api } from '../../../src/lib/convex-api';
 import { useAuth } from '../../../src/lib/clerk-client';
 import { formatCurrencyXAF } from '../../../src/lib/format-currency';
 import { useAppTheme } from '../../../src/lib/theme';
 import { Skeleton } from '../../../src/components/skeleton';
+import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
 
 type InboxItem = FunctionReturnType<typeof api.paymentRecords.myInbox>[number];
 
@@ -28,6 +30,7 @@ export default function InboxScreen() {
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const { isAuthenticated } = useConvexAuth();
   const inbox = useQuery(api.paymentRecords.myInbox, isAuthenticated ? {} : 'skip');
+  const { refreshing, onRefresh } = usePullRefresh();
 
   if (isLoaded && !isSignedIn) {
     return <Redirect href="/sign-in" />;
@@ -67,11 +70,22 @@ export default function InboxScreen() {
           </Text>
         }
         ListEmptyComponent={
-          <Text className="pt-xl text-center font-body text-body text-muted">
-            {t('inbox.empty')}
-          </Text>
+          <View className="items-center gap-md pt-xxl">
+            <View className="h-[72px] w-[72px] items-center justify-center rounded-full bg-success-bg">
+              <CheckCircleIcon size={40} color={theme.successDark} />
+            </View>
+            <Text className="text-center font-body-semi text-body text-foreground">
+              {t('inbox.empty')}
+            </Text>
+            <Text className="text-center font-body text-body-sm text-muted">
+              {t('inbox.emptyHint')}
+            </Text>
+          </View>
         }
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </View>
   );
