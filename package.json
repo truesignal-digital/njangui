@@ -26,6 +26,7 @@
     "test": "bun test convex/lib",
     "typecheck": "tsc --noEmit",
     "lint:design": "bun scripts/lint-design-system.ts",
+    "release:status": "bun scripts/release-status.ts",
     "doctor": "npx expo-doctor"
   },
   "dependencies": {
