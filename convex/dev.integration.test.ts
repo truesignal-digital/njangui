@@ -2,7 +2,7 @@
 
 import { convexTest } from 'convex-test';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { internal } from './_generated/api';
+import { api, internal } from './_generated/api';
 import schema from './schema';
 import { modules } from './test.setup';
 
@@ -72,5 +72,44 @@ describe('mock pilot fixture', () => {
         memberClerkId: 'pilot-member',
       })
     ).rejects.toThrow('devSeed is disabled');
+  });
+
+  test('advances the fixture through production round transitions', async () => {
+    const t = convexTest({ schema, modules });
+    const seeded = await t.mutation(internal.dev.devSeedPilotData, {
+      presidentClerkId: 'pilot-president',
+      treasurerClerkId: 'pilot-treasurer',
+      memberClerkId: 'pilot-member',
+    });
+    const president = t.withIdentity({ subject: 'pilot-president' });
+
+    const opened = await president.mutation(api.dev.devStartAndOpenRound, {
+      groupId: seeded.groupId,
+    });
+    expect(opened.opened).toBe(true);
+
+    const grace = await president.action(api.dev.devAdvancePilotRound, {
+      groupId: seeded.groupId,
+      step: 'to_grace',
+    });
+    expect(grace).toMatchObject({ roundIndex: 1, roundStatus: 'grace' });
+
+    const closed = await president.action(api.dev.devAdvancePilotRound, {
+      groupId: seeded.groupId,
+      step: 'to_close',
+    });
+    expect(closed).toMatchObject({ roundIndex: 1, roundStatus: 'payout' });
+
+    const evidence = await t.run(async (ctx) => {
+      const records = await ctx.db
+        .query('paymentRecords')
+        .withIndex('by_round', (q) => q.eq('roundId', opened.roundId))
+        .collect();
+      const round = opened.roundId ? await ctx.db.get(opened.roundId) : null;
+      return { records, round };
+    });
+    expect(evidence.records.filter((record) => record.kind === 'contribution')).toHaveLength(15);
+    expect(evidence.records.filter((record) => record.kind === 'payout')).toHaveLength(1);
+    expect(evidence.round?.obligationStatuses).toHaveLength(15);
   });
 });

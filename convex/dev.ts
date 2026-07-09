@@ -4,6 +4,7 @@ import type { Id } from './_generated/dataModel';
 import {
   action,
   internalMutation,
+  internalQuery,
   mutation,
   type MutationCtx,
 } from './_generated/server';
@@ -464,6 +465,173 @@ export const devSeedPilot = action({
       presidentClerkId: identity.subject,
       treasurerClerkId,
       memberClerkId,
+    });
+  },
+});
+
+const pilotStepValidator = v.union(
+  v.literal('open_next'),
+  v.literal('to_grace'),
+  v.literal('to_close'),
+  v.literal('expire_claims')
+);
+
+const pilotRoundStateValidator = v.object({
+  cycleId: v.union(v.id('cycles'), v.null()),
+  roundId: v.union(v.id('rounds'), v.null()),
+  roundIndex: v.union(v.number(), v.null()),
+  roundStatus: v.union(
+    v.literal('scheduled'),
+    v.literal('open'),
+    v.literal('grace'),
+    v.literal('closed'),
+    v.literal('payout'),
+    v.literal('completed'),
+    v.literal('skipped'),
+    v.literal('cancelled'),
+    v.null()
+  ),
+});
+
+/** Prepare timestamps only; internal.crons.tick performs the real transitions. */
+export const devPreparePilotStep = internalMutation({
+  args: {
+    groupId: v.id('groups'),
+    step: pilotStepValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    await requireRole(ctx, args.groupId, ['president']);
+    const cycle = await ctx.db
+      .query('cycles')
+      .withIndex('by_group_and_status', (q) =>
+        q.eq('groupId', args.groupId).eq('status', 'active')
+      )
+      .first();
+    if (!cycle) throw new Error('No active pilot cycle');
+    const rounds = await ctx.db
+      .query('rounds')
+      .withIndex('by_cycle', (q) => q.eq('cycleId', cycle._id))
+      .collect();
+    const ordered = [...rounds].sort((a, b) => a.index - b.index);
+    const now = Date.now();
+
+    if (args.step === 'open_next') {
+      if (ordered.some((round) => round.status === 'open' || round.status === 'grace')) {
+        throw new Error('Finish the current open round before opening the next');
+      }
+      if (ordered.some((round) => round.status === 'closed' || round.status === 'payout')) {
+        throw new Error('Complete the current payout before opening the next round');
+      }
+      const next = ordered.find((round) => round.status === 'scheduled');
+      if (!next) throw new Error('No scheduled round remains');
+      await ctx.db.patch(next._id, {
+        scheduledOpenAt: now - 1,
+        dueAt: now + 24 * 60 * 60 * 1000,
+        graceEndAt: now + 3 * 24 * 60 * 60 * 1000,
+      });
+      return null;
+    }
+
+    if (args.step === 'expire_claims') {
+      const claimed = await ctx.db
+        .query('paymentRecords')
+        .withIndex('by_group_and_state', (q) =>
+          q.eq('groupId', args.groupId).eq('state', 'claimed')
+        )
+        .collect();
+      for (const record of claimed) {
+        await ctx.db.patch(record._id, {
+          claimedAt: now - 8 * 24 * 60 * 60 * 1000,
+        });
+        if (record.roundId !== undefined && record.claimedBySide === 'payer') {
+          const round = await ctx.db.get(record.roundId);
+          if (round && round.dueAt > now) {
+            await ctx.db.patch(round._id, { dueAt: now - 1 });
+          }
+        }
+      }
+      return null;
+    }
+
+    const current = ordered.find(
+      (round) => round.status === 'open' || round.status === 'grace'
+    );
+    if (!current) throw new Error('No open or grace round');
+    if (args.step === 'to_grace') {
+      if (current.status !== 'open') throw new Error('Round is already in grace');
+      await ctx.db.patch(current._id, {
+        dueAt: now - 1,
+        graceEndAt: now + 60 * 60 * 1000,
+      });
+      return null;
+    }
+    await ctx.db.patch(current._id, {
+      dueAt: now - 2,
+      graceEndAt: now - 1,
+    });
+    return null;
+  },
+});
+
+export const devPilotRoundState = internalQuery({
+  args: { groupId: v.id('groups') },
+  returns: pilotRoundStateValidator,
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    const cycle = await ctx.db
+      .query('cycles')
+      .withIndex('by_group_and_status', (q) =>
+        q.eq('groupId', args.groupId).eq('status', 'active')
+      )
+      .first();
+    if (!cycle) {
+      return {
+        cycleId: null,
+        roundId: null,
+        roundIndex: null,
+        roundStatus: null,
+      };
+    }
+    const rounds = await ctx.db
+      .query('rounds')
+      .withIndex('by_cycle', (q) => q.eq('cycleId', cycle._id))
+      .collect();
+    const ordered = [...rounds].sort((a, b) => a.index - b.index);
+    const current =
+      ordered.find((round) =>
+        ['open', 'grace', 'closed', 'payout'].includes(round.status)
+      ) ??
+      [...ordered]
+        .reverse()
+        .find((round) => round.status === 'completed' || round.status === 'cancelled');
+    return {
+      cycleId: cycle._id,
+      roundId: current?._id ?? null,
+      roundIndex: current?.index ?? null,
+      roundStatus: current?.status ?? null,
+    };
+  },
+});
+
+/**
+ * Compress calendar time for the mock pilot while routing every state change
+ * through the production cron implementation.
+ */
+export const devAdvancePilotRound = action({
+  args: {
+    groupId: v.id('groups'),
+    step: pilotStepValidator,
+  },
+  returns: pilotRoundStateValidator,
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    if (!(await ctx.auth.getUserIdentity())) throw new Error('Not authenticated');
+    await ctx.runMutation(internal.dev.devPreparePilotStep, args);
+    await ctx.runMutation(internal.crons.tick, {});
+    return await ctx.runQuery(internal.dev.devPilotRoundState, {
+      groupId: args.groupId,
     });
   },
 });
