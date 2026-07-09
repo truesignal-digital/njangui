@@ -1,0 +1,200 @@
+items:
+  - id: BL-001
+    title: Serialize Meeting Mode offline queue writes
+    description: Prevent concurrent enqueue and dequeue operations for one round from overwriting persisted taps.
+    priority: HIGH
+    estimated_hours: 6
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, correctness, meeting-mode, offline]
+    dependencies: []
+
+  - id: BL-002
+    title: Persist Meeting Mode confirmation actions
+    description: Queue treasurer confirmation taps before invoking Convex so confirmations survive network loss and app termination.
+    priority: HIGH
+    estimated_hours: 4
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, correctness, meeting-mode, offline]
+    dependencies: [BL-001]
+
+  - id: BL-003
+    title: Add Convex integration-test foundation
+    description: Configure convex-test and reusable authenticated fixtures for public mutations, internal lifecycle functions, and authorization cases.
+    priority: HIGH
+    estimated_hours: 6
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, test, convex]
+    dependencies: []
+
+  - id: BL-004
+    title: Test Meeting Mode durability and idempotency
+    description: Prove that 15 concurrent taps, retries, interrupted synchronization, and replay produce exactly the intended ledger effects.
+    priority: HIGH
+    estimated_hours: 8
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, test, meeting-mode, offline]
+    dependencies: [BL-001, BL-002, BL-003]
+
+  - id: BL-005
+    title: Mock up Meeting Mode synchronization states
+    description: Design saved-on-phone, synchronizing, recorded, and needs-attention states before changing the production UI.
+    priority: HIGH
+    estimated_hours: 3
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, ui, mockup, meeting-mode]
+    dependencies: []
+
+  - id: BL-006
+    title: Implement approved Meeting Mode synchronization feedback
+    description: Implement the approved sync and recovery mockup and verify it against interrupted synchronization.
+    priority: MEDIUM
+    estimated_hours: 5
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, ui, meeting-mode]
+    dependencies: [BL-004, BL-005]
+
+  - id: BL-007
+    title: Implement confirmed-record correction
+    description: Add an auditable president-only correction path for a mistaken confirmed record without destructively rewriting history.
+    priority: HIGH
+    estimated_hours: 8
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, correctness, governance, convex]
+    dependencies: [BL-003]
+
+  - id: BL-008
+    title: Mock up the confirmed-record correction flow
+    description: Design the consequence preview, mandatory reason, confirmation step, and immutable-history presentation before UI implementation.
+    priority: HIGH
+    estimated_hours: 4
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, ui, mockup, governance]
+    dependencies: []
+
+  - id: BL-009
+    title: Complete treasurer handover semantics
+    description: Repoint pending obligations to the new treasurer while preserving claimed, disputed, and confirmed records with their historical parties.
+    priority: HIGH
+    estimated_hours: 8
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, correctness, governance, convex]
+    dependencies: [BL-003]
+
+  - id: BL-010
+    title: Mock up the treasurer handover statement
+    description: Design the officer selection, consequences, custody-safe statement, and historical attribution before UI implementation.
+    priority: MEDIUM
+    estimated_hours: 4
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, ui, mockup, governance]
+    dependencies: []
+
+  - id: BL-011
+    title: Add governance integration tests
+    description: Cover correction permissions, handover behavior, order changes, former-member visibility, and cross-group denial.
+    priority: HIGH
+    estimated_hours: 8
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, test, governance, convex]
+    dependencies: [BL-007, BL-009]
+
+  - id: BL-012
+    title: Create the Njangi Solidarite fixture
+    description: Seed a deterministic 15-member group with three controllable identities, feature-phone members, mixed methods, and a draft cycle.
+    priority: HIGH
+    estimated_hours: 4
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, fixture, dev-tools]
+    dependencies: []
+
+  - id: BL-013
+    title: Add compressed lifecycle controls
+    description: Advance the mock group through real round-open, close, timer, and payout paths without waiting for wall-clock dates.
+    priority: MEDIUM
+    estimated_hours: 6
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, dev-tools, convex]
+    dependencies: [BL-012]
+
+  - id: BL-014
+    title: Mock up the development pilot console
+    description: Design persona switching, scenario advancement, offline simulation, expected-state display, and explicit reset behavior.
+    priority: MEDIUM
+    estimated_hours: 4
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, ui, mockup, dev-tools]
+    dependencies: [BL-012]
+
+  - id: BL-015
+    title: Implement the approved development pilot console
+    description: Build the development-only console behind existing development and deployment guards.
+    priority: MEDIUM
+    estimated_hours: 8
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, ui, dev-tools]
+    dependencies: [BL-013, BL-014]
+
+  - id: BL-016
+    title: Encode four mock-pilot scenario scripts
+    description: Make the normal, unreliable-network, exception, and governance rounds repeatable with explicit expected ledger outcomes.
+    priority: HIGH
+    estimated_hours: 8
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, test, scenarios]
+    dependencies: [BL-004, BL-011, BL-012, BL-013]
+
+  - id: BL-017
+    title: Execute the simulated pilot
+    description: Run all four rounds in the native simulator and collect timing, queue, duplicate, recovery, and usability evidence.
+    priority: HIGH
+    estimated_hours: 8
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, validation]
+    dependencies: [BL-006, BL-011, BL-015, BL-016]
+
+  - id: BL-018
+    title: Publish the pilot-readiness report
+    description: Separate release blockers, accepted pilot limitations, observed UI problems, and post-pilot work using collected evidence.
+    priority: HIGH
+    estimated_hours: 4
+    status: BLOCKED
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [pilot, documentation, decision]
+    dependencies: [BL-017]
+
+  - id: BL-019
+    title: Reconcile authentication and feature-status documentation
+    description: Align the README, product specifications, and status artifact with username-password plus Google authentication and the implemented payment UI.
+    priority: MEDIUM
+    estimated_hours: 4
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [documentation, auth]
+    dependencies: []
+
+  - id: BL-020
+    title: Align Expo SDK patch versions
+    description: Update the five packages reported by Expo Doctor and re-run native dependency validation.
+    priority: LOW
+    estimated_hours: 2
+    status: READY
+    created_at: "2026-07-09T00:00:00-05:00"
+    tags: [maintenance, expo]
+    dependencies: []
