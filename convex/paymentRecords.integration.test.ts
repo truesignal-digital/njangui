@@ -512,4 +512,60 @@ describe('payment record integration', () => {
     );
     expect(unchanged?.state).toBe('confirmed');
   });
+
+  test('partial wrong-amount dispute restores the exact outstanding obligation', async () => {
+    const { t, paymentRecordId, roundId } = await seedContributionScenario();
+    const payer = t.withIdentity({ subject: 'clerk-payer' });
+    const treasurer = t.withIdentity({ subject: 'clerk-treasurer' });
+
+    await payer.mutation(api.paymentRecords.claim, {
+      paymentRecordId,
+      idempotencyKey: 'partial-four-thousand',
+      amount: 4_000,
+      method: 'cash',
+    });
+    let records = await t.run((ctx) =>
+      ctx.db
+        .query('paymentRecords')
+        .withIndex('by_round_and_kind', (q) =>
+          q.eq('roundId', roundId).eq('kind', 'contribution')
+        )
+        .collect()
+    );
+    expect(records.map((record) => [record.state, record.amount]).sort()).toEqual([
+      ['claimed', 4_000],
+      ['pending', 6_000],
+    ]);
+
+    await treasurer.mutation(api.paymentRecords.dispute, {
+      paymentRecordId,
+      reason: 'wrong_amount',
+      note: 'Only the six-thousand balance was received',
+    });
+    await payer.mutation(api.paymentRecords.cancel, {
+      paymentRecordId,
+      note: 'Withdrawing the incorrect four-thousand claim',
+    });
+
+    records = await t.run((ctx) =>
+      ctx.db
+        .query('paymentRecords')
+        .withIndex('by_round_and_kind', (q) =>
+          q.eq('roundId', roundId).eq('kind', 'contribution')
+        )
+        .collect()
+    );
+    expect(records.filter((record) => record.state === 'cancelled')).toHaveLength(1);
+    expect(
+      records
+        .filter((record) => record.state === 'pending')
+        .map((record) => record.amount)
+        .sort((a, b) => a - b)
+    ).toEqual([4_000, 6_000]);
+    expect(
+      records
+        .filter((record) => record.state !== 'cancelled')
+        .reduce((sum, record) => sum + record.amount, 0)
+    ).toBe(10_000);
+  });
 });

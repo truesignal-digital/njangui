@@ -154,7 +154,7 @@ items:
     description: Make the normal, unreliable-network, exception, and governance rounds repeatable with explicit expected ledger outcomes.
     priority: HIGH
     estimated_hours: 8
-    status: READY
+    status: DONE
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, test, scenarios]
     dependencies: [BL-004, BL-011, BL-012, BL-013]
