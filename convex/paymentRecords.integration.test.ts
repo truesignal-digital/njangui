@@ -382,6 +382,11 @@ describe('payment record integration', () => {
       paymentRecordId,
       channel: 'meeting',
     });
+    expect(
+      await president.query(api.paymentRecords.getPaymentRecord, {
+        paymentRecordId,
+      })
+    ).toMatchObject({ viewerCanCorrect: true, corrections: [] });
 
     await expect(
       payer.mutation(api.paymentRecords.cancel, {
@@ -441,6 +446,19 @@ describe('payment record integration', () => {
     expect(evidence.records).toHaveLength(2);
     expect(evidence.records.find((record) => record.state === 'pending')).toMatchObject({
       amount: 10_000,
+    });
+    expect(
+      await president.query(api.paymentRecords.getPaymentRecord, {
+        paymentRecordId,
+      })
+    ).toMatchObject({
+      viewerCanCorrect: false,
+      corrections: [
+        {
+          presidentName: 'Alice President',
+          note: 'Duplicate entry recorded during the meeting',
+        },
+      ],
     });
   });
 

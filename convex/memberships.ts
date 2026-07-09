@@ -42,6 +42,14 @@ const addMemberResultValidator = v.object({
   membershipId: v.id('memberships'),
 });
 
+const treasurerHandoverPreviewValidator = v.object({
+  currentTreasurerName: v.union(v.string(), v.null()),
+  pendingContributionCount: v.number(),
+  pendingPayoutCount: v.number(),
+  activeClaimCount: v.number(),
+  custodyAmount: v.number(),
+});
+
 // ============================================================================
 // Helpers
 // ============================================================================
@@ -621,6 +629,90 @@ export const reassignTreasurer = mutation({
 // ============================================================================
 // Queries
 // ============================================================================
+
+export const getTreasurerHandoverPreview = query({
+  args: { groupId: v.id('groups') },
+  returns: treasurerHandoverPreviewValidator,
+  handler: async (ctx, args) => {
+    await requireRole(ctx, args.groupId, ['president']);
+    const memberships = await ctx.db
+      .query('memberships')
+      .withIndex('by_group', (q) => q.eq('groupId', args.groupId))
+      .take(MEMBERSHIP_CAP);
+    const treasurer = memberships.find(
+      (membership) =>
+        membership.role === 'treasurer' && membership.status === 'active'
+    );
+    if (!treasurer) {
+      return {
+        currentTreasurerName: null,
+        pendingContributionCount: 0,
+        pendingPayoutCount: 0,
+        activeClaimCount: 0,
+        custodyAmount: 0,
+      };
+    }
+
+    const [pending, claimed, confirmed] = await Promise.all([
+      ctx.db
+        .query('paymentRecords')
+        .withIndex('by_group_and_state', (q) =>
+          q.eq('groupId', args.groupId).eq('state', 'pending')
+        )
+        .take(500),
+      ctx.db
+        .query('paymentRecords')
+        .withIndex('by_group_and_state', (q) =>
+          q.eq('groupId', args.groupId).eq('state', 'claimed')
+        )
+        .take(500),
+      ctx.db
+        .query('paymentRecords')
+        .withIndex('by_group_and_state', (q) =>
+          q.eq('groupId', args.groupId).eq('state', 'confirmed')
+        )
+        .take(500),
+    ]);
+
+    const pendingContributionCount = pending.filter(
+      (record) =>
+        record.kind !== 'payout' &&
+        record.payeeMembershipId === treasurer._id
+    ).length;
+    const pendingPayoutCount = pending.filter(
+      (record) =>
+        record.kind === 'payout' &&
+        record.payerMembershipId === treasurer._id
+    ).length;
+    const activeClaimCount = claimed.filter(
+      (record) =>
+        record.payerMembershipId === treasurer._id ||
+        record.payeeMembershipId === treasurer._id
+    ).length;
+    const confirmedIn = confirmed
+      .filter(
+        (record) =>
+          record.kind === 'contribution' &&
+          record.payeeMembershipId === treasurer._id
+      )
+      .reduce((sum, record) => sum + record.amount, 0);
+    const confirmedOut = confirmed
+      .filter(
+        (record) =>
+          record.kind === 'payout' &&
+          record.payerMembershipId === treasurer._id
+      )
+      .reduce((sum, record) => sum + record.amount, 0);
+
+    return {
+      currentTreasurerName: treasurer.displayName,
+      pendingContributionCount,
+      pendingPayoutCount,
+      activeClaimCount,
+      custodyAmount: Math.max(0, confirmedIn - confirmedOut),
+    };
+  },
+});
 
 /**
  * Group roster. Phone numbers are projected ONLY for treasurer/president

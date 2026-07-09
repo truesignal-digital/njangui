@@ -160,15 +160,27 @@ describe('createDurableQueue', () => {
       recordId: 'record-stale',
     });
 
+    const discarded: { entry: Entry; message: string }[] = [];
     const result = await queue.drain(
       'round-1',
       async () => {
         throw new Error('record already cancelled');
       },
-      (error) => error instanceof Error && /network/i.test(error.message)
+      (error) => error instanceof Error && /network/i.test(error.message),
+      (entry, error) =>
+        discarded.push({
+          entry,
+          message: error instanceof Error ? error.message : 'unknown',
+        })
     );
 
     expect(result).toEqual({ processed: 0, discarded: 1, retained: 0 });
+    expect(discarded).toEqual([
+      {
+        entry: { idempotencyKey: 'stale', recordId: 'record-stale' },
+        message: 'record already cancelled',
+      },
+    ]);
     expect(await queue.load('round-1')).toEqual([]);
   });
 });

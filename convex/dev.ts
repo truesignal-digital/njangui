@@ -453,8 +453,10 @@ export const devSeedPilot = action({
     cycleId: Id<'cycles'>;
   }> => {
     assertDevSeedEnabled();
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    if (!(await ctx.auth.getUserIdentity())) throw new Error('Not authenticated');
+    const presidentClerkId =
+      (await clerkResolveUserByUsername('phone_12015550100')) ??
+      (await clerkCreateDevUser('phone_12015550100'));
     const treasurerClerkId =
       (await clerkResolveUserByUsername('phone_12015550101')) ??
       (await clerkCreateDevUser('phone_12015550101'));
@@ -462,7 +464,7 @@ export const devSeedPilot = action({
       (await clerkResolveUserByUsername('phone_12015550102')) ??
       (await clerkCreateDevUser('phone_12015550102'));
     return await ctx.runMutation(internal.dev.devSeedPilotData, {
-      presidentClerkId: identity.subject,
+      presidentClerkId,
       treasurerClerkId,
       memberClerkId,
     });
@@ -475,6 +477,22 @@ const pilotStepValidator = v.union(
   v.literal('to_close'),
   v.literal('expire_claims')
 );
+
+type PilotRoundState = {
+  cycleId: Id<'cycles'> | null;
+  roundId: Id<'rounds'> | null;
+  roundIndex: number | null;
+  roundStatus:
+    | 'scheduled'
+    | 'open'
+    | 'grace'
+    | 'closed'
+    | 'payout'
+    | 'completed'
+    | 'skipped'
+    | 'cancelled'
+    | null;
+};
 
 const pilotRoundStateValidator = v.object({
   cycleId: v.union(v.id('cycles'), v.null()),
@@ -625,7 +643,7 @@ export const devAdvancePilotRound = action({
     step: pilotStepValidator,
   },
   returns: pilotRoundStateValidator,
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<PilotRoundState> => {
     assertDevSeedEnabled();
     if (!(await ctx.auth.getUserIdentity())) throw new Error('Not authenticated');
     await ctx.runMutation(internal.dev.devPreparePilotStep, args);

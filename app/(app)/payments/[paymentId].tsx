@@ -30,8 +30,8 @@ type DisputeReason = 'not_received' | 'wrong_amount' | 'other';
  * pushes, and feed entries. Backed by getPaymentRecord, so it renders any
  * state (a push can land on a record no longer in any inbox). Actions are
  * viewer-relative: « C'est exact ✓ » / « Contester » for the counterparty
- * (confirm guarded — it is IRREVERSIBLE: no confirmed→cancelled path
- * exists), « Retirer ma déclaration » for the claimant.
+ * (confirm guarded), « Retirer ma déclaration » for the claimant, and an
+ * auditable president-only correction for a mistaken confirmed entry.
  */
 export default function PaymentDetailScreen() {
   const { t } = useTranslation();
@@ -211,6 +211,33 @@ export default function PaymentDetailScreen() {
         </Card>
       ) : null}
 
+      {record.corrections.length > 0 ? (
+        <Card>
+          <Text className="font-body-semi text-body text-destructive-dark">
+            {t('payment.correctionHistory')}
+          </Text>
+          {record.corrections.map((correction) => (
+            <View
+              key={`${correction.createdAt}-${correction.presidentName}`}
+              className="mt-sm rounded-lg bg-destructive-bg p-sm"
+            >
+              <Text className="font-body-semi text-body-sm text-foreground">
+                {t('payment.correctedBy', { name: correction.presidentName })}
+              </Text>
+              <Text className="pt-[2px] font-body text-caption text-muted">
+                {new Date(correction.createdAt).toLocaleString()}
+              </Text>
+              <Text className="pt-xs font-body text-body-sm text-foreground">
+                « {correction.note} »
+              </Text>
+            </View>
+          ))}
+          <Text className="pt-sm font-body text-caption text-muted">
+            {t('payment.correctionHistoryNote')}
+          </Text>
+        </Card>
+      ) : null}
+
       {/* Actions */}
       <PaymentActions record={record} />
     </ScrollView>
@@ -228,7 +255,9 @@ function PaymentActions({ record }: { record: RecordDetail }) {
   const dispute = useMutation(api.paymentRecords.dispute);
   const cancel = useMutation(api.paymentRecords.cancel);
 
-  const [mode, setMode] = useState<'idle' | 'confirming' | 'disputing' | 'cancelling'>('idle');
+  const [mode, setMode] = useState<
+    'idle' | 'confirming' | 'disputing' | 'cancelling' | 'correcting'
+  >('idle');
   const [reason, setReason] = useState<DisputeReason | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -247,6 +276,72 @@ function PaymentActions({ record }: { record: RecordDetail }) {
       setBusy(false);
     }
   };
+
+  if (record.state === 'confirmed' && record.viewerCanCorrect) {
+    return (
+      <Card>
+        {mode === 'idle' ? (
+          <AppButton
+            variant="outline"
+            label={t('payment.correctCta')}
+            testID="payment-correct"
+            onPress={() => {
+              setNote('');
+              setMode('correcting');
+            }}
+          />
+        ) : (
+          <View className="gap-sm">
+            <Text className="font-heading text-title text-foreground">
+              {t('payment.correctTitle')}
+            </Text>
+            <Text className="font-body text-body-sm text-muted">
+              {t('payment.correctBody')}
+            </Text>
+            <View className="rounded-lg bg-success-bg p-sm">
+              <Text className="font-body-semi text-body-sm text-foreground">
+                {t('payment.correctDueAgain', {
+                  amount: formatCurrencyXAF(record.amount),
+                })}
+              </Text>
+              <Text className="pt-[2px] font-body text-caption text-muted">
+                {t('payment.correctConfirmationPreserved')}
+              </Text>
+            </View>
+            <TextField
+              label={t('payment.correctReason')}
+              value={note}
+              onChangeText={setNote}
+              placeholder={t('payment.correctReasonPlaceholder')}
+            />
+            <AppButton
+              variant="destructive"
+              label={t('payment.correctSubmit')}
+              loading={busy}
+              disabled={busy || note.trim().length < 10}
+              testID="payment-correct-submit"
+              onPress={() =>
+                void run(
+                  () =>
+                    cancel({
+                      paymentRecordId: record.paymentRecordId,
+                      note: note.trim(),
+                    }),
+                  'payment.corrected'
+                )
+              }
+            />
+            <AppButton
+              variant="ghost"
+              label={t('common.cancel')}
+              disabled={busy}
+              onPress={() => setMode('idle')}
+            />
+          </View>
+        )}
+      </Card>
+    );
+  }
 
   if (record.state === 'claimed' && (record.viewerCanConfirm || record.viewerCanCancel)) {
     return (

@@ -9,11 +9,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import {
   ArrowUturnLeftIcon,
+  CheckCircleIcon,
+  CloudArrowUpIcon,
+  ExclamationTriangleIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
 
 import { api, type Id } from '../../../../../../src/lib/convex-api';
 import { formatCurrencyXAF } from '../../../../../../src/lib/format-currency';
+import { throwIfPilotOffline } from '../../../../../../src/lib/dev-pilot';
 import { haptics } from '../../../../../../src/lib/haptics';
 import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
 import {
@@ -83,6 +87,9 @@ export default function MeetingModeScreen() {
     Record<string, 'claimed' | 'confirmed'>
   >({});
   const [pendingSync, setPendingSync] = useState(0);
+  const [syncingCount, setSyncingCount] = useState(0);
+  const [recordedThisSession, setRecordedThisSession] = useState(0);
+  const [syncIssues, setSyncIssues] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<{
     recordId: string;
     memberName: string;
@@ -97,6 +104,13 @@ export default function MeetingModeScreen() {
     setPendingSync(queue.length);
   }, [roundId]);
 
+  const addSyncIssue = useCallback((recordId: string, error: unknown) => {
+    setSyncIssues((current) => ({
+      ...current,
+      [recordId]: error instanceof Error ? error.message : 'Ledger conflict',
+    }));
+  }, []);
+
   // Replay the durable queue on mount — taps lost to an app kill re-fire
   // with their ORIGINAL keys (server no-ops the ones that landed).
   useEffect(() => {
@@ -106,8 +120,10 @@ export default function MeetingModeScreen() {
       const pending = await loadQueue(roundId);
       if (!live) return;
       setPendingSync(pending.length);
-      await replayQueue(roundId, {
+      if (pending.length > 0) setSyncingCount((count) => count + pending.length);
+      const result = await replayQueue(roundId, {
         claim: async (tap) => {
+          await throwIfPilotOffline();
           await claim({
             paymentRecordId: tap.recordId as Id<'paymentRecords'>,
             idempotencyKey: tap.idempotencyKey,
@@ -116,19 +132,24 @@ export default function MeetingModeScreen() {
           });
         },
         confirm: async (tap) => {
+          await throwIfPilotOffline();
           await confirm({
             paymentRecordId: tap.recordId as Id<'paymentRecords'>,
             channel: 'meeting',
           });
         },
-      });
+      }, (tap, error) => addSyncIssue(tap.recordId, error));
+      if (live) {
+        setRecordedThisSession((count) => count + result.processed);
+        setSyncingCount((count) => Math.max(0, count - pending.length));
+      }
       if (live) await refreshPendingCount();
     })();
     return () => {
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roundId, isAuthenticated]);
+  }, [roundId, isAuthenticated, addSyncIssue, claim, confirm, refreshPendingCount]);
 
   const summary = useMemo(() => {
     if (!rows) return null;
@@ -183,7 +204,9 @@ export default function MeetingModeScreen() {
         return;
       }
       void refreshPendingCount();
+      setSyncingCount((count) => count + 1);
       try {
+        await throwIfPilotOffline();
         await claim({
           paymentRecordId: recordId as Id<'paymentRecords'>,
           idempotencyKey: key,
@@ -191,6 +214,7 @@ export default function MeetingModeScreen() {
           ...(amountOverride !== undefined && { amount: amountOverride }),
         });
         await dequeueTap(roundId, key);
+        setRecordedThisSession((count) => count + 1);
         // Server row is authoritative now — a stale optimistic 'claimed'
         // must not mask a self-record that confirmed in one mutation.
         setOptimistic((o) => {
@@ -215,9 +239,11 @@ export default function MeetingModeScreen() {
           });
           haptics.error();
           toast.error(err.message);
+          addSyncIssue(recordId, err);
         }
         // network errors: stays queued, optimistic state stands
       } finally {
+        setSyncingCount((count) => Math.max(0, count - 1));
         keysRef.current.delete(recordId);
         void refreshPendingCount();
       }
@@ -269,12 +295,15 @@ export default function MeetingModeScreen() {
         return;
       }
       void refreshPendingCount();
+      setSyncingCount((count) => count + 1);
       try {
+        await throwIfPilotOffline();
         await confirm({
           paymentRecordId: recordId as Id<'paymentRecords'>,
           channel: 'meeting',
         });
         await dequeueTap(roundId, key);
+        setRecordedThisSession((count) => count + 1);
         setOptimistic((o) => {
           const { [row.membershipId]: _drop, ...rest } = o;
           return rest;
@@ -288,9 +317,11 @@ export default function MeetingModeScreen() {
           });
           haptics.error();
           toast.error(err.message);
+          addSyncIssue(recordId, err);
         }
         // Network errors remain queued and optimistic until replay.
       } finally {
+        setSyncingCount((count) => Math.max(0, count - 1));
         keysRef.current.delete(recordId);
         void refreshPendingCount();
       }
@@ -341,14 +372,19 @@ export default function MeetingModeScreen() {
         </Pressable>
       </View>
 
-      {/* Sync counter — visible truth about undelivered taps (03 §D) */}
-      {pendingSync > 0 ? (
-        <View className="mt-sm self-start rounded-pill bg-warning-bg px-sm py-[3px]">
-          <Text className="font-body-medium text-caption text-warning-dark">
-            {t('meeting.pendingSync', { count: pendingSync })}
-          </Text>
-        </View>
-      ) : null}
+      <MeetingSyncStatus
+        pendingCount={pendingSync}
+        syncingCount={syncingCount}
+        recordedCount={recordedThisSession}
+        issues={syncIssues}
+        rows={rows ?? []}
+        onOpen={(paymentRecordId) =>
+          router.push({
+            pathname: '/payments/[paymentId]',
+            params: { paymentId: paymentRecordId },
+          })
+        }
+      />
 
       {rows === undefined || round === null ? (
         <View className="mt-lg gap-sm">
@@ -496,6 +532,98 @@ export default function MeetingModeScreen() {
       )}
     </View>
   );
+}
+
+function MeetingSyncStatus({
+  pendingCount,
+  syncingCount,
+  recordedCount,
+  issues,
+  rows,
+  onOpen,
+}: {
+  pendingCount: number;
+  syncingCount: number;
+  recordedCount: number;
+  issues: Record<string, string>;
+  rows: PaymentRow[];
+  onOpen: (paymentRecordId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const theme = useAppTheme();
+  const issueEntries = Object.entries(issues);
+
+  if (issueEntries.length > 0) {
+    return (
+      <View className="mt-sm gap-xs rounded-lg border border-destructive bg-destructive-bg p-sm">
+        <View className="flex-row items-start gap-xs">
+          <ExclamationTriangleIcon size={18} color={theme.destructiveDark} />
+          <View className="min-w-0 flex-1">
+            <Text className="font-body-semi text-body-sm text-destructive-dark">
+              {t('meeting.needsAttention', { count: issueEntries.length })}
+            </Text>
+            <Text className="font-body text-caption text-muted">
+              {t('meeting.othersRecorded')}
+            </Text>
+          </View>
+        </View>
+        {issueEntries.map(([recordId, message]) => {
+          const member = rows.find((row) =>
+            row.records.some((record) => record.paymentRecordId === recordId)
+          );
+          return (
+            <Pressable
+              key={recordId}
+              accessibilityRole="button"
+              onPress={() => onOpen(recordId)}
+              className="rounded-md border border-border bg-surface px-sm py-xs active:bg-surface-muted"
+            >
+              <Text className="font-body-semi text-body-sm text-foreground">
+                {member?.displayName ?? t('meeting.unknownEntry')}
+              </Text>
+              <Text numberOfLines={1} className="font-body text-caption text-muted">
+                {message}
+              </Text>
+              <Text className="pt-[2px] font-body-semi text-caption text-accent">
+                {t('meeting.openEntry')}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    );
+  }
+
+  if (pendingCount > 0) {
+    return (
+      <View className="mt-sm flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
+        <CloudArrowUpIcon size={18} color={theme.warningDark} />
+        <View className="min-w-0 flex-1">
+          <Text className="font-body-semi text-body-sm text-warning-dark">
+            {t('meeting.savedOnPhone', { count: pendingCount })}
+          </Text>
+          <Text className="font-body text-caption text-muted">
+            {syncingCount > 0
+              ? t('meeting.synchronizing')
+              : t('meeting.safeToLeave')}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (recordedCount > 0) {
+    return (
+      <View className="mt-sm flex-row items-center gap-xs rounded-lg bg-success-bg p-sm">
+        <CheckCircleIcon size={18} color={theme.successDark} />
+        <Text className="font-body-semi text-body-sm text-success-dark">
+          {t('meeting.recordedCount', { count: recordedCount })}
+        </Text>
+      </View>
+    );
+  }
+
+  return null;
 }
 
 function RollCallRow({

@@ -11,6 +11,10 @@ export const storageKeys = {
   // retired OTP device credential (removed 2026-07) — never repurpose them.
   /** AsyncStorage, per round — src/lib/meeting-queue.ts */
   meetingQueue: (roundId: string) => `njangi-meeting-queue-${roundId}`,
+  /** AsyncStorage, development harness only — src/lib/dev-pilot.ts */
+  pilotOffline: 'njangi-dev-pilot-offline',
+  /** AsyncStorage, development harness only — consumed after persona sign-in */
+  pendingPilotGroup: 'njangi-dev-pilot-pending-group',
   /** AsyncStorage, per method+language — src/lib/ussd-content.ts */
   ussdContent: (method: string, language: string) => `njangi-ussd-${method}-${language}`,
 } as const;

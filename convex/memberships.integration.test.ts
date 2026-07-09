@@ -142,6 +142,18 @@ describe('treasurer handover integration', () => {
     const scenario = await seedHandoverScenario();
     const president = scenario.t.withIdentity({ subject: 'clerk-president' });
 
+    const preview = await president.query(
+      api.memberships.getTreasurerHandoverPreview,
+      { groupId: scenario.groupId }
+    );
+    expect(preview).toMatchObject({
+      currentTreasurerName: 'Marie Old Treasurer',
+      pendingContributionCount: 1,
+      pendingPayoutCount: 1,
+      activeClaimCount: 1,
+      custodyAmount: 10_000,
+    });
+
     await president.mutation(api.memberships.reassignTreasurer, {
       groupId: scenario.groupId,
       membershipId: scenario.newTreasurerMembershipId,

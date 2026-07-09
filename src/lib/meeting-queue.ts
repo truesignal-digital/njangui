@@ -52,7 +52,8 @@ export async function replayQueue(
   handlers: {
     claim(tap: QueuedTap): Promise<void>;
     confirm(tap: QueuedTap): Promise<void>;
-  }
+  },
+  onTerminalError?: (tap: QueuedTap, error: unknown) => void
 ) {
   return await queue.drain(
     roundId,
@@ -63,6 +64,7 @@ export async function replayQueue(
         await handlers.confirm(tap);
       }
     },
-    isTransientMeetingSyncError
+    isTransientMeetingSyncError,
+    onTerminalError
   );
 }

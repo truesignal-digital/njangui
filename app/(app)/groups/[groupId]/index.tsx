@@ -18,6 +18,7 @@ import { ReadinessCard } from '../../../../src/components/groups/readiness-card'
 import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
 import { RotationSection } from '../../../../src/components/groups/rotation-section';
+import { TreasurerHandover } from '../../../../src/components/groups/treasurer-handover';
 import { GroupAvatar } from '../../../../src/components/ui/group-identity';
 import { SectionCard } from '../../../../src/components/ui/section-card';
 
@@ -272,6 +273,15 @@ export default function GroupHomeScreen() {
           {activitySection}
         </>
       )}
+
+      {/* Governance */}
+      {group.viewerStatus === 'active' &&
+      group.viewerRole === 'president' &&
+      members !== undefined ? (
+        <SectionCard title={t('groups.handover.sectionTitle')}>
+          <TreasurerHandover groupId={group._id} members={activeMembers} />
+        </SectionCard>
+      ) : null}
 
       {/* Group rules */}
       <SectionCard title={t('groups.detail.rulesTitle')}>

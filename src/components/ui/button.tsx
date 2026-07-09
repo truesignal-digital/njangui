@@ -5,19 +5,21 @@ import { cn } from '../../lib/cn';
 import { haptics } from '../../lib/haptics';
 import { useAppTheme } from '../../lib/theme';
 
-type ButtonVariant = 'primary' | 'outline' | 'ghost';
+type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'destructive';
 type ButtonSize = 'lg' | 'sm';
 
 const CONTAINER_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-accent active:bg-accent-hover',
   outline: 'border border-border bg-surface active:bg-surface-muted',
   ghost: 'bg-transparent active:bg-surface-muted',
+  destructive: 'bg-destructive active:bg-destructive-dark',
 };
 
 const LABEL_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'font-body-semi text-body text-primary-fg',
   outline: 'font-body-semi text-body text-foreground',
   ghost: 'font-body-medium text-body text-muted',
+  destructive: 'font-body-semi text-body text-inverted',
 };
 
 const CONTAINER_SIZES: Record<ButtonSize, string> = {
@@ -74,7 +76,13 @@ export function AppButton({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? theme.primaryForeground : theme.accent}
+          color={
+            variant === 'primary'
+              ? theme.primaryForeground
+              : variant === 'destructive'
+                ? theme.textInverted
+                : theme.accent
+          }
         />
       ) : (
         icon

@@ -90,7 +90,8 @@ export function createDurableQueue<T extends DurableQueueEntry>(
     async drain(
       scopeId: string,
       process: (entry: T) => Promise<void>,
-      shouldRetainError: (error: unknown) => boolean
+      shouldRetainError: (error: unknown) => boolean,
+      onDiscard?: (entry: T, error: unknown) => void
     ): Promise<DurableQueueDrainResult> {
       const entries = await serialize(scopeId, () => read(scopeId));
       let processed = 0;
@@ -108,6 +109,7 @@ export function createDurableQueue<T extends DurableQueueEntry>(
           } else {
             await this.dequeue(scopeId, entry.idempotencyKey);
             discarded += 1;
+            onDiscard?.(entry, error);
           }
         }
       }

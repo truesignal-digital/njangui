@@ -1391,6 +1391,13 @@ const paymentRecordDetailValidator = v.object({
       openedByName: v.union(v.string(), v.null()),
     })
   ),
+  corrections: v.array(
+    v.object({
+      note: v.string(),
+      presidentName: v.string(),
+      createdAt: v.number(),
+    })
+  ),
   // Viewer-relative flags — the SCREEN chooses affordances from these; the
   // mutations re-validate through the state machine regardless.
   viewerIsClaimant: v.boolean(),
@@ -1399,6 +1406,7 @@ const paymentRecordDetailValidator = v.object({
   viewerCanDispute: v.boolean(),
   viewerCanCancel: v.boolean(),
   viewerCanResolveDispute: v.boolean(),
+  viewerCanCorrect: v.boolean(),
 });
 
 /**
@@ -1445,6 +1453,21 @@ export const getPaymentRecord = query({
     const openedBy = disputeRow?.openedByMembershipId
       ? await ctx.db.get(disputeRow.openedByMembershipId)
       : null;
+    const overrides = await ctx.db
+      .query('presidentOverrides')
+      .withIndex('by_payment_record', (q) =>
+        q.eq('paymentRecordId', record._id)
+      )
+      .order('desc')
+      .take(10);
+    const corrections = await Promise.all(
+      overrides.map(async (override) => ({
+        note: override.note,
+        presidentName:
+          (await ctx.db.get(override.presidentMembershipId))?.displayName ?? '—',
+        createdAt: override._creationTime,
+      }))
+    );
 
     const claimantId =
       record.claimedBySide === 'payer'
@@ -1511,6 +1534,7 @@ export const getPaymentRecord = query({
             openedByName: openedBy?.displayName ?? null,
           }
         : null,
+      corrections,
       viewerIsClaimant,
       viewerIsCounterparty,
       viewerCanConfirm:
@@ -1531,6 +1555,10 @@ export const getPaymentRecord = query({
         (viewerIsCounterparty ||
           viewerIsClaimant ||
           viewer.role === 'president'),
+      viewerCanCorrect:
+        record.state === 'confirmed' &&
+        viewerActive &&
+        viewer.role === 'president',
     };
   },
 });
