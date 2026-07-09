@@ -44,7 +44,7 @@ items:
     description: Design saved-on-phone, synchronizing, recorded, and needs-attention states before changing the production UI.
     priority: HIGH
     estimated_hours: 3
-    status: READY
+    status: IN_PROGRESS
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, ui, mockup, meeting-mode]
     dependencies: []
@@ -74,7 +74,7 @@ items:
     description: Design the consequence preview, mandatory reason, confirmation step, and immutable-history presentation before UI implementation.
     priority: HIGH
     estimated_hours: 4
-    status: READY
+    status: IN_PROGRESS
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, ui, mockup, governance]
     dependencies: []
@@ -94,7 +94,7 @@ items:
     description: Design the officer selection, consequences, custody-safe statement, and historical attribution before UI implementation.
     priority: MEDIUM
     estimated_hours: 4
-    status: READY
+    status: IN_PROGRESS
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, ui, mockup, governance]
     dependencies: []
@@ -134,7 +134,7 @@ items:
     description: Design persona switching, scenario advancement, offline simulation, expected-state display, and explicit reset behavior.
     priority: MEDIUM
     estimated_hours: 4
-    status: READY
+    status: IN_PROGRESS
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, ui, mockup, dev-tools]
     dependencies: [BL-012]
