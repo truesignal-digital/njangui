@@ -1,6 +1,12 @@
 import { v } from 'convex/values';
 import { internal } from './_generated/api';
-import { action, internalMutation, mutation } from './_generated/server';
+import type { Id } from './_generated/dataModel';
+import {
+  action,
+  internalMutation,
+  mutation,
+  type MutationCtx,
+} from './_generated/server';
 import { performStartCycle } from './cycles';
 import { generateUniqueInviteCode } from './groups';
 import { openRoundForTick } from './rounds';
@@ -246,6 +252,221 @@ const SEED_NAMES = [
   'Achu Nformi',
   'Limbe Kima',
 ];
+
+const PILOT_SMARTPHONE_MEMBERS = [
+  ['Awa Ndip', 'fr'],
+  ['Mballa Manga', 'fr'],
+  ['Ngu Tabi', 'fr'],
+  ['Etonde Ze', 'fr'],
+  ['Oben Arrey', 'en'],
+  ['Sumelong Bih', 'en'],
+  ['Achu Nformi', 'en'],
+] as const;
+
+const PILOT_FEATURE_PHONE_MEMBERS = [
+  'Mama Ngozi',
+  'Papa Simon',
+  'Mami Therese',
+  'Tata Julienne',
+  'Pa Etienne',
+] as const;
+
+async function ensurePilotUser(
+  ctx: MutationCtx,
+  clerkId: string,
+  name: string,
+  language: 'fr' | 'en'
+) {
+  const existing = await ctx.db
+    .query('users')
+    .withIndex('by_clerk_id', (q) => q.eq('clerkId', clerkId))
+    .unique();
+  if (existing) {
+    if (!existing.name.trim()) {
+      await ctx.db.patch(existing._id, { name });
+    }
+    return existing._id;
+  }
+  return await ctx.db.insert('users', { clerkId, name, language });
+}
+
+/**
+ * Deterministic 15-person mock pilot fixture. Internal so tests can exercise
+ * it without Clerk network calls; the public action below provisions the two
+ * controllable Clerk identities, then delegates here.
+ */
+export const devSeedPilotData = internalMutation({
+  args: {
+    presidentClerkId: v.string(),
+    treasurerClerkId: v.string(),
+    memberClerkId: v.string(),
+  },
+  returns: v.object({
+    groupId: v.id('groups'),
+    cycleId: v.id('cycles'),
+  }),
+  handler: async (ctx, args) => {
+    assertDevSeedEnabled();
+    const now = Date.now();
+    const presidentUserId = await ensurePilotUser(
+      ctx,
+      args.presidentClerkId,
+      'Alice Mballa',
+      'fr'
+    );
+    const treasurerUserId = await ensurePilotUser(
+      ctx,
+      args.treasurerClerkId,
+      'Marie Ngono',
+      'fr'
+    );
+    const memberUserId = await ensurePilotUser(
+      ctx,
+      args.memberClerkId,
+      'Paul Nfor',
+      'en'
+    );
+    const inviteCode = await generateUniqueInviteCode(ctx);
+    const groupId = await ctx.db.insert('groups', {
+      name: 'Njangi Solidarité',
+      description: 'Groupe pilote simulé — 15 membres',
+      city: 'Douala',
+      schedule: 'monthly',
+      contributionAmount: 10_000,
+      targetMemberCount: 15,
+      colorSeed: 36,
+      graceDays: 2,
+      finesEnabled: false,
+      beneficiaryContributes: true,
+      collectionMode: 'via_treasurer',
+      inviteCode,
+      status: 'setup',
+      language: 'fr',
+      createdByUserId: presidentUserId,
+    });
+
+    const rotationOrder: Id<'memberships'>[] = [];
+    const addLinkedMembership = async (
+      userId: typeof presidentUserId,
+      displayName: string,
+      role: 'president' | 'treasurer' | 'member',
+      phone: string | undefined,
+      offset: number
+    ) => {
+      const membershipId = await ctx.db.insert('memberships', {
+        groupId,
+        userId,
+        ...(phone !== undefined && { phone }),
+        displayName,
+        role,
+        status: 'active',
+        joinedAt: now + offset,
+      });
+      rotationOrder.push(membershipId);
+      return membershipId;
+    };
+
+    const presidentMembershipId = await addLinkedMembership(
+      presidentUserId,
+      'Alice Mballa',
+      'president',
+      DEV_TEST_PHONES.president,
+      0
+    );
+    await addLinkedMembership(
+      treasurerUserId,
+      'Marie Ngono',
+      'treasurer',
+      DEV_TEST_PHONES.treasurer,
+      1
+    );
+    await addLinkedMembership(
+      memberUserId,
+      'Paul Nfor',
+      'member',
+      DEV_TEST_PHONES.member,
+      2
+    );
+
+    for (let i = 0; i < PILOT_SMARTPHONE_MEMBERS.length; i++) {
+      const [name, language] = PILOT_SMARTPHONE_MEMBERS[i];
+      const userId = await ensurePilotUser(
+        ctx,
+        `pilot-${args.presidentClerkId}-${i}`,
+        name,
+        language
+      );
+      await addLinkedMembership(userId, name, 'member', undefined, i + 3);
+    }
+
+    for (let i = 0; i < PILOT_FEATURE_PHONE_MEMBERS.length; i++) {
+      const membershipId = await ctx.db.insert('memberships', {
+        groupId,
+        phone: `+23767710${String(100 + i).slice(-3)}`,
+        displayName: PILOT_FEATURE_PHONE_MEMBERS[i],
+        role: 'member',
+        status: 'active',
+        joinedAt: now + 10 + i,
+      });
+      rotationOrder.push(membershipId);
+    }
+
+    const startDate = new Date(now + 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const cycleId = await ctx.db.insert('cycles', {
+      groupId,
+      index: 1,
+      status: 'draft',
+      rotationOrder,
+      contributionAmount: 10_000,
+      schedule: 'monthly',
+      beneficiaryContributes: true,
+      collectionMode: 'via_treasurer',
+      graceDays: 2,
+      startDate,
+    });
+
+    await logActivityEvent(ctx, {
+      groupId,
+      kind: 'group_created',
+      entityTable: 'groups',
+      entityId: groupId,
+      actorMembershipId: presidentMembershipId,
+      note: 'mock pilot fixture',
+    });
+
+    return { groupId, cycleId };
+  },
+});
+
+/** Provision the three controllable Clerk identities, then seed the fixture. */
+export const devSeedPilot = action({
+  args: {},
+  returns: v.object({
+    groupId: v.id('groups'),
+    cycleId: v.id('cycles'),
+  }),
+  handler: async (ctx): Promise<{
+    groupId: Id<'groups'>;
+    cycleId: Id<'cycles'>;
+  }> => {
+    assertDevSeedEnabled();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+    const treasurerClerkId =
+      (await clerkResolveUserByUsername('phone_12015550101')) ??
+      (await clerkCreateDevUser('phone_12015550101'));
+    const memberClerkId =
+      (await clerkResolveUserByUsername('phone_12015550102')) ??
+      (await clerkCreateDevUser('phone_12015550102'));
+    return await ctx.runMutation(internal.dev.devSeedPilotData, {
+      presidentClerkId: identity.subject,
+      treasurerClerkId,
+      memberClerkId,
+    });
+  },
+});
 
 /**
  * Seed a setup-state group owned by the signed-in user (president), with a
