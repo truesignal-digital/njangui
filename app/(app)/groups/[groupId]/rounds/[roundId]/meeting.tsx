@@ -19,7 +19,9 @@ import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
 import {
   dequeueTap,
   enqueueTap,
+  isTransientMeetingSyncError,
   loadQueue,
+  replayQueue,
 } from '../../../../../../src/lib/meeting-queue';
 import {
   buildRoundSummary,
@@ -101,33 +103,25 @@ export default function MeetingModeScreen() {
     if (!roundId || !isAuthenticated) return;
     let live = true;
     void (async () => {
-      const queue = await loadQueue(roundId);
+      const pending = await loadQueue(roundId);
       if (!live) return;
-      setPendingSync(queue.length);
-      for (const tap of queue) {
-        try {
-          if (tap.action === 'claim') {
-            await claim({
-              paymentRecordId: tap.recordId as Id<'paymentRecords'>,
-              idempotencyKey: tap.idempotencyKey,
-              method: 'cash',
-              ...(tap.amount !== undefined && { amount: tap.amount }),
-            });
-          } else {
-            await confirm({
-              paymentRecordId: tap.recordId as Id<'paymentRecords'>,
-              channel: 'meeting',
-            });
-          }
-          await dequeueTap(roundId, tap.idempotencyKey);
-        } catch (err) {
-          // A terminal server verdict (state moved on) is a resolved tap;
-          // a network failure keeps it queued for the next replay.
-          if (err instanceof Error && !/network|fetch/i.test(err.message)) {
-            await dequeueTap(roundId, tap.idempotencyKey);
-          }
-        }
-      }
+      setPendingSync(pending.length);
+      await replayQueue(roundId, {
+        claim: async (tap) => {
+          await claim({
+            paymentRecordId: tap.recordId as Id<'paymentRecords'>,
+            idempotencyKey: tap.idempotencyKey,
+            method: 'cash',
+            ...(tap.amount !== undefined && { amount: tap.amount }),
+          });
+        },
+        confirm: async (tap) => {
+          await confirm({
+            paymentRecordId: tap.recordId as Id<'paymentRecords'>,
+            channel: 'meeting',
+          });
+        },
+      });
       if (live) await refreshPendingCount();
     })();
     return () => {
@@ -213,7 +207,7 @@ export default function MeetingModeScreen() {
             return rest;
           });
           toast(t('meeting.collision'));
-        } else if (err instanceof Error && !/network|fetch/i.test(err.message)) {
+        } else if (!isTransientMeetingSyncError(err)) {
           await dequeueTap(roundId, key);
           setOptimistic((o) => {
             const { [row.membershipId]: _drop, ...rest } = o;
@@ -286,7 +280,7 @@ export default function MeetingModeScreen() {
           return rest;
         });
       } catch (err) {
-        if (err instanceof Error && !/network|fetch/i.test(err.message)) {
+        if (!isTransientMeetingSyncError(err)) {
           await dequeueTap(roundId, key);
           setOptimistic((o) => {
             const { [row.membershipId]: _drop, ...rest } = o;

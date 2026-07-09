@@ -42,3 +42,27 @@ export async function dequeueTap(
 ): Promise<void> {
   await queue.dequeue(roundId, idempotencyKey);
 }
+
+export function isTransientMeetingSyncError(error: unknown): boolean {
+  return error instanceof Error && /network|fetch/i.test(error.message);
+}
+
+export async function replayQueue(
+  roundId: string,
+  handlers: {
+    claim(tap: QueuedTap): Promise<void>;
+    confirm(tap: QueuedTap): Promise<void>;
+  }
+) {
+  return await queue.drain(
+    roundId,
+    async (tap) => {
+      if (tap.action === 'claim') {
+        await handlers.claim(tap);
+      } else {
+        await handlers.confirm(tap);
+      }
+    },
+    isTransientMeetingSyncError
+  );
+}

@@ -8,6 +8,12 @@ export interface DurableQueueEntry {
   idempotencyKey: string;
 }
 
+export interface DurableQueueDrainResult {
+  processed: number;
+  discarded: number;
+  retained: number;
+}
+
 /**
  * A tiny per-scope durable queue with serialized read-modify-write access.
  *
@@ -79,6 +85,33 @@ export function createDurableQueue<T extends DurableQueueEntry>(
         }
         await storage.setItem(storageKey(scopeId), JSON.stringify(remaining));
       });
+    },
+
+    async drain(
+      scopeId: string,
+      process: (entry: T) => Promise<void>,
+      shouldRetainError: (error: unknown) => boolean
+    ): Promise<DurableQueueDrainResult> {
+      const entries = await serialize(scopeId, () => read(scopeId));
+      let processed = 0;
+      let discarded = 0;
+      let retained = 0;
+
+      for (const entry of entries) {
+        try {
+          await process(entry);
+          await this.dequeue(scopeId, entry.idempotencyKey);
+          processed += 1;
+        } catch (error) {
+          if (shouldRetainError(error)) {
+            retained += 1;
+          } else {
+            await this.dequeue(scopeId, entry.idempotencyKey);
+            discarded += 1;
+          }
+        }
+      }
+      return { processed, discarded, retained };
     },
   };
 }

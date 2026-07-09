@@ -112,4 +112,63 @@ describe('createDurableQueue', () => {
       { idempotencyKey: 'saved', recordId: 'record-saved' },
     ]);
   });
+
+  test('retains transient failures and replays every intended tap exactly once', async () => {
+    const { storage } = delayedMemoryStorage();
+    const queue = createDurableQueue<Entry>(storage, (roundId) => `round:${roundId}`);
+    const entries = Array.from({ length: 15 }, (_, index) => ({
+      idempotencyKey: `tap-${index}`,
+      recordId: `record-${index}`,
+    }));
+    await Promise.all(entries.map((entry) => queue.enqueue('round-1', entry)));
+
+    const applied = new Set<string>();
+    let interrupted = true;
+    const firstDrain = await queue.drain(
+      'round-1',
+      async (entry) => {
+        if (interrupted && Number(entry.recordId.split('-')[1]) >= 7) {
+          throw new Error('network unavailable');
+        }
+        applied.add(entry.idempotencyKey);
+      },
+      (error) => error instanceof Error && /network/i.test(error.message)
+    );
+
+    expect(firstDrain).toEqual({ processed: 7, discarded: 0, retained: 8 });
+    expect(await queue.load('round-1')).toHaveLength(8);
+
+    interrupted = false;
+    const replay = await queue.drain(
+      'round-1',
+      async (entry) => {
+        applied.add(entry.idempotencyKey);
+      },
+      () => false
+    );
+
+    expect(replay).toEqual({ processed: 8, discarded: 0, retained: 0 });
+    expect(await queue.load('round-1')).toEqual([]);
+    expect(applied.size).toBe(15);
+  });
+
+  test('discards terminal failures so they do not loop forever', async () => {
+    const { storage } = delayedMemoryStorage();
+    const queue = createDurableQueue<Entry>(storage, (roundId) => `round:${roundId}`);
+    await queue.enqueue('round-1', {
+      idempotencyKey: 'stale',
+      recordId: 'record-stale',
+    });
+
+    const result = await queue.drain(
+      'round-1',
+      async () => {
+        throw new Error('record already cancelled');
+      },
+      (error) => error instanceof Error && /network/i.test(error.message)
+    );
+
+    expect(result).toEqual({ processed: 0, discarded: 1, retained: 0 });
+    expect(await queue.load('round-1')).toEqual([]);
+  });
 });
