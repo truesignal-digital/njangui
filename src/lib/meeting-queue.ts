@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createDurableQueue } from './durable-queue';
 import { storageKeys } from './storage-keys';
 
 /**
@@ -18,11 +19,11 @@ export interface QueuedTap {
 }
 
 const keyFor = storageKeys.meetingQueue;
+const queue = createDurableQueue<QueuedTap>(AsyncStorage, keyFor);
 
 export async function loadQueue(roundId: string): Promise<QueuedTap[]> {
   try {
-    const raw = await AsyncStorage.getItem(keyFor(roundId));
-    return raw ? (JSON.parse(raw) as QueuedTap[]) : [];
+    return await queue.load(roundId);
   } catch {
     return [];
   }
@@ -32,20 +33,12 @@ export async function enqueueTap(
   roundId: string,
   tap: QueuedTap
 ): Promise<void> {
-  const queue = await loadQueue(roundId);
-  if (!queue.some((t) => t.idempotencyKey === tap.idempotencyKey)) {
-    queue.push(tap);
-  }
-  await AsyncStorage.setItem(keyFor(roundId), JSON.stringify(queue));
+  await queue.enqueue(roundId, tap);
 }
 
 export async function dequeueTap(
   roundId: string,
   idempotencyKey: string
 ): Promise<void> {
-  const queue = await loadQueue(roundId);
-  await AsyncStorage.setItem(
-    keyFor(roundId),
-    JSON.stringify(queue.filter((t) => t.idempotencyKey !== idempotencyKey))
-  );
+  await queue.dequeue(roundId, idempotencyKey);
 }

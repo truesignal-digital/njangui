@@ -170,13 +170,24 @@ export default function MeetingModeScreen() {
         keysRef.current.set(recordId, key);
       }
       setOptimistic((o) => ({ ...o, [row.membershipId]: 'claimed' }));
-      await enqueueTap(roundId, {
-        recordId,
-        idempotencyKey: key,
-        action: 'claim',
-        amount: amountOverride,
-        queuedAt: Date.now(),
-      });
+      try {
+        await enqueueTap(roundId, {
+          recordId,
+          idempotencyKey: key,
+          action: 'claim',
+          amount: amountOverride,
+          queuedAt: Date.now(),
+        });
+      } catch (err) {
+        keysRef.current.delete(recordId);
+        setOptimistic((o) => {
+          const { [row.membershipId]: _drop, ...rest } = o;
+          return rest;
+        });
+        haptics.error();
+        toast.error(err instanceof Error ? err.message : t('common.error'));
+        return;
+      }
       void refreshPendingCount();
       try {
         await claim({
@@ -239,19 +250,55 @@ export default function MeetingModeScreen() {
       }
       // Payer-side claim (the member declared from home) → my tap CONFIRMS
       // the EXISTING record. Never a second claim (double-count risk).
+      const recordId = claimed.paymentRecordId;
+      let key = keysRef.current.get(recordId);
+      if (!key) {
+        key = newIdempotencyKey();
+        keysRef.current.set(recordId, key);
+      }
       setOptimistic((o) => ({ ...o, [row.membershipId]: 'confirmed' }));
       try {
-        await confirm({
-          paymentRecordId: claimed.paymentRecordId as Id<'paymentRecords'>,
-          channel: 'meeting',
+        await enqueueTap(roundId, {
+          recordId,
+          idempotencyKey: key,
+          action: 'confirm',
+          queuedAt: Date.now(),
         });
       } catch (err) {
+        keysRef.current.delete(recordId);
         setOptimistic((o) => {
           const { [row.membershipId]: _drop, ...rest } = o;
           return rest;
         });
         haptics.error();
         toast.error(err instanceof Error ? err.message : t('common.error'));
+        return;
+      }
+      void refreshPendingCount();
+      try {
+        await confirm({
+          paymentRecordId: recordId as Id<'paymentRecords'>,
+          channel: 'meeting',
+        });
+        await dequeueTap(roundId, key);
+        setOptimistic((o) => {
+          const { [row.membershipId]: _drop, ...rest } = o;
+          return rest;
+        });
+      } catch (err) {
+        if (err instanceof Error && !/network|fetch/i.test(err.message)) {
+          await dequeueTap(roundId, key);
+          setOptimistic((o) => {
+            const { [row.membershipId]: _drop, ...rest } = o;
+            return rest;
+          });
+          haptics.error();
+          toast.error(err.message);
+        }
+        // Network errors remain queued and optimistic until replay.
+      } finally {
+        keysRef.current.delete(recordId);
+        void refreshPendingCount();
       }
       return;
     }

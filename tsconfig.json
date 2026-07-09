@@ -24,6 +24,7 @@
   "exclude": [
     "node_modules",
     ".port-reference",
-    "convex/**/*.test.ts"
+    "convex/**/*.test.ts",
+    "src/**/*.test.ts"
   ]
 }
