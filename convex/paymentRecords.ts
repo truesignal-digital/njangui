@@ -370,6 +370,113 @@ async function afterConfirmed(
   }
 }
 
+/** Validate lifecycle constraints before changing a corrected record. */
+async function prepareConfirmedReversal(
+  ctx: MutationCtx,
+  record: Doc<'paymentRecords'>
+): Promise<void> {
+  if (record.kind !== 'payout' || record.roundId === undefined) {
+    return;
+  }
+  const round = await ctx.db.get(record.roundId);
+  if (round?.status !== 'completed') {
+    return;
+  }
+  const cycle = await ctx.db.get(round.cycleId);
+  if (cycle?.status !== 'completed') {
+    return;
+  }
+  const groupCycles = await ctx.db
+    .query('cycles')
+    .withIndex('by_group', (q) => q.eq('groupId', cycle.groupId))
+    .collect();
+  if (
+    groupCycles.some(
+      (candidate) =>
+        candidate.index > cycle.index && candidate.status !== 'cancelled'
+    )
+  ) {
+    throw new Error(
+      'This payout cannot be reversed after a later cycle has started'
+    );
+  }
+}
+
+/**
+ * Undo denormalized effects after the confirmed row has been corrected.
+ * confirmedAt and confirmation rows remain untouched as historical proof.
+ */
+async function applyConfirmedReversalEffects(
+  ctx: MutationCtx,
+  record: Doc<'paymentRecords'>,
+  actorMembershipId: Id<'memberships'>,
+  note: string
+): Promise<void> {
+  if (record.kind === 'payout' && record.roundId !== undefined) {
+    const round = await ctx.db.get(record.roundId);
+    if (round?.status === 'completed') {
+      const cycle = await ctx.db.get(round.cycleId);
+      if (cycle?.status === 'completed') {
+        await ctx.db.patch(cycle._id, {
+          status: 'active',
+          completedAt: undefined,
+        });
+        await logActivityEvent(ctx, {
+          groupId: record.groupId,
+          kind: 'cycle_reopened_for_payout_correction',
+          entityTable: 'cycles',
+          entityId: cycle._id,
+          fromState: 'completed',
+          toState: 'active',
+          actorMembershipId,
+          note,
+        });
+      }
+      const group = await ctx.db.get(record.groupId);
+      if (group?.status === 'between_cycles') {
+        await ctx.db.patch(group._id, { status: 'active' });
+        await logActivityEvent(ctx, {
+          groupId: record.groupId,
+          kind: 'group_reopened_for_payout_correction',
+          entityTable: 'groups',
+          entityId: group._id,
+          fromState: 'between_cycles',
+          toState: 'active',
+          actorMembershipId,
+          note,
+        });
+      }
+      await ctx.db.patch(round._id, {
+        status: 'payout',
+        completedAt: undefined,
+      });
+      await logActivityEvent(ctx, {
+        groupId: record.groupId,
+        kind: 'round_reopened_for_payout_correction',
+        entityTable: 'rounds',
+        entityId: round._id,
+        fromState: 'completed',
+        toState: 'payout',
+        actorMembershipId,
+        note,
+      });
+    }
+  }
+
+  if (record.kind === 'fine' && record.fineId !== undefined) {
+    const fine = await ctx.db.get(record.fineId);
+    if (fine?.status === 'paid') {
+      await ctx.db.patch(fine._id, {
+        status: 'owed',
+        resolvedAt: undefined,
+      });
+    }
+  }
+
+  await ensureObligationRemainder(ctx, record);
+  await refreezeObligationStatus(ctx, record);
+}
+
 // ============================================================================
 // Cron-applied transitions — exported for convex/crons.ts (02 §c rows 5 & 7).
 // Both validate through the machine and NEVER throw on a stale record, so a
@@ -888,11 +995,13 @@ export const dispute = mutation({
 });
 
 /**
- * Withdraw (02 §c rows 8 & 10): the claimant cancels their own claim
+ * Withdraw or correct (02 §c rows 8, 10 & 12): the claimant cancels their own claim
  * (« Je me suis trompé » from `claimed`; « Je retire ma déclaration » from
  * `disputed` — payer only, per the machine). A fresh `pending` record is
  * re-created when the obligation is still unmet, so it is never silently
- * lost. President dispute-overrides go through resolveDispute, never here.
+ * lost. A president may also reverse a confirmed record with a mandatory
+ * note; confirmation history remains and an immutable override row is
+ * appended. Dispute-overrides still go through resolveDispute.
  */
 export const cancel = mutation({
   args: {
@@ -911,10 +1020,16 @@ export const cancel = mutation({
     if (record.state === 'cancelled') {
       return { paymentRecordId: record._id, state: 'cancelled' as const }; // idempotent re-tap
     }
-    if (record.state !== 'claimed' && record.state !== 'disputed') {
+    if (
+      record.state !== 'claimed' &&
+      record.state !== 'disputed' &&
+      record.state !== 'confirmed'
+    ) {
       // Row 13 pending bulk-cancels belong to the skip/exit/terminate flows,
       // not to this claimant-facing mutation.
-      throw new Error('Only claimed or disputed records can be withdrawn');
+      throw new Error(
+        'Only claimed, disputed, or confirmed records can be cancelled'
+      );
     }
 
     const result = validateTransition(toSnapshot(record), 'cancelled', actor);
@@ -926,6 +1041,21 @@ export const cancel = mutation({
     }
 
     const note = args.note?.trim() || undefined;
+    if (result.edge === 'override_reversal') {
+      if (note === undefined || note.length < MIN_OVERRIDE_NOTE_LENGTH) {
+        throw new Error(
+          `A note of at least ${MIN_OVERRIDE_NOTE_LENGTH} characters is mandatory for a president override`
+        );
+      }
+      await prepareConfirmedReversal(ctx, record);
+      await ctx.db.insert('presidentOverrides', {
+        paymentRecordId: record._id,
+        groupId: record.groupId,
+        outcome: 'cancelled',
+        note,
+        presidentMembershipId: membership._id,
+      });
+    }
     const now = Date.now();
 
     if (record.state === 'disputed') {
@@ -954,7 +1084,9 @@ export const cancel = mutation({
       // Row 8 copy: push to counterparty + feed. Row 10 copy: "Litige
       // résolu — déclaration retirée" to all parties + president.
       kind:
-        result.edge === 'withdraw_from_dispute'
+        result.edge === 'override_reversal'
+          ? 'president_override_reversal'
+          : result.edge === 'withdraw_from_dispute'
           ? 'dispute_resolved_cancelled'
           : 'payment_claim_withdrawn',
       entityTable: 'paymentRecords',
@@ -968,12 +1100,37 @@ export const cancel = mutation({
     if (result.recreatePendingIfObligationUnmet) {
       const cancelled = await ctx.db.get(record._id);
       if (cancelled) {
-        await ensureObligationRemainder(ctx, cancelled);
+        if (result.edge === 'override_reversal') {
+          await applyConfirmedReversalEffects(
+            ctx,
+            cancelled,
+            membership._id,
+            note as string
+          );
+        } else {
+          await ensureObligationRemainder(ctx, cancelled);
+        }
       }
     }
-    // A post-close withdrawal downgrades the provisionally-frozen status
-    // (after the remainder re-creation so the arrears pending is counted).
-    await refreezeObligationStatus(ctx, record);
+    if (result.edge !== 'override_reversal') {
+      // A post-close withdrawal downgrades the provisionally-frozen status
+      // (after the remainder re-creation so the arrears pending is counted).
+      await refreezeObligationStatus(ctx, record);
+    }
+
+    if (result.edge === 'override_reversal') {
+      await notifyMemberships(
+        ctx,
+        [record.payerMembershipId, record.payeeMembershipId],
+        {
+          titleFr: 'Paiement corrigé',
+          titleEn: 'Payment corrected',
+          bodyFr: `Le président a annulé l'entrée de ${formatXAF(record.amount)} — ${note}`,
+          bodyEn: `The president reversed the ${formatXAF(record.amount)} entry — ${note}`,
+          url: paymentLink(record._id),
+        }
+      );
+    }
 
     return { paymentRecordId: record._id, state: 'cancelled' as const };
   },

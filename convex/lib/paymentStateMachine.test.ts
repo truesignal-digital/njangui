@@ -143,12 +143,18 @@ describe('illegal transitions', () => {
     }
   });
 
-  test('confirmed is ledger-final — even the president cannot transition it (02 §c row 12 is an amendment, not a transition)', () => {
+  test('confirmed has one administrative exit: president override reversal', () => {
     const confirmed = record({ state: 'confirmed', claimedBySide: 'payer' });
-    for (const to of ['pending', 'claimed', 'disputed', 'cancelled'] as const) {
-      const result = validateTransition(confirmed, to, president);
-      expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.reason).toContain('ledger-final');
+    const reversal = expectEdge(
+      validateTransition(confirmed, 'cancelled', president),
+      'override_reversal'
+    );
+    expect(reversal.requiresNote).toBe(true);
+    expect(reversal.recreatePendingIfObligationUnmet).toBe(true);
+    expect(validateTransition(confirmed, 'cancelled', payer).ok).toBe(false);
+    expect(validateTransition(confirmed, 'cancelled', system).ok).toBe(false);
+    for (const to of ['pending', 'claimed', 'disputed'] as const) {
+      expect(validateTransition(confirmed, to, president).ok).toBe(false);
     }
   });
 

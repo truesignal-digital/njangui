@@ -566,14 +566,42 @@ export const reassignTreasurer = mutation({
     }
     await ctx.db.patch(target._id, { role: 'treasurer' });
 
-    // TODO(Week 2, 02 §e5 treasurer-replacement): re-point
-    // `payeeMembershipId` of PENDING paymentRecords only to the new
-    // treasurer. `claimed`/`disputed` records keep the old treasurer as
-    // payee (they assert money already handed over — the new treasurer can
-    // never truthfully confirm cash they never held); `confirmed` records
-    // keep the historical treasurer forever. Also show both treasurers the
-    // handover statement titled « Espèces chez le trésorier (selon le
-    // registre) — l'application ne détient aucun fonds ».
+    if (previousTreasurer) {
+      // 02 §e5 / I-2: only obligations where no money has been asserted to
+      // move follow the office. Claimed/disputed/confirmed rows retain the
+      // historical parties who allegedly handled the cash.
+      const pendingRecords = await ctx.db
+        .query('paymentRecords')
+        .withIndex('by_group_and_state', (q) =>
+          q.eq('groupId', args.groupId).eq('state', 'pending')
+        )
+        .collect();
+      for (const record of pendingRecords) {
+        if (
+          record.kind !== 'payout' &&
+          record.payeeMembershipId === previousTreasurer._id
+        ) {
+          await ctx.db.patch(record._id, {
+            payeeMembershipId: target._id,
+          });
+        }
+        // A pending payout is an obligation the active treasurer will carry
+        // out. No claim exists yet, so changing its payer does not rewrite
+        // anyone's account of money that already moved.
+        if (
+          record.kind === 'payout' &&
+          record.payerMembershipId === previousTreasurer._id
+        ) {
+          await ctx.db.patch(record._id, {
+            payerMembershipId: target._id,
+          });
+        }
+      }
+    }
+
+    // The production handover statement is a separate UI task and remains
+    // gated on an approved mockup. The ledger ownership change itself is
+    // complete and atomic here.
 
     await logActivityEvent(ctx, {
       groupId: args.groupId,

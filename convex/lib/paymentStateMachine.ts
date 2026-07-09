@@ -141,10 +141,9 @@ export const LEGAL_TRANSITIONS: Record<PaymentState, readonly PaymentState[]> =
     // pending → confirmed exists ONLY for self-records (payer = payee).
     pending: ['claimed', 'confirmed', 'cancelled'],
     claimed: ['confirmed', 'disputed', 'cancelled'],
-    // `confirmed` is ledger-final (02 §c): NO state-mutating exit. Corrections
-    // to confirmed records are president-override amendment records (02 row 12)
-    // plus an immutable presidentOverrides row — never a transition.
-    confirmed: [],
+    // Row 12 is the sole administrative exit: a president correction keeps
+    // confirmedAt + confirmations as history and appends an override artifact.
+    confirmed: ['cancelled'],
     disputed: ['confirmed', 'cancelled'],
     cancelled: [],
   };
@@ -190,7 +189,8 @@ export type TransitionEdge =
   | 'late_confirm' // row 9 — payee, « finalement reçu »
   | 'withdraw_from_dispute' // row 10 — payer
   | 'override_confirm' // row 11 — president, mandatory note
-  | 'override_cancel'; // row 11 — president, mandatory note
+  | 'override_cancel' // row 11 — president, mandatory note
+  | 'override_reversal'; // row 12 — confirmed → cancelled correction
 
 export type TransitionResult =
   | {
@@ -253,13 +253,24 @@ export function validateTransition(
 ): TransitionResult {
   const from = record.state;
 
-  if (from === 'confirmed') {
-    return reject(
-      'confirmed is ledger-final and never mutated (02 §c) — corrections are president-override amendment records, not transitions'
-    );
-  }
   if (!LEGAL_TRANSITIONS[from].includes(to) || from === to) {
     return reject(`illegal transition: ${from} → ${to}`);
+  }
+
+  // ── confirmed → cancelled (row 12) ──────────────────────────
+  // This is not an ordinary party transition. It is the dedicated
+  // president correction path: history remains, an immutable override row
+  // is appended, and the unmet obligation is re-created by the mutation.
+  if (from === 'confirmed' && to === 'cancelled') {
+    if (actor.type === 'member' && actor.isPresident) {
+      return allow('override_reversal', {
+        requiresNote: true,
+        recreatePendingIfObligationUnmet: true,
+      });
+    }
+    return reject(
+      'only the president may reverse a confirmed record, with a mandatory note'
+    );
   }
 
   const self = isSelfRecord(record);
