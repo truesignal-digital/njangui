@@ -184,7 +184,7 @@ items:
     description: Align the README, product specifications, and status artifact with username-password plus Google authentication and the implemented payment UI.
     priority: MEDIUM
     estimated_hours: 4
-    status: READY
+    status: DONE
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [documentation, auth]
     dependencies: []

@@ -59,11 +59,11 @@ Creator picks group name, schedule (`weekly | biweekly | monthly`), fixed contri
 
 ### Invites — designed for WhatsApp
 - Each group has one **group invite code**: 6 chars, uppercase, alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no 0/O/1/I), e.g. `K7PMQ4`. Stored on `groups`, regenerable (regeneration invalidates the old code). The code **stays valid during active cycles** — people are recruited at réunions year-round, and for a monthly 25-member group closing enrollment would mean two years; mid-cycle joins land in `pending_approval` and the "Prochain cycle" list per edge case 4.
-- Invite link `https://<domain>/j/K7PMQ4` resolves to a public landing page (prerendered shell) showing group name, member count, contribution amount, schedule — then Clerk phone-number sign-up.
+- Invite share carries the manual code plus the native `njangi://` deep link. It opens the app's join-by-code screen; signed-out users complete username/password or Google authentication first. There is no public web landing page in the mobile-only MVP.
 - Share action opens WhatsApp with prefilled French copy (i18n key `invite.whatsappMessage`):
   *« {presidentName} t'invite à rejoindre le njangi "{groupName}" — {amount} FCFA / {schedule}. Rejoins ici : {link} (code {code}) »*
 - DECISION: joining via code creates Membership in `pending_approval`; **president or treasurer must approve** before the member is `active` (njangis are closed trust circles; an open link must not auto-admit). Approval/rejection sends push to the joiner. Approval is rejected above **40 active+pending memberships** (hard cap, 05 Week 6 DECISION).
-- Feature-phone members: treasurer/president adds them directly (name + phone number) → Membership `active` with `hasAccount: false`. Direct add is rejected above the same 40-membership cap. If that phone number later signs up via Clerk, the account is linked to the existing Membership and its full history (match on E.164 phone, `convex/utils/phone.ts`).
+- Feature-phone members: treasurer/president adds them directly (name + phone number) → Membership `active` with `hasAccount: false`. Direct add is rejected above the same 40-membership cap. A later app signup is **not** auto-linked by phone; a possession-proof migration flow is post-pilot. Until then the officer adds app users by their unique username and the historical feature-phone row remains immutable.
 
 ### Membership states
 

@@ -13,7 +13,7 @@ app/
 ├── _layout.tsx                                 # root Stack: ClerkProvider → ConvexClientProvider, theme init, fr/en init,
 │                                               #   deep-link config (njangi:// scheme; https universal links later)
 ├── index.tsx                                   # signed-out welcome → sign-in entry (redirects to (app) when authed)
-├── sign-in.tsx                                 # Clerk native flow, phone-number-first
+├── sign-in.tsx                                 # Clerk username/password + Google flow
 ├── j/[inviteCode].tsx                          # njangi://j/:inviteCode  deep-link entry: group preview → sign-in → join/approval
 ├── onboarding.tsx                              # post-auth: name, language confirm
 └── (app)/                                      # authed section
@@ -543,7 +543,7 @@ Four steps, one screen each, progress dots on top, in-screen state (single Conve
 - **Step 1**: name only. Currency displayed but locked to XAF.
 - **Step 2**: Schedule (`weekly | biweekly | monthly`) + meeting day + fixed Contribution amount (MVP: fixed per decision/glossary). Amount input shows formatted preview ("10 000 F × 12 membres = pot de 120 000 F" once members exist).
 - **Step 3 — rotation order builder**: creator adds members by name + phone number (contact picker where supported; manual entry always available — members need not have the app yet, covering feature-phone members). Drag handles `≡` to reorder; `🔀 Tirage au sort` shuffles (njangis often draw lots). DECISION (replaces the earlier "locks at first round start" wording): the wizard's order is a **draft**. It locks only when the president taps **« Démarrer le cycle »** on the setup-state group detail (B2) — an explicit action that runs 02's guards and materializes all rounds. Until then the president reorders freely; **after** lock, changes go exclusively through the OrderChange flow (« Échanger deux tours », B2), never free editing.
-- **Step 4 — invite**: short code link `…/j/<code>` (§A link DECISION); WhatsApp share is the primary button. Members added in step 3 who later join via link are matched by phone number and slot into their reserved position. `Terminer ✓` lands on the **setup-state group detail** (B2): « 3 membres ajoutés — démarrez le cycle quand tout le monde a rejoint », with the president-only « Démarrer le cycle » CTA.
+- **Step 4 — invite**: short code + `njangi://` deep link (§A); WhatsApp share is the primary button. Joiners authenticate, submit the code, and await officer approval. Feature-phone rows are not silently matched to accounts by phone. `Terminer ✓` lands on the **setup-state group detail** (B2): « 3 membres ajoutés — démarrez le cycle quand tout le monde a rejoint », with the president-only « Démarrer le cycle » CTA.
 - Creator becomes president + treasurer by default; roles reassignable in group settings (DECISION).
 
 ### B10. Onboarding — `index`, `sign-in`, `onboarding`, `j/[inviteCode]`
@@ -570,14 +570,14 @@ Four steps, one screen each, progress dots on top, in-screen state (single Conve
 └────────────────────────────────┘
 ```
 
-- **Phone-number-first via Clerk** (phone + SMS OTP as primary factor; no email, no password). +237 prefilled. fr/en toggle persists to `AsyncStorage("njangi-language")` before auth even exists.
-- After OTP: `onboarding` asks exactly one thing — name ("Comment le groupe vous appelle-t-il ?") — then routes to the Accueil tab (empty state) or into the invite flow below.
+- **Clerk username/password + Google.** Credentials sign-up asks for first/last name, generates a unique memorable username, and accepts optional email for recovery. Google sign-up derives the same username after OAuth. The fr/en toggle persists to `AsyncStorage("njangi-language")` before auth exists.
+- After authentication: `onboarding` asks for a name only when the Clerk profile did not provide one, then routes to Accueil or resumes the invite flow.
 - **Invite path** `j/[inviteCode]` (pre-auth deep-link entry — `njangi://j/:code`; non-installed invitees reach it via the store link in the WhatsApp message, §A invite DECISION): shows group name, member count, contribution amount, schedule — *before* sign-up, so the invitee knows what they're joining → `Rejoindre` → Clerk → then the join **splits** (02's invites DECISION: an open link must not auto-admit — njangis are closed trust circles, and auto-join would expose the full ledger to an unapproved stranger):
   - Phone matches a membership **pre-added by the creator/treasurer** (wizard step 3, feature-phone adds) → **auto-attach** to the existing membership + its history → lands on group detail.
   - Otherwise → Membership created in **`pending_approval`** → waiting screen « **Demande envoyée à {presidentName} — vous serez notifié.** » showing only the public preview data (no ledger access). President/treasurer get an approval-queue entry (B2 settings) + push (§E); on approval, the joiner's push lands them on group detail. Mid-cycle approvals land in the « Prochain cycle » list per 02 §e4.
   - Group at the **40-member cap** (05 Week 6: joins rejected above cap) → friendly state: « **Ce groupe est complet (40 membres).** Contactez {presidentName}. » — never an unspecified error on the main acquisition funnel.
 - ≤3 screens from WhatsApp tap to group detail (or to the waiting state) once the app is installed. This is the main acquisition funnel (champion brings 15–30 members, decision 5).
-- Whole onboarding works on the member's *second* visit too: signing in with the same phone number reattaches all Memberships.
+- Returning members recover the same Clerk identity through their username/password or Google account; Convex resolves memberships from the stable Clerk subject.
 
 ---
 
@@ -654,7 +654,7 @@ Step 7/6 ("verify the name on screen") is deliberate anti-fraud copy: the carrie
 | Meeting Mode ticks / undo / fines | ✅ In-memory queue **plus the one durable exception**: a Meeting-Mode-only **AsyncStorage tap queue** written before each mutation and replayed idempotently on next open (04 §D — the réunion hall with no signal is the critical path). Cash total computes client-side. **Cross-doc note:** 05's Week-4 scope-guard DECISION must be amended to name this single exception so 03/04/05 say one thing. |
 | Attach screenshot | ✅ The claim queues; the image upload retries on reconnect *within the session* and never blocks the claim. If the app is killed first, the user re-attaches from the PaymentRecord screen. |
 | Confirm (treasurer) / resolve dispute | ⚠ Same in-memory queue, but UI warns: « Sera confirmé dès le retour du réseau. » |
-| Create group, join via invite, send invite, sign in/OTP | ❌ Requires connection (Clerk + invite-code validation). Friendly blocker: « Connectez-vous à internet pour continuer. » |
+| Create group, join via invite, send invite, sign in | ❌ Requires connection (Clerk + invite-code validation). Friendly blocker: « Connectez-vous à internet pour continuer. » |
 
 **LATER (explicitly demoted — post-pilot hardening, not MVP):** a general persistent AsyncStorage outbound mutation queue; versioned AsyncStorage snapshot rehydration of query results; a persistent offline image-upload retry queue.
 

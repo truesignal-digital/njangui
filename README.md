@@ -12,7 +12,7 @@ Njangi is an **Expo (React Native) app targeting Android and iOS from day one** 
 
 ## Stack
 
-Expo SDK 56 + expo-router + NativeWind (Tailwind v3 tokens from `src/lib/mobile-ui-config.json`) + Convex + Clerk (`@clerk/expo`, phone-first) + i18next (fr default, en) + Bun. Conventions copied from the piol mobile app (`piol-vite/apps/mobile`) — match them.
+Expo SDK 56 + expo-router + NativeWind (Tailwind v3 tokens from `src/lib/mobile-ui-config.json`) + Convex + Clerk (`@clerk/expo`, username/password + Google) + i18next (fr default, en) + Bun. Conventions copied from the piol mobile app (`piol-vite/apps/mobile`) — match them.
 
 ## Setup
 
@@ -31,7 +31,7 @@ Expo SDK 56 + expo-router + NativeWind (Tailwind v3 tokens from `src/lib/mobile-
    The deployment URL goes in `.env.local` as `EXPO_PUBLIC_CONVEX_URL` (see `.env.example`).
 
 3. **Set up Clerk**
-   - Create a Clerk application with **phone number** as the primary identifier (SMS OTP — verify delivery on real MTN and Orange Cameroon SIMs early, see docs/05-mvp-plan.md Week 1).
+   - Create a Clerk application with **username + password** enabled, optional email for recovery, and Google OAuth. Sign-up asks for a name and generates the unique username used by the add-member flow.
    - Put `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` in `.env.local`.
    - Add a webhook endpoint `https://<convex-deployment>.convex.site/clerk-webhook` (events: `user.created`, `user.updated`, `user.deleted`) and set `CLERK_WEBHOOK_SECRET` + `CLERK_JWT_ISSUER_DOMAIN` in the Convex Dashboard environment variables.
 

@@ -1,6 +1,6 @@
 # Auth redesign — WhatsApp OTP + device-bind
 
-**Status:** proposal / spec · **Date:** 2026-06-15 · **Supersedes:** Clerk SMS OTP (05 Week 1)
+**Status:** archived / not implemented · **Date:** 2026-06-15 · **Superseded 2026-07-04 by:** Clerk username/password + Google authentication
 
 ## Why
 

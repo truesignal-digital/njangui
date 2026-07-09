@@ -39,7 +39,7 @@
 
 Key outcomes of the review: `ledger_final` is derived, never stored (5-state validator); rounds close system-driven at `graceEndAt`, no human gate; president override is the only exit from `confirmed`; `collectionMode` added (`via_treasurer` | `direct_to_beneficiary` — many MoMo njangis pay the beneficiary directly, intake must screen for it); OrderChange swaps ("begging the turn") included in MVP; M15 minimal assistance levy added (a deuil is near-certain across 5 pilot groups); Meeting Mode tap queue persisted to local storage (silent-loss fix; localStorage at review time, AsyncStorage after the mobile pivot); pilot recruiting bounded to groups that complete a cycle in ~3–4 months; Buea pitch script in English/Pidgin.
 
-Remaining human TODO: a real njangi treasurer reads 02 + 03; Cameroon counsel reviews the disclaimer baseline in 05's launch checklist; verify Clerk SMS OTP delivery on live MTN/Orange SIMs (Week 1).
+Remaining human TODO: a real njangi treasurer reads 02 + 03; Cameroon counsel reviews the disclaimer baseline in 05's launch checklist; verify assisted username/password and Google onboarding on the actual low-end Android pilot device.
 
 ## Regulatory red line (never cross without local counsel + license)
 
