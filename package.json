@@ -23,7 +23,9 @@
     "eas:build:preview:android": "npx eas-cli@latest build -p android --profile preview",
     "eas:run:ios": "npx eas-cli@latest build:run -p ios --latest",
     "eas:run:android": "npx eas-cli@latest build:run -p android --latest",
-    "test": "bun test convex/lib src/lib",
+    "test": "bun run test:unit && bun run test:convex",
+    "test:unit": "bun test convex/lib src/lib",
+    "test:convex": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint:design": "bun scripts/lint-design-system.ts",
     "release:status": "bun scripts/release-status.ts",
@@ -81,11 +83,14 @@
     "svix": "^1.95.2"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
     "@types/react": "~19.2.10",
+    "convex-test": "^0.0.54",
     "expo-mcp": "~0.2.1",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "serve-sim": "0.1.31",
     "tailwindcss": "^3.4.19",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
   }
 }

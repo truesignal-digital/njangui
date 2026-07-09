@@ -24,7 +24,7 @@ items:
     description: Configure convex-test and reusable authenticated fixtures for public mutations, internal lifecycle functions, and authorization cases.
     priority: HIGH
     estimated_hours: 6
-    status: READY
+    status: DONE
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, test, convex]
     dependencies: []
@@ -34,7 +34,7 @@ items:
     description: Prove that 15 concurrent taps, retries, interrupted synchronization, and replay produce exactly the intended ledger effects.
     priority: HIGH
     estimated_hours: 8
-    status: BLOCKED
+    status: READY
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, test, meeting-mode, offline]
     dependencies: [BL-001, BL-002, BL-003]
@@ -64,7 +64,7 @@ items:
     description: Add an auditable president-only correction path for a mistaken confirmed record without destructively rewriting history.
     priority: HIGH
     estimated_hours: 8
-    status: BLOCKED
+    status: READY
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, correctness, governance, convex]
     dependencies: [BL-003]
@@ -84,7 +84,7 @@ items:
     description: Repoint pending obligations to the new treasurer while preserving claimed, disputed, and confirmed records with their historical parties.
     priority: HIGH
     estimated_hours: 8
-    status: BLOCKED
+    status: READY
     created_at: "2026-07-09T00:00:00-05:00"
     tags: [pilot, correctness, governance, convex]
     dependencies: [BL-003]

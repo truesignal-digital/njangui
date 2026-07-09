@@ -46,8 +46,8 @@ jobs:
 
       - name: test
         if: matrix.check == 'test'
-        # `bun run test`, not `bun test` — bare `bun test` bypasses the script
-        # and globs the whole repo instead of the scoped convex/lib suite.
+        # The script runs both fast Bun unit tests and Convex integration tests.
+        # Bare `bun test` would bypass the Vitest/edge-runtime half.
         run: bun run test
 
   # Single stable required check for branch protection — name stays "CI"
