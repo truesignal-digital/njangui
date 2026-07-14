@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
@@ -19,8 +19,12 @@ import { InviteShare } from '../../../../src/components/groups/invite-share';
 import { MemberList } from '../../../../src/components/groups/member-list';
 import { RotationSection } from '../../../../src/components/groups/rotation-section';
 import { TreasurerHandover } from '../../../../src/components/groups/treasurer-handover';
-import { GroupAvatar } from '../../../../src/components/ui/group-identity';
+import { GroupSeal } from '../../../../src/components/groups/group-seal';
+import { CollectiveTableCard } from '../../../../src/components/groups/collective-table-card';
 import { SectionCard } from '../../../../src/components/ui/section-card';
+import { StatusBarCover } from '../../../../src/components/ui/status-bar-cover';
+import { SoftPressable } from '../../../../src/components/ui/soft-pressable';
+import { ICON_SIZE } from '../../../../src/lib/icons';
 
 /**
  * Group home shell (docs/03 B2, Week 1 slice): roster with roles + status
@@ -152,7 +156,12 @@ export default function GroupHomeScreen() {
   ) : null;
 
   const rotationSection = (
-    <SectionCard title={t('groups.detail.rotationTitle')}>
+    <View className="mt-md gap-sm">
+      {!cycleRunning ? (
+        <Text className="font-body-semi text-overline uppercase text-muted">
+          {t('groups.detail.rotationTitle')}
+        </Text>
+      ) : null}
       <RotationSection
         groupId={group._id}
         groupStatus={group.status}
@@ -166,12 +175,12 @@ export default function GroupHomeScreen() {
         onPress={() =>
           router.push({
             pathname: '/groups/[groupId]/calendar',
-            params: { groupId: group._id },
+            params: { groupId: group._id, name: group.name },
           })
         }
         testID="see-group-calendar"
       />
-    </SectionCard>
+    </View>
   );
 
   // 5-item preview; the full immutable ledger lives on its own paginated
@@ -195,120 +204,138 @@ export default function GroupHomeScreen() {
   );
 
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerStyle={screenPadding}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <View className="flex-row items-start gap-xs">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-          onPress={() =>
-            router.canGoBack() ? router.back() : router.replace('/')
-          }
-          className="mt-[2px] h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
-        >
-          <ChevronLeftIcon size={22} color={theme.textMuted} />
-        </Pressable>
-        <GroupAvatar
-          name={group.name}
-          colorSeed={group.colorSeed}
-          groupId={group._id}
-          size={40}
-        />
-        <View className="min-w-0 flex-1 gap-xs">
-          <Text
-            numberOfLines={1}
-            className="font-heading text-headline text-foreground"
-          >
-            {group.name}
-          </Text>
-          <Badge
-            tone={GROUP_STATUS_TONE[group.status] ?? 'outline'}
-            label={t(`groups.status.${group.status}`)}
-          />
-        </View>
-      </View>
-
-      {/* Setup readiness — the lock guards made visible, plus the projected
-          season so "do we wait for one more member?" has a visible cost */}
-      {group.status === 'setup' && members !== undefined ? (
-        <ReadinessCard
-          activeMemberCount={activeMembers.length}
-          targetMemberCount={group.targetMemberCount}
-          hasPresident={hasPresident}
-          hasTreasurer={activeMembers.some((m) => m.role === 'treasurer')}
-          schedule={group.schedule}
-          meetingDayOfWeek={group.meetingDayOfWeek}
-        />
-      ) : null}
-
-      {/* Pending approvals — problems float up (president/treasurer only) */}
-      {canManage && pendingMembers.length > 0 ? (
-        <SectionCard
-          title={`${t('groups.detail.pendingTitle')} (${pendingMembers.length})`}
-        >
-          <MemberList members={pendingMembers} canManage={canManage} />
-        </SectionCard>
-      ) : null}
-
-      {/* Section order answers the user's actual question. Cycle running →
-          « what happens next » (rotation/round, then the feed) leads;
-          setup/between-cycles → roster and invite lead (building the group
-          IS the task). */}
-      {cycleRunning ? (
-        <>
-          {rotationSection}
-          {activitySection}
-          {membersSection}
-          {inviteSection}
-        </>
-      ) : (
-        <>
-          {membersSection}
-          {inviteSection}
-          {rotationSection}
-          {activitySection}
-        </>
-      )}
-
-      {/* Governance */}
-      {group.viewerStatus === 'active' &&
-      group.viewerRole === 'president' &&
-      members !== undefined ? (
-        <SectionCard title={t('groups.handover.sectionTitle')}>
-          <TreasurerHandover groupId={group._id} members={activeMembers} />
-        </SectionCard>
-      ) : null}
-
-      {/* Group rules */}
-      <SectionCard title={t('groups.detail.rulesTitle')}>
-        <View className="gap-sm">
-          <RuleRow
-            label={t('groups.detail.contribution')}
-            value={t('groups.detail.perMember', {
-              amount: formatCurrencyXAF(group.contributionAmount),
-            })}
-            emphasized
-          />
-          <RuleRow
-            label={t('groups.detail.rhythm')}
-            value={
-              t(`groups.schedule.${group.schedule}`) +
-              (typeof group.meetingDayOfWeek === 'number'
-                ? ` · ${t(`groups.days.${group.meetingDayOfWeek}`)}`
-                : '')
+    <View className="flex-1 bg-background">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={screenPadding}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View className="flex-row items-start gap-xs">
+          <SoftPressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back')}
+            onPress={() =>
+              router.canGoBack() ? router.back() : router.replace('/')
             }
+            className="mt-[2px] h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
+          >
+            <ChevronLeftIcon size={ICON_SIZE.control} color={theme.textMuted} />
+          </SoftPressable>
+          <GroupSeal
+            name={group.name}
+            colorSeed={group.colorSeed}
+            groupId={group._id}
+            size={40}
           />
-          <RuleRow
-            label={t('groups.detail.collection')}
-            value={t(`groups.collectionMode.${group.collectionMode}`)}
-          />
+          <View className="min-w-0 flex-1 gap-xs">
+            <Text className="font-body-semi text-overline uppercase text-success-dark">
+              {t('groups.detail.eyebrow')}
+            </Text>
+            <Text
+              numberOfLines={1}
+              className="font-heading text-headline text-foreground"
+            >
+              {group.name}
+            </Text>
+            <Badge
+              tone={GROUP_STATUS_TONE[group.status] ?? 'outline'}
+              label={t(`groups.status.${group.status}`)}
+            />
+          </View>
         </View>
-      </SectionCard>
-    </ScrollView>
+
+        {members !== undefined ? (
+          <CollectiveTableCard
+            groupId={group._id}
+            groupName={group.name}
+            colorSeed={group.colorSeed}
+            groupStatus={group.status}
+            members={activeMembers}
+          />
+        ) : (
+          <Skeleton className="mt-lg h-[440px] rounded-2xl" />
+        )}
+
+        {/* Setup readiness — the lock guards made visible, plus the projected
+            season so "do we wait for one more member?" has a visible cost */}
+        {group.status === 'setup' && members !== undefined ? (
+          <ReadinessCard
+            activeMemberCount={activeMembers.length}
+            targetMemberCount={group.targetMemberCount}
+            hasPresident={hasPresident}
+            hasTreasurer={activeMembers.some((m) => m.role === 'treasurer')}
+            schedule={group.schedule}
+            meetingDayOfWeek={group.meetingDayOfWeek}
+          />
+        ) : null}
+
+        {/* Pending approvals — problems float up (president/treasurer only) */}
+        {canManage && pendingMembers.length > 0 ? (
+          <SectionCard
+            title={`${t('groups.detail.pendingTitle')} (${pendingMembers.length})`}
+          >
+            <MemberList members={pendingMembers} canManage={canManage} />
+          </SectionCard>
+        ) : null}
+
+        {/* Section order answers the user's actual question. Cycle running →
+            « what happens next » (rotation/round, then the feed) leads;
+            setup/between-cycles → roster and invite lead (building the group
+            IS the task). */}
+        {cycleRunning ? (
+          <>
+            {rotationSection}
+            {activitySection}
+            {membersSection}
+            {inviteSection}
+          </>
+        ) : (
+          <>
+            {membersSection}
+            {inviteSection}
+            {rotationSection}
+            {activitySection}
+          </>
+        )}
+
+        {/* Governance */}
+        {group.viewerStatus === 'active' &&
+        group.viewerRole === 'president' &&
+        members !== undefined ? (
+          <SectionCard title={t('groups.handover.sectionTitle')}>
+            <TreasurerHandover groupId={group._id} members={activeMembers} />
+          </SectionCard>
+        ) : null}
+
+        {/* Group rules */}
+        <SectionCard title={t('groups.detail.rulesTitle')}>
+          <View className="gap-sm">
+            <RuleRow
+              label={t('groups.detail.contribution')}
+              value={t('groups.detail.perMember', {
+                amount: formatCurrencyXAF(group.contributionAmount),
+              })}
+              emphasized
+            />
+            <RuleRow
+              label={t('groups.detail.rhythm')}
+              value={
+                t(`groups.schedule.${group.schedule}`) +
+                (typeof group.meetingDayOfWeek === 'number'
+                  ? ` · ${t(`groups.days.${group.meetingDayOfWeek}`)}`
+                  : '')
+              }
+            />
+            <RuleRow
+              label={t('groups.detail.collection')}
+              value={t(`groups.collectionMode.${group.collectionMode}`)}
+            />
+          </View>
+        </SectionCard>
+      </ScrollView>
+      <StatusBarCover />
+    </View>
   );
 }
 

@@ -57,8 +57,11 @@ Once un-forceable binaries exist (phase 2), a 1-minute Convex deploy is also a 1
 
 ### 1.3 EAS linkage
 
-- [ ] `eas init` (writes `owner` + `extra.eas.projectId` into app.json — currently missing; also unblocks push-notification testing per docs/build-plan.md). Commit the app.json change.
-- [ ] EAS environment variables per environment (`development`/`preview`/`production` — eas.json profiles already declare `environment:`): `EXPO_PUBLIC_CONVEX_URL`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- [x] `eas init` linked `@dev-5304/njangi`; `owner` and
+  `extra.eas.projectId` are present in app.json.
+- [x] EAS environment variables exist for `development`, `preview`, and
+  `production`: `EXPO_PUBLIC_CONVEX_URL` and
+  `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (verified 2026-07-14).
 - [ ] Connect the GitHub repo in the Expo dashboard (prerequisite for EAS Workflows in phase 2)
 
 Build cadence (fits the free tier — 15 iOS + 15 Android builds/month, ~100 workflow minutes):

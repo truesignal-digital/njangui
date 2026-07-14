@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { Stack } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { DevSeedButton } from '../../src/components/dev/dev-tools';
 import { usePushNotifications } from '../../src/hooks/use-push-notifications';
@@ -14,25 +15,76 @@ export const unstable_settings = {
  * setup workflows present as modals.
  */
 export default function AppLayout() {
+  const { t } = useTranslation();
   usePushNotifications();
 
   return (
     <Fragment>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          headerBackButtonDisplayMode: 'minimal',
+          headerTitleStyle: {
+            fontFamily: 'Newsreader_600SemiBold',
+            fontSize: 20,
+          },
+        }}
+      >
+        {/* Human back label: pushed screens with native headers announce
+            « Today », never the raw route name "(tabs)". */}
+        <Stack.Screen name="(tabs)" options={{ title: t('tabs.home') }} />
         <Stack.Screen name="onboarding" />
+        <Stack.Screen
+          name="calendar"
+          options={{
+            headerShown: true,
+            headerLargeTitle: true,
+            headerLargeTitleStyle: {
+              fontFamily: 'Newsreader_600SemiBold',
+            },
+            title: t('tabs.calendar'),
+          }}
+        />
+        <Stack.Screen
+          name="profile"
+          options={{
+            headerShown: true,
+            headerLargeTitleEnabled: true,
+            headerLargeTitleStyle: {
+              fontFamily: 'Newsreader_600SemiBold',
+            },
+            title: t('tabs.profile'),
+          }}
+        />
         <Stack.Screen name="payments/[paymentId]" />
+        <Stack.Screen
+          name="create-or-join"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.62, 0.94],
+            sheetInitialDetentIndex: 0,
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+            gestureEnabled: true,
+          }}
+        />
         <Stack.Screen name="groups/new" />
         <Stack.Screen name="groups/[groupId]/index" />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/index" />
-        {/* Pay flow: ONE modal layer (the picker). USSD + claim push as
-            cards INSIDE the flow — no modal-on-modal stacking, and no
-            dismiss gesture that can drop a user mid-declaration: a swipe
+        {/* Pay flow: ONE modal layer (the picker, a content-fit sheet —
+            three method rows must not claim the full screen). USSD + claim
+            push as cards INSIDE the flow — no modal-on-modal stacking, and
+            no dismiss gesture that can drop a user mid-declaration: a swipe
             on the sheet would tear down the whole flow, losing a typed
             claim (amount + proof), so the gesture is off for the flow. */}
         <Stack.Screen
           name="groups/[groupId]/rounds/[roundId]/pay/index"
-          options={{ presentation: 'modal', gestureEnabled: false }}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: 'fitToContents',
+            sheetGrabberVisible: false,
+            gestureEnabled: false,
+          }}
         />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/pay/ussd" />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/pay/claim" />
@@ -46,7 +98,14 @@ export default function AppLayout() {
         />
         <Stack.Screen
           name="join-by-code"
-          options={{ presentation: 'modal', gestureEnabled: true }}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.62, 0.94],
+            sheetInitialDetentIndex: 1,
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+            gestureEnabled: true,
+          }}
         />
         <Stack.Screen
           name="groups/[groupId]/add-member"

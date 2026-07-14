@@ -6,10 +6,14 @@ import {
   counterpartySideOf,
   isSelfRecord,
   membershipIdForSide,
-  type PaymentRecordSnapshot,
   type TransitionContext,
   validateTransition,
 } from './lib/paymentStateMachine';
+import {
+  membershipNeedsRepresentation,
+  paymentActorForMembership,
+  toPaymentRecordSnapshot,
+} from './lib/paymentCapabilities';
 import { payoutPrefillAmount } from './lib/roundMath';
 import {
   expectedForMember,
@@ -56,16 +60,6 @@ const recordStateResultValidator = v.object({
 // Helpers
 // ============================================================================
 
-function toSnapshot(record: Doc<'paymentRecords'>): PaymentRecordSnapshot {
-  return {
-    state: record.state,
-    kind: record.kind,
-    payerMembershipId: record.payerMembershipId,
-    payeeMembershipId: record.payeeMembershipId,
-    claimedBySide: record.claimedBySide,
-  };
-}
-
 /**
  * 02 §a: `archived` groups are read-only forever — every record write
  * refuses. Claims/confirms stay allowed while `paused` (arrears and late
@@ -97,29 +91,9 @@ async function requireActiveActor(
     throw new Error('Not a group member');
   }
   return {
-    actor: {
-      type: 'member',
-      membershipId: membership._id,
-      isPresident: membership.role === 'president',
-    },
+    actor: paymentActorForMembership(membership),
     membership,
   };
-}
-
-/**
- * 02 §c rows 4 & 6: the president may act on behalf ONLY of a counterparty
- * who cannot act for itself — hasAccount:false (no linked userId), exited,
- * or deceased.
- */
-function needsRepresentation(membership: Doc<'memberships'> | null): boolean {
-  if (!membership) {
-    return false;
-  }
-  return (
-    membership.userId === undefined ||
-    membership.status === 'exited' ||
-    membership.status === 'deceased'
-  );
 }
 
 async function counterpartyOf(
@@ -133,14 +107,15 @@ async function counterpartyOf(
     return { membership: null, context: {} };
   }
   const counterpartyId = membershipIdForSide(
-    toSnapshot(record),
+    toPaymentRecordSnapshot(record),
     counterpartySideOf(record.claimedBySide)
   ) as Id<'memberships'>;
   const membership = await ctx.db.get(counterpartyId);
   return {
     membership,
     context: {
-      counterpartyNeedsRepresentation: needsRepresentation(membership),
+      counterpartyNeedsRepresentation:
+        membershipNeedsRepresentation(membership),
     },
   };
 }
@@ -488,7 +463,10 @@ export async function applyAutoConfirm(
   ctx: MutationCtx,
   record: Doc<'paymentRecords'>
 ): Promise<boolean> {
-  const result = validateTransition(toSnapshot(record), 'confirmed', {
+  const result = validateTransition(
+    toPaymentRecordSnapshot(record),
+    'confirmed',
+    {
     type: 'system',
   });
   if (result.ok === false) {
@@ -516,7 +494,10 @@ export async function applyAutoDispute(
   ctx: MutationCtx,
   record: Doc<'paymentRecords'>
 ): Promise<boolean> {
-  const result = validateTransition(toSnapshot(record), 'disputed', {
+  const result = validateTransition(
+    toPaymentRecordSnapshot(record),
+    'disputed',
+    {
     type: 'system',
   });
   if (result.ok === false) {
@@ -666,10 +647,10 @@ export const claim = mutation({
 
     const now = Date.now();
     const note = args.note?.trim() || undefined;
-    const self = isSelfRecord(toSnapshot(record));
+    const self = isSelfRecord(toPaymentRecordSnapshot(record));
 
     const result = validateTransition(
-      toSnapshot(record),
+      toPaymentRecordSnapshot(record),
       self ? 'confirmed' : 'claimed',
       actor
     );
@@ -808,7 +789,7 @@ export const confirm = mutation({
       record
     );
     const result = validateTransition(
-      toSnapshot(record),
+      toPaymentRecordSnapshot(record),
       'confirmed',
       actor,
       context
@@ -913,7 +894,7 @@ export const dispute = mutation({
 
     const { context } = await counterpartyOf(ctx, record);
     const result = validateTransition(
-      toSnapshot(record),
+      toPaymentRecordSnapshot(record),
       'disputed',
       actor,
       context
@@ -1032,7 +1013,11 @@ export const cancel = mutation({
       );
     }
 
-    const result = validateTransition(toSnapshot(record), 'cancelled', actor);
+    const result = validateTransition(
+      toPaymentRecordSnapshot(record),
+      'cancelled',
+      actor
+    );
     if (result.ok === false) {
       throw new Error(result.reason);
     }
@@ -1165,7 +1150,11 @@ export const resolveDispute = mutation({
       throw new Error('Only disputed records can be resolved');
     }
 
-    const result = validateTransition(toSnapshot(record), args.outcome, actor);
+    const result = validateTransition(
+      toPaymentRecordSnapshot(record),
+      args.outcome,
+      actor
+    );
     if (result.ok === false) {
       throw new Error(result.reason);
     }

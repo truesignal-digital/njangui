@@ -11,9 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { useColorScheme } from 'react-native';
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
@@ -24,12 +22,17 @@ import {
   JetBrainsMono_600SemiBold,
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
+import {
+  Newsreader_600SemiBold,
+  Newsreader_700Bold,
+} from '@expo-google-fonts/newsreader';
 import { Toaster } from 'sonner-native';
 
 import * as Sentry from '@sentry/react-native';
 
 import { AppProviders } from '@/providers/app-providers';
-import { getAppTheme } from '@/lib/theme';
+import { useAppTheme } from '@/lib/theme';
+import { useThemePreference } from '@/lib/theme-preference';
 
 Sentry.init({
   // DSN is a public identifier, safe in source.
@@ -51,8 +54,8 @@ export const unstable_settings = {
 };
 
 function AppNavigation() {
-  const colorScheme = useColorScheme();
-  const theme = getAppTheme(colorScheme === 'dark' ? 'dark' : 'light');
+  const theme = useAppTheme();
+  const { hydrated: themeHydrated } = useThemePreference();
   const navigationTheme = useMemo<typeof NavLightTheme>(() => {
     const base = theme.isDark ? NavDarkTheme : NavLightTheme;
     return {
@@ -75,15 +78,17 @@ function AppNavigation() {
     PlusJakartaSans_700Bold,
     JetBrainsMono_600SemiBold,
     JetBrainsMono_700Bold,
+    Newsreader_600SemiBold,
+    Newsreader_700Bold,
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded && themeHydrated) {
       void SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, themeHydrated]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !themeHydrated) {
     return null;
   }
 
@@ -117,9 +122,7 @@ export default Sentry.wrap(function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <AppProviders>
-          <BottomSheetModalProvider>
-            <AppNavigation />
-          </BottomSheetModalProvider>
+          <AppNavigation />
         </AppProviders>
       </KeyboardProvider>
     </GestureHandlerRootView>

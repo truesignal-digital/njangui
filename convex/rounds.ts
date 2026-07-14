@@ -576,6 +576,16 @@ const roundDetailValidator = v.object({
   confirmedTotal: v.number(), // sum of confirmed contributions — the only ledger-final money
   inFlightTotal: v.number(), // claimed + disputed contributions
   payout: v.union(v.null(), payoutSummaryValidator), // null in direct mode / before open
+  // Who the viewer's contribution goes to, WITH the number the USSD flow
+  // needs. Deliberately narrower than the roster phone gate (04 §B): a
+  // payer must be able to reach their payee, but only this one contact —
+  // never the full roster — is exposed to non-officers.
+  payeeContact: v.optional(
+    v.object({
+      displayName: v.string(),
+      phone: v.optional(v.string()),
+    })
+  ),
   obligationStatuses: v.optional(
     v.array(
       v.object({
@@ -643,6 +653,7 @@ export const getRound = query({
     // Custody framing (00 red line): every pot figure names its holder —
     // the treasurer in via_treasurer mode, the beneficiary in direct mode.
     let custodianName = beneficiary?.displayName ?? '—';
+    let payeeMembership = beneficiary;
     if (cycle.collectionMode === 'via_treasurer') {
       const memberships = await ctx.db
         .query('memberships')
@@ -652,7 +663,20 @@ export const getRound = query({
         (m) => m.role === 'treasurer' && m.status === 'active'
       );
       custodianName = treasurer?.displayName ?? custodianName;
+      payeeMembership = treasurer ?? beneficiary;
     }
+    // Linked members usually carry their number on the user doc, not the
+    // membership row — resolve both before declaring it missing.
+    let payeePhone = payeeMembership?.phone;
+    if (!payeePhone && payeeMembership?.userId) {
+      payeePhone = (await ctx.db.get(payeeMembership.userId))?.phone;
+    }
+    const payeeContact = payeeMembership
+      ? {
+          displayName: payeeMembership.displayName,
+          ...(payeePhone !== undefined && { phone: payeePhone }),
+        }
+      : undefined;
 
     const records = await ctx.db
       .query('paymentRecords')
@@ -708,6 +732,7 @@ export const getRound = query({
             confirmedAt: payout.confirmedAt,
           }
         : null,
+      payeeContact,
       obligationStatuses: round.obligationStatuses,
     };
   },

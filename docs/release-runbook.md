@@ -44,6 +44,23 @@ bun run release:status
 > ⚠️ `--environment` bakes in that tier's backend URL + Clerk key.
 > Wrong flag = staging app talking to prod money. Never omit it.
 
+## Put the current native app on a phone
+
+Use preview services while testing so test records cannot affect production.
+
+```bash
+# Android: produces a shareable APK install link
+bun run eas:build:preview:android
+
+# iOS: produces a store-signed build, then sends it to TestFlight
+bun run eas:build:testflight
+bun run eas:submit:testflight
+```
+
+The first iOS run is interactive because Apple signing and 2FA must be set up.
+See [mobile-release-readiness-2026-07-14.md](./mobile-release-readiness-2026-07-14.md)
+for the account, privacy, metadata, screenshot, and device-test checklist.
+
 ## When OTA is not enough (native changed)
 
 If `release:status` shows the update's runtime differs from the installed builds'

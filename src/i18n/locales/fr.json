@@ -104,6 +104,137 @@
       "receiving": "je reçois · {{date}}"
     }
   },
+  "attention": {
+    "context": "{{group}} · {{role}}",
+    "priority": {
+      "blocking": "À traiter",
+      "overdue": "En retard",
+      "overdueDays_one": "{{count}} jour de retard",
+      "overdueDays_other": "{{count}} jours de retard",
+      "today": "Aujourd'hui"
+    },
+    "today": {
+      "title": "Aujourd'hui",
+      "greetingMorning": "Bonjour, {{name}}",
+      "greetingAfternoon": "Bon après-midi, {{name}}",
+      "greetingEvening": "Bonsoir, {{name}}",
+      "collectiveTitle": "Faisons avancer une chose ensemble.",
+      "needsYou_one": "{{count}} vous attend",
+      "needsYou_other": "{{count}} vous attendent",
+      "withOthers_one": "{{count}} avec une autre personne",
+      "withOthers_other": "{{count}} avec les autres",
+      "meetShort": "Réunion {{date}}",
+      "subtitle": "Voici ce qui a besoin de vous en premier.",
+      "primary": "En premier aujourd’hui",
+      "secondary": "Également sous votre responsabilité",
+      "seeAllActions": "Voir toutes les actions",
+      "moreActions_one": "{{count}} autre action",
+      "moreActions_other": "{{count}} autres actions",
+      "allClearTitle": "Rien à faire pour le moment",
+      "allClearBody": "Ce que vous attendez et la prochaine réunion restent visibles ci-dessous.",
+      "nextEvent": "Prochaine réunion",
+      "truncated": "Certaines activités ne tiennent pas dans cette vue. Ouvrez le groupe pour consulter tout le carnet.",
+      "profileAccessibility": "Ouvrir le profil"
+    },
+    "actions": {
+      "title": "Vos actions",
+      "subtitle": "Regroupées selon les personnes et les groupes qu’elles font avancer.",
+      "groupCount_one": "{{count}} action",
+      "groupCount_other": "{{count}} actions",
+      "emptyTitle": "Aucune action nécessaire",
+      "emptyBody": "Les attentes et réunions à venir restent séparées pour ne pas sembler être votre travail.",
+      "truncated": "Cette liste est incomplète. Ouvrez les groupes concernés pour consulter tout le carnet."
+    },
+    "action": {
+      "resolveDispute": {
+        "title": "Résoudre une cotisation contestée",
+        "detail": "{{payer}} et {{payee}} ne sont pas d'accord sur cette écriture.",
+        "cta": "Examiner ensemble"
+      },
+      "confirmRecords": {
+        "title_one": "Confirmer {{count}} écriture",
+        "title_other": "Confirmer {{count}} écritures",
+        "detail": "{{amount}} attend votre réponse.",
+        "cta": "Examiner les écritures"
+      },
+      "runMeeting": {
+        "title": "Tenir la réunion",
+        "detail": "Tour {{round}} · {{beneficiary}} reçoit le pot.",
+        "cta": "Ouvrir le mode réunion"
+      },
+      "recordPayout": {
+        "title": "Enregistrer la remise du pot",
+        "detail": "Enregistrez ce qui a été remis à {{beneficiary}}.",
+        "cta": "Ouvrir le tour"
+      },
+      "confirmPayout": {
+        "title": "Confirmer la remise du pot",
+        "detail": "La remise du pot à {{beneficiary}} attend votre réponse.",
+        "cta": "Examiner la remise"
+      },
+      "recordContribution": {
+        "title": "Enregistrer votre cotisation",
+        "arrearsTitle": "Enregistrer votre cotisation en retard",
+        "detail": "Enregistrez ce que vous avez réellement remis.",
+        "cta": "Cotiser"
+      },
+      "reviewMembers": {
+        "title_one": "Examiner {{count}} demande d'adhésion",
+        "title_other": "Examiner {{count}} demandes d'adhésion",
+        "detail": "Un responsable doit décider qui rejoint ce groupe de confiance.",
+        "cta": "Examiner les demandes"
+      },
+      "assignPresident": {
+        "title": "Nommer le président du groupe",
+        "detail": "Un président est requis avant de pouvoir verrouiller la rotation.",
+        "cta": "Choisir un président"
+      },
+      "prepareCycle": {
+        "add_members": {
+          "title": "Ajouter des membres avant le cycle",
+          "detail": "Il faut au moins deux membres actifs.",
+          "cta": "Ouvrir le groupe"
+        },
+        "assign_treasurer": {
+          "title": "Nommer le trésorier",
+          "detail": "Le cycle a besoin d'un trésorier actuel avant de démarrer.",
+          "cta": "Ouvrir la gouvernance"
+        },
+        "arrange_rotation": {
+          "title": "Préparer la prochaine rotation",
+          "detail": "Placez chaque membre actif dans l'ordre du cycle brouillon.",
+          "cta": "Préparer le cycle"
+        }
+      },
+      "lockCycle": {
+        "title": "Verrouiller le cycle brouillon",
+        "detail_one": "La rotation est prête pour {{count}} membre.",
+        "detail_other": "La rotation est prête pour {{count}} membres.",
+        "cta": "Vérifier et verrouiller"
+      }
+    },
+    "waiting": {
+      "label_one": "En attente · {{count}}",
+      "label_other": "En attente · {{count}}",
+      "records": {
+        "title_one": "{{count}} écriture attend une confirmation",
+        "title_other": "{{count}} écritures attendent une confirmation",
+        "detail": "{{amount}} · {{group}}"
+      },
+      "membership": {
+        "title": "Votre adhésion attend une approbation",
+        "detail": "Un responsable de {{group}} doit répondre."
+      },
+      "cycle": {
+        "title": "Le cycle brouillon est prêt pour le président",
+        "detail": "{{group}} attend le verrouillage du président."
+      },
+      "openGroup": "Ouvrir le groupe"
+    },
+    "nextEvent": {
+      "detail": "{{group}} · {{beneficiary}} reçoit"
+    }
+  },
   "groups": {
     "memberCount_one": "{{count}} membre",
     "memberCount_other": "{{count}} membres",
@@ -144,42 +275,80 @@
       "via_treasurer": "Via le trésorier / la trésorière",
       "direct_to_beneficiary": "Directement au bénéficiaire"
     },
+    "entry": {
+      "title": "Réunissez vos proches",
+      "subtitle": "Commencez un nouveau collectif, ou arrivez avec l’invitation de personnes de confiance.",
+      "createTitle": "Créer un nouveau njangi",
+      "createBody": "Donnez-lui son rythme et invitez vos proches.",
+      "joinTitle": "J’ai une invitation",
+      "joinBody": "Collez le message WhatsApp ou saisissez son code.",
+      "safety": "Njangi tient le registre commun. L’argent reste entre les membres.",
+      "sealLabel": "Un collectif commence à se former"
+    },
     "wizard": {
       "title": "Créer un njangi",
       "step": "Étape {{current}} sur {{total}}",
-      "nameTitle": "Votre njangi",
+      "sealLabel": "Nouveau collectif",
+      "identityEyebrow": "Nommez le cercle",
+      "nameTitle": "Comment vos proches l’appelleront-ils ?",
+      "nameBody": "Choisissez un nom familier que tout le monde reconnaîtra sur WhatsApp et dans le registre partagé.",
       "nameLabel": "Nom du groupe",
       "namePlaceholder": "ex. Njangi des femmes de Bonabéri",
       "nameRequired": "Donnez un nom à votre groupe.",
       "currencyNote": "Devise : franc CFA (FCFA) — fixe",
-      "rhythmTitle": "Le rythme",
+      "rhythmEyebrow": "Trouvez votre rythme",
+      "rhythmTitle": "À quelle fréquence vous réunissez-vous ?",
+      "rhythmBody": "Choisissez le rythme que votre groupe connaît déjà. Vous préciserez l’heure de réunion plus tard.",
+      "rhythmSummary": "{{schedule}} · {{day}}",
       "scheduleLabel": "Cotisations",
       "scheduleWeekly": "Chaque semaine",
       "scheduleBiweekly": "Tous les 15 jours",
       "scheduleMonthly": "Chaque mois",
       "dayLabel": "Jour de réunion",
+      "contributionEyebrow": "Convenez de la remise",
+      "contributionTitle": "Qu’apporte chaque personne ?",
+      "contributionBody": "C’est le montant attendu de chaque membre à chaque tour. L’appli tient seulement le registre commun.",
       "amountLabel": "Cotisation par membre",
       "amountPlaceholder": "10 000",
       "amountRequired": "Entrez le montant de la cotisation.",
       "amountPreview": "{{amount}} par membre, à chaque tour",
-      "modeTitle": "Comment l'argent circule-t-il ?",
+      "handoverLabel": "Attendu à chaque remise",
+      "handoverNote": "Un engagement entre membres. Njangi ne reçoit ni ne détient cet argent.",
+      "handoverEyebrow": "Choisissez le chemin",
+      "modeTitle": "Comment se fera la remise ?",
+      "modeBody": "Rendez le parcours réel explicite pour que chacun sache qui remet à qui.",
       "modeViaTreasurer": "Via le trésorier / la trésorière",
       "modeViaTreasurerDesc": "Les membres remettent leur cotisation au trésorier, qui remet le pot au bénéficiaire du tour.",
       "modeDirect": "Directement au bénéficiaire",
       "modeDirectDesc": "Chaque membre remet sa cotisation directement au bénéficiaire du tour.",
-      "modeCustodyNote": "Dans les deux cas, l'argent passe par MoMo, Orange Money ou en espèces — jamais par l'appli.",
+      "modeCustodyNote": "Dans les deux cas, l’argent circule entre les personnes par MoMo, Orange Money ou en espèces. Il ne passe jamais par Njangi.",
+      "charterEyebrow": "Faites-en le vôtre",
+      "charterTitle": "Votre première charte",
+      "charterBody": "Choisissez votre vrai rôle, puis relisez l’accord compact que vos membres verront.",
       "roleLabel": "Votre rôle dans ce groupe",
-      "roleHint": "C'est souvent le trésorier ou la trésorière qui crée le groupe — choisissez votre vrai rôle.",
-      "create": "Créer le groupe",
-      "creating": "Création…",
+      "roleHint": "C’est souvent le trésorier ou la trésorière qui crée le groupe — choisissez votre vrai rôle. Les autres rôles seront complétés dans la configuration.",
+      "roleTreasurerDesc": "J’enregistrerai les cotisations et les remises.",
+      "rolePresidentDesc": "Je guiderai les adhésions et les décisions du groupe.",
+      "reviewName": "Collectif",
+      "reviewRhythm": "Rythme",
+      "reviewContribution": "Chaque membre apporte",
+      "reviewHandover": "Remise",
+      "editField": "Modifier : {{field}}",
+      "create": "Former ce cercle",
+      "creating": "Le cercle se forme…",
       "inviteTitle": "Invitez le groupe",
       "inviteHint": "Envoyez le code dans le groupe WhatsApp de votre njangi. Vous pourrez aussi ajouter des membres vous-même.",
       "finish": "Terminer ✓",
+      "successTitle": "Le cercle porte un nom",
+      "successBody": "{{name}} est prêt à accueillir ses membres. Invitez-les maintenant ; le premier cycle ne démarre que lorsque le groupe est prêt.",
+      "addWithoutPhone": "Ajouter une personne sans smartphone",
+      "enterGroup": "Entrer dans le groupe",
       "targetLabel": "Combien serez-vous ? (optionnel)",
       "targetPlaceholder": "ex. 10",
       "potPreview": "Pot estimé par tour : {{amount}}"
     },
     "detail": {
+      "eyebrow": "Votre groupe",
       "membersTitle": "Membres",
       "pendingTitle": "Demandes en attente",
       "approve": "Approuver",
@@ -196,7 +365,7 @@
       "add": "Ajouter",
       "adding": "Ajout…",
       "memberAddedToast": "{{name}} a été ajouté(e) ✓",
-      "noApp": "sans l'appli",
+      "noApp": "Membre hors appli",
       "you": "Vous",
       "setupBanner_one": "{{count}} membre ajouté — démarrez le cycle quand tout le monde a rejoint.",
       "setupBanner_other": "{{count}} membres ajoutés — démarrez le cycle quand tout le monde a rejoint.",
@@ -251,15 +420,26 @@
       "copiedToast": "Copié ✓"
     },
     "join": {
-      "title": "Rejoindre avec un code",
-      "desc": "Entrez le code à 6 caractères reçu sur WhatsApp, ou collez le message d'invitation.",
-      "codeLabel": "Code d'invitation",
+      "title": "Rejoignez vos proches",
+      "desc": "Entrez le code à 6 caractères, ou collez l’invitation complète reçue sur WhatsApp.",
+      "codeLabel": "Code ou message d’invitation",
       "placeholder": "ex. K7M2PQ",
       "submit": "Rejoindre",
       "submitting": "Vérification…",
-      "invalid": "Ce code n'est pas valide. Vérifiez le message reçu.",
-      "requestSentTitle": "Demande envoyée",
-      "requestSentBody": "Le président ou le trésorier doit vous approuver. Vous serez notifié(e).",
+      "invalid": "Cette invitation est introuvable. Vérifiez le message reçu.",
+      "pasteHint": "Vous pouvez coller ici tout le message WhatsApp.",
+      "memberCount_one": "{{count}} personne dans le cercle",
+      "memberCount_other": "{{count}} personnes dans le cercle",
+      "previewSummary": "{{schedule}} · {{amount}} par membre",
+      "previewSafety": "Cet aperçu confirme uniquement le groupe. La liste des membres et les registres privés restent masqués.",
+      "askToJoin": "Demander à rejoindre",
+      "openGroup": "Ouvrir ce groupe",
+      "full": "Ce groupe a atteint sa limite de membres.",
+      "unavailable": "Un responsable doit vous aider à rejoindre de nouveau ce groupe.",
+      "couldNotJoin": "La demande n’a pas pu être envoyée. Vérifiez votre connexion et réessayez.",
+      "requestSentTitle": "Votre place vous attend",
+      "requestSentBody": "Le président ou le trésorier approuvera votre demande. Nous vous préviendrons quand le cercle s’ouvrira.",
+      "waitingStatus": "En attente de l’approbation d’un responsable",
       "joined": "Vous avez rejoint le groupe ✓"
     },
     "cycle": {
@@ -281,12 +461,17 @@
       "noActive": "Aucun cycle actif pour l'instant.",
       "cycleN": "Cycle {{n}}",
       "roundN": "Tour {{n}}",
-      "locked": "fixé",
-      "thisRound": "CE TOUR",
-      "noApp": "sans appli",
+      "locked": "Ordre verrouillé",
+      "thisRound": "Ce tour",
+      "nextGathering": "Prochaine réunion · {{date}}",
+      "receivesThisRound": "{{name}} reçoit ce tour",
+      "openGathering": "Ouvrir la réunion",
+      "noApp": "Membre hors appli",
       "addHand": "Ajouter une main (deux noms)",
       "removeHand": "Retirer cette main",
-      "handBadge": "main {{n}}"
+      "handBadge": "main {{n}}",
+      "showOrder": "Voir l'ordre complet (+{{count}})",
+      "hideOrder": "Masquer l'ordre complet"
     },
     "readiness": {
       "title": "Prêt à démarrer ?",
@@ -296,8 +481,24 @@
       "presidentHint": "nommez-en un(e) ci-dessous",
       "projection": "{{count}} tours · du ~{{start}} au ~{{end}} (estimation)"
     },
+    "table": {
+      "receivesNext": "{{name}} reçoit au prochain tour",
+      "yourCircle": "Votre cercle",
+      "forming": "En formation",
+      "gatherTogether": "Se retrouver ensemble",
+      "invitePeople": "Invitez vos proches",
+      "prepareTogether": "Préparer ensemble",
+      "peopleReady_one": "{{count}} personne prête",
+      "peopleReady_other": "{{count}} personnes prêtes",
+      "recordsShared": "Registre partagé",
+      "circleForming": "Le cercle se forme",
+      "receivesThisRound": "Reçoit à ce tour",
+      "addPeople": "Ajoutez des proches pour commencer",
+      "accessibilityLabel": "Table collective de {{group}}. Prochaine réunion : {{date}}."
+    },
     "card": {
       "roundOf": "{{done}}/{{total}} tours",
+      "currentRound": "Tour {{n}} sur {{total}}",
       "nextDue": "proch. {{date}}",
       "upToDate": "À jour",
       "pendingCount_one": "{{count}} en attente",
@@ -309,14 +510,24 @@
       "betweenLine": "Cycle terminé · prochain tirage à planifier",
       "contribute": "Cotiser · {{amount}}",
       "dueChip": "{{amount}} dus",
-      "yourTurn": "Votre tour 🎁",
-      "upToDateInline": "à jour ✓"
+      "yourTurn": "Votre tour",
+      "upToDateInline": "à jour ✓",
+      "peopleRole_one": "{{count}} personne · vous êtes {{role}}",
+      "peopleRole_other": "{{count}} personnes · vous êtes {{role}}",
+      "waitingApproval": "Le groupe vous accueillera bientôt",
+      "needsYou": "Votre confirmation est attendue",
+      "confirmRecord": "Confirmer {{amount}}",
+      "youReceiveNext": "Vous recevez au prochain tour",
+      "receivesNext": "{{name}} reçoit au prochain tour",
+      "chooseRhythm": "Choisissez le rythme"
     },
     "tab": {
+      "eyebrow": "Vos proches",
+      "collectiveTitle": "Vos groupes",
+      "activeCount_one": "{{count}} actif",
+      "activeCount_other": "{{count}} actifs",
       "sectionOngoing": "En cours",
       "sectionDone": "Terminés",
-      "activeCount_one": "{{count}} en cours",
-      "activeCount_other": "{{count}} en cours",
       "pausedCount_one": "{{count}} en pause",
       "pausedCount_other": "{{count}} en pause",
       "doneCount_one": "{{count}} terminé",
@@ -326,14 +537,15 @@
       "join": "Rejoindre avec un code",
       "emptyTitle": "Aucun njangi pour l’instant",
       "emptyBody": "Créez le vôtre, ou rejoignez celui de votre association avec un code d’invitation.",
-      "circleCount_one": "{{count}} cercle",
-      "circleCount_other": "{{count}} cercles",
-      "actionsCount_one": "{{count}} action attendue",
-      "actionsCount_other": "{{count}} actions attendues"
+      "groupCount_one": "{{count}} groupe",
+      "groupCount_other": "{{count}} groupes",
+      "needYou_one": "{{count}} vous attend",
+      "needYou_other": "{{count}} vous attendent"
     }
   },
   "round": {
     "title": "Tour {{n}}",
+    "gatheringTitle": "Tour {{n}} · {{name}} reçoit",
     "beneficiary": "Bénéficiaire : {{name}}",
     "dueDate": "réunion le {{date}}",
     "notFound": "Tour introuvable.",
@@ -355,13 +567,27 @@
     "claimSelfSuccess": "Cotisation enregistrée — auto (même personne) ✓"
   },
   "pay": {
+    "recordContribution": "Enregistrer la cotisation",
+    "roundEyebrow": "Tour {{n}}",
+    "yourContribution": "Votre cotisation",
+    "directTo": "Enregistrée directement entre vous et {{name}}",
+    "continue": "Continuer",
     "title": "Cotiser · Tour {{n}} · {{amount}}",
     "titleBare": "Cotiser",
-    "pickMethod": "Comment payez-vous ?",
+    "pickMethod": "Comment allez-vous cotiser ?",
     "cash": "Espèces, à la réunion",
     "cashBody": "Apportez {{amount}} à la prochaine réunion. {{name}} cochera votre nom au Mode réunion.",
     "cashClaimCta": "J'ai déjà remis les espèces → Déclarer",
     "custodyNote": "L'argent va directement de votre compte à celui de {{name}}. L'appli ne touche jamais votre argent.",
+    "custodyNoteNeutral": "L'argent circule directement entre les membres. L'appli ne détient jamais votre argent.",
+    "recipientFallback": "le bénéficiaire",
+    "unavailable": {
+      "missingPhone": "Aucun numéro enregistré pour {{name}} — payez en espèces à la réunion.",
+      "wrongOperator": "Le numéro de {{name}} fonctionne avec {{method}}.",
+      "noMobileMoney": "Le numéro de {{name}} ne peut pas recevoir {{method}}."
+    },
+    "needHelp": "Besoin d'aide ? Étapes détaillées",
+    "hideHelp": "Masquer les étapes",
     "banner": "Les menus *126# / #150# peuvent changer. Vérifiez chaque étape sur l'écran de votre téléphone.",
     "payeeNumber": "Numéro de {{name}}",
     "amountLabel": "Montant",
@@ -393,9 +619,9 @@
     "cameraDenied": "Accès à l'appareil photo refusé — autorisez-le dans Réglages."
   },
   "tabs": {
-    "home": "Accueil",
-    "group": "Groupe",
-    "inbox": "À confirmer",
+    "home": "Aujourd'hui",
+    "group": "Groupes",
+    "inbox": "Actions",
     "profile": "Profil",
     "calendar": "Calendrier"
   },
@@ -460,11 +686,42 @@
     "corrected": "Entrée corrigée — l'historique est conservé",
     "correctionHistory": "Correction du registre",
     "correctedBy": "Corrigé par {{name}}",
-    "correctionHistoryNote": "La confirmation originale et cette décision restent dans le registre."
+    "correctionHistoryNote": "La confirmation originale et cette décision restent dans le registre.",
+    "status": {
+      "pendingTitle": "Pas encore déclaré",
+      "pendingBody": "Personne n'a encore enregistré ce paiement.",
+      "needsYouTitle": "Votre réponse décide",
+      "needsYouBody": "Confirmez cette écriture si elle est exacte, ou contestez-la sinon.",
+      "waitingTitle": "En attente de {{name}}",
+      "waitingBody": "L'écriture devient officielle quand {{name}} la confirme.",
+      "disputedTitle": "En litige",
+      "disputedYoursBody": "Vous pouvez retirer votre déclaration, ou régler cela avec {{name}} à la réunion.",
+      "disputedBody": "{{payer}} et {{payee}} doivent s'accorder — généralement à la réunion. Le président peut corriger une erreur confirmée.",
+      "confirmedTitle": "Confirmé",
+      "confirmedBody": "Les deux parties sont d'accord. Rien d'autre à faire ici.",
+      "cancelledTitle": "Retiré",
+      "cancelledBody": "Cette déclaration a été retirée et ne compte plus."
+    }
   },
   "profile": {
     "signOut": "Se déconnecter",
-    "usernameHint": "Votre identifiant de connexion"
+    "usernameHint": "Votre identifiant de connexion",
+    "language": "Langue",
+    "emailLabel": "Email",
+    "phoneLabel": "Téléphone",
+    "nameLabel": "Nom",
+    "notSet": "Non renseigné",
+    "title": "Profil",
+    "subtitle": "Votre identité, vos préférences et votre place dans le cercle.",
+    "appearance": "Apparence",
+    "appearanceDescription": "Système suit cet appareil. Clair et Sombre restent des choix locaux.",
+    "themeSystem": "Système",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "preferences": "Préférences",
+    "calendarDescription": "Réunions de tous vos groupes",
+    "languageDescription": "Français et anglais",
+    "account": "Compte"
   },
   "payout": {
     "title": "Remise du pot",
@@ -475,11 +732,18 @@
     "claimCta": "Confirmer la remise",
     "claimed": "Remise déclarée — l'autre partie doit confirmer ✓",
     "selfDone": "Pot remis et confirmé (même personne) ✓",
-    "done": "🎉 Pot de {{amount}} remis à {{name}} — confirmé",
+    "done": "Pot de {{amount}} remis à {{name}} — confirmé",
     "view": "Voir la remise",
     "waiting": "Le pot sera remis à {{name}} par le trésorier / la trésorière."
   },
   "meeting": {
+    "gatheringEyebrow": "Cette réunion",
+    "roundContext": "Tour {{n}} · {{name}} reçoit",
+    "steps": {
+      "record": "Enregistrer les cotisations",
+      "review": "Vérifier le récapitulatif",
+      "share": "Partager le relevé avec le groupe"
+    },
     "openCta": "Mode réunion",
     "title": "Mode réunion",
     "custodyHeader": "Espèces chez {{name}}",
@@ -517,20 +781,20 @@
       "generic": "{{actor}} · {{kind}}",
       "group_created": "Groupe créé par {{actor}}",
       "cycle_started": "{{actor}} a démarré le cycle — {{note}}",
-      "cycle_completed": "🎉 Cycle terminé",
+      "cycle_completed": "Cycle terminé",
       "group_status_changed": "Statut du groupe mis à jour",
       "round_opened": "Tour ouvert — bénéficiaire : {{note}}",
       "round_closed": "Tour clôturé",
-      "round_completed": "🎉 Tour terminé — pot remis",
+      "round_completed": "Tour terminé — pot remis",
       "round_payout_pending": "Cotisations closes — remise du pot en attente",
       "round_cancelled": "Tour annulé — {{note}}",
       "payment_claimed_by_payer": "{{actor}} déclare avoir cotisé",
       "payment_claimed_by_payee": "{{actor}} a enregistré une cotisation reçue",
       "payment_confirmed": "{{actor}} a confirmé la réception ✓",
       "payment_confirmed_on_behalf": "{{note}}",
-      "payment_auto_confirmed": "Confirmé automatiquement (délai écoulé) ✓",
+      "payment_auto_confirmed": "Confirmé automatiquement ✓",
       "payment_self_confirmed": "{{actor}} — cotisation enregistrée (auto, même personne)",
-      "payment_disputed": "⚠ {{actor}} a ouvert un litige",
+      "payment_disputed": "{{actor}} a ouvert un litige",
       "payment_claim_withdrawn": "{{actor}} a retiré sa déclaration",
       "dispute_resolved_confirmed": "Litige résolu — confirmé ✓",
       "dispute_resolved_cancelled": "Litige résolu — déclaration retirée",
@@ -560,6 +824,8 @@
     }
   },
   "calendar": {
+    "acrossGroups": "Dans tous vos groupes",
+    "chooseDate": "Choisir une date",
     "title": "Calendrier",
     "seeCalendar": "Voir le calendrier",
     "youReceive": "Tour {{n}} — vous recevez {{amount}}",
@@ -575,7 +841,8 @@
     "receivesShort": "{{name}} reçoit",
     "handOf": "main {{n}}/{{total}}",
     "monthOut": "Sorties {{month}}",
-    "monthIn": "Entrées {{month}}"
+    "monthIn": "Entrées {{month}}",
+    "next": "Prochain"
   },
   "errors": {
     "network": "Pas de connexion. Vos données sont en sécurité — réessayez une fois en ligne."

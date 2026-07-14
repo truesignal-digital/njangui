@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
-import { Text, View, useColorScheme } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 
 import { formatCurrencyXAF } from '../../lib/format-currency';
 import { groupAccent } from '../../lib/group-colors';
 import { useAppTheme } from '../../lib/theme';
+import { mobileUiConfig } from '../../lib/mobile-ui-config';
 
 /**
  * The pot filling up IS the njangi — the fill animates (spring) on every
@@ -32,7 +34,8 @@ export function PotProgress({
 }) {
   const { t } = useTranslation();
   const theme = useAppTheme();
-  const dark = useColorScheme() === 'dark';
+  const reducedMotion = useReducedMotion();
+  const dark = theme.isDark;
   const pct =
     expectedTotal > 0
       ? Math.min(100, Math.round((confirmedTotal / expectedTotal) * 100))
@@ -40,8 +43,10 @@ export function PotProgress({
 
   const width = useSharedValue(pct);
   useEffect(() => {
-    width.value = withSpring(pct, { damping: 18, stiffness: 120 });
-  }, [pct, width]);
+    width.value = reducedMotion
+      ? pct
+      : withTiming(pct, { duration: mobileUiConfig.motion.successDuration });
+  }, [pct, reducedMotion, width]);
   const fillStyle = useAnimatedStyle(() => ({ width: `${width.value}%` }));
 
   const fillColor =

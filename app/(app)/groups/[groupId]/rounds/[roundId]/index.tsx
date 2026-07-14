@@ -30,6 +30,9 @@ import { PotProgress } from '../../../../../../src/components/ui/pot-progress';
 import { SectionCard } from '../../../../../../src/components/ui/section-card';
 import { resolveSeed } from '../../../../../../src/lib/group-colors';
 import { Skeleton } from '../../../../../../src/components/skeleton';
+import { SoftPressable } from '../../../../../../src/components/ui/soft-pressable';
+import { ICON_SIZE } from '../../../../../../src/lib/icons';
+import { NjangiMark } from '../../../../../../src/components/brand/njangi-mark';
 
 /**
  * Round detail (docs/03 B4 entry, payment-features-plan Slice 1): pot
@@ -115,24 +118,44 @@ export default function RoundDetailScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View className="flex-row items-start gap-xs">
-        <Pressable
+      <View
+        className="flex-row items-start gap-xs bg-success-bg p-md"
+        style={{
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 10,
+          borderBottomRightRadius: 28,
+          borderBottomLeftRadius: 10,
+          borderCurve: 'continuous',
+        }}
+      >
+        <SoftPressable
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-          className="mt-[2px] h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
+          className="mt-[2px] h-[44px] w-[44px] items-center justify-center rounded-full bg-surface active:bg-surface-muted"
         >
-          <ChevronLeftIcon size={22} color={theme.textMuted} />
-        </Pressable>
-        <View className="min-w-0 flex-1 gap-xs">
-          <Text className="font-heading text-headline text-foreground">
-            {t('round.title', { n: round.index })}
+          <ChevronLeftIcon size={ICON_SIZE.control} color={theme.textMuted} />
+        </SoftPressable>
+        <View className="min-w-0 flex-1 gap-[3px]">
+          <Text className="font-heading text-display-lg text-warning-dark">
+            {dueDate}
           </Text>
-          <Text className="font-body text-body-sm text-muted">
-            {t('round.beneficiary', { name: round.beneficiaryName })} ·{' '}
-            {t('round.dueDate', { date: dueDate })}
+          {group ? (
+            <Text className="font-body-semi text-overline uppercase text-success-dark">
+              {group.name}
+            </Text>
+          ) : null}
+          <Text className="font-heading text-headline text-foreground">
+            {t('round.gatheringTitle', {
+              n: round.index,
+              name: round.beneficiaryName,
+            })}
+          </Text>
+          <Text className="font-body text-caption text-muted">
+            {t('meeting.custodyHeader', { name: round.custodianName })}
           </Text>
         </View>
+        <NjangiMark size={56} color={theme.successDark} />
       </View>
 
       {/* Scheduled round — nothing claimable yet (a REAL state, not an error) */}
@@ -148,7 +171,7 @@ export default function RoundDetailScreen() {
           {group?.viewerRole === 'treasurer' &&
           (round.status === 'open' || round.status === 'grace') ? (
             <AppButton
-              className="mt-lg"
+              className="mt-md"
               label={t('meeting.openCta')}
               testID="open-meeting-mode"
               onPress={() =>
@@ -536,4 +559,3 @@ function MemberPaymentRow({ row, isMe }: { row: PaymentRow; isMe: boolean }) {
     </View>
   );
 }
-

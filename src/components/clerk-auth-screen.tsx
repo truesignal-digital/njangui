@@ -4,7 +4,6 @@ import {
   ScrollView,
   Text,
   View,
-  useColorScheme,
 } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
@@ -13,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { api } from '@/lib/convex-api';
 import { useAuth } from '@/lib/clerk-client';
-import { getAppTheme, useShadow } from '@/lib/theme';
+import { useAppTheme, useShadow } from '@/lib/theme';
 import { CredentialsAuthForm } from './credentials-auth-form';
 import { LanguageToggle } from './language-toggle';
 
@@ -35,8 +34,7 @@ export function ClerkAuthScreen({ mode: _mode = 'signInOrUp' }: { mode?: AuthMod
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const shadow = useShadow();
-  const colorScheme = useColorScheme();
-  const theme = getAppTheme(colorScheme === 'dark' ? 'dark' : 'light');
+  const theme = useAppTheme();
   const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -100,7 +98,12 @@ export function ClerkAuthScreen({ mode: _mode = 'signInOrUp' }: { mode?: AuthMod
         </View>
         <LanguageToggle />
       </View>
-      <CredentialsAuthForm />
+      <View
+        className="mx-lg rounded-2xl border border-border-subtle bg-surface py-lg"
+        style={{ ...shadow('card'), borderCurve: 'continuous' }}
+      >
+        <CredentialsAuthForm />
+      </View>
       <View className="flex-1" />
       <Text className="px-lg pb-sm pt-xl text-center font-body text-caption text-placeholder">
         {t('auth.custodyNote')}

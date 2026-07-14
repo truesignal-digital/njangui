@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Njangi — Role-aware simplified UI proposal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --night: #171914;
+      --night-2: #22251d;
+      --paper: #f4f0e5;
+      --paper-2: #ebe5d6;
+      --surface: #fffdf7;
+      --ink: #1c211b;
+      --muted: #6d7168;
+      --line: rgba(28, 33, 27, .12);
+      --gold: #bd8513;
+      --gold-dark: #815704;
+      --gold-soft: #f5e7bd;
+      --green: #39735a;
+      --green-soft: #dcece2;
+      --red: #9a4c3f;
+      --red-soft: #f3dfda;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .28);
+      --phone-shadow: 0 34px 90px rgba(0, 0, 0, .42), 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #f6f1e5;
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(189, 133, 19, .17), transparent 27rem),
+        radial-gradient(circle at 88% 80%, rgba(57, 115, 90, .14), transparent 32rem),
+        var(--night);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .16;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid #f5c760; outline-offset: 3px; }
+
+    .page {
+      width: min(1240px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 56px;
+      position: relative;
+    }
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 28px;
+      align-items: end;
+      padding: 0 4px 28px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #d7b967;
+      font: 600 12px/1.2 "IBM Plex Mono", monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 28px; height: 1px; background: currentColor; }
+    h1 {
+      margin: 12px 0 8px;
+      max-width: 790px;
+      font: 700 clamp(35px, 5vw, 66px)/.98 "Fraunces", serif;
+      letter-spacing: -.045em;
+    }
+    .lede {
+      margin: 0;
+      max-width: 720px;
+      color: rgba(246, 241, 229, .66);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    .legend { text-align: right; color: rgba(246,241,229,.55); font-size: 12px; line-height: 1.55; }
+    .legend strong { display: block; color: #f6f1e5; font-size: 14px; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(260px, 330px) minmax(360px, 430px) minmax(260px, 1fr);
+      gap: clamp(22px, 4vw, 56px);
+      align-items: start;
+      padding-top: 36px;
+    }
+    .rail { position: sticky; top: 24px; }
+    .rail h2, .notes h2 {
+      margin: 0 0 12px;
+      font: 600 25px/1.1 "Fraunces", serif;
+      letter-spacing: -.02em;
+    }
+    .rail p, .notes p { color: rgba(246,241,229,.62); line-height: 1.55; font-size: 14px; }
+    .control-label {
+      margin: 26px 0 9px;
+      color: rgba(246,241,229,.45);
+      font: 600 11px/1.2 "IBM Plex Mono", monospace;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .segmented { display: grid; gap: 8px; }
+    .role-button, .screen-button {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 11px 14px;
+      color: rgba(246,241,229,.7);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,.035);
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .role-button:hover, .screen-button:hover { background: rgba(255,255,255,.07); transform: translateX(2px); }
+    .role-button.active, .screen-button.active {
+      color: #161812;
+      border-color: #d3a43b;
+      background: #d3a43b;
+    }
+    .role-button small, .screen-button small { opacity: .68; font-size: 11px; }
+    .role-button .mark {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border-radius: 50%;
+      font: 600 12px "IBM Plex Mono", monospace;
+      color: #161812;
+      background: #e8c46d;
+    }
+    .role-name { display: flex; align-items: center; gap: 10px; text-align: left; }
+
+    .phone-stage { display: grid; place-items: center; }
+    .phone {
+      width: min(100%, 398px);
+      aspect-ratio: 398 / 824;
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 52px;
+      background: #080a07;
+      box-shadow: var(--phone-shadow);
+      position: relative;
+    }
+    .phone::before {
+      content: "";
+      position: absolute;
+      z-index: 5;
+      width: 114px;
+      height: 29px;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      border-radius: 22px;
+      background: #080a07;
+    }
+    .phone-screen {
+      height: 100%;
+      overflow: hidden;
+      border-radius: 42px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 100% 0, rgba(189,133,19,.10), transparent 15rem),
+        var(--paper);
+      position: relative;
+    }
+    .status-bar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 23px;
+      font: 600 12px "IBM Plex Mono", monospace;
+      position: relative;
+      z-index: 3;
+    }
+    .status-icons { display: flex; gap: 6px; align-items: center; }
+    .status-icons span { display: block; width: 13px; height: 7px; border-radius: 2px; background: var(--ink); opacity: .85; }
+    .status-icons span:first-child { width: 9px; border-radius: 50%; }
+    .app-view {
+      position: absolute;
+      inset: 42px 0 74px;
+      padding: 15px 18px 28px;
+      overflow-y: auto;
+      scrollbar-width: none;
+      animation: enter .28s ease both;
+    }
+    .app-view::-webkit-scrollbar { display: none; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .app-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .app-top .context { color: var(--muted); font: 600 10px "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: #fffaf0; background: var(--ink); font: 600 12px "IBM Plex Mono", monospace; box-shadow: 0 0 0 3px rgba(189,133,19,.22); }
+    .screen-title { margin: 17px 0 4px; font: 700 32px/1 "Fraunces", serif; letter-spacing: -.035em; }
+    .screen-subtitle { margin: 0 0 20px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .section-label { margin: 20px 2px 9px; color: var(--muted); font: 600 10px "IBM Plex Mono", monospace; letter-spacing: .09em; text-transform: uppercase; }
+    .card {
+      margin-bottom: 10px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,253,247,.92);
+      box-shadow: 0 7px 20px rgba(39,36,26,.055);
+    }
+    .card.primary { border-color: rgba(189,133,19,.42); background: linear-gradient(155deg, #fffaf0, #f8ecc9); }
+    .card.issue { border-color: rgba(154,76,63,.24); background: linear-gradient(155deg, #fffaf7, #f5e2dc); }
+    .card.success { border-color: rgba(57,115,90,.22); background: linear-gradient(155deg, #fffdf7, #e4f0e8); }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .card-kicker { color: var(--gold-dark); font: 600 10px "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase; }
+    .card-title { margin: 4px 0 2px; font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+    .card-copy { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .amount { margin: 8px 0 4px; font: 600 29px/1 "IBM Plex Mono", monospace; letter-spacing: -.05em; }
+    .pill { white-space: nowrap; padding: 5px 8px; border-radius: 999px; color: var(--green); background: var(--green-soft); font-size: 10px; font-weight: 700; }
+    .pill.warn { color: var(--gold-dark); background: var(--gold-soft); }
+    .pill.red { color: var(--red); background: var(--red-soft); }
+    .cta {
+      min-height: 47px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 13px;
+      border: 0;
+      border-radius: 13px;
+      color: #fffaf0;
+      background: var(--ink);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .17s ease, background .17s ease;
+    }
+    .cta:hover { transform: translateY(-1px); background: #30372c; }
+    .cta.gold { color: #201803; background: #d3a43b; }
+    .text-action { min-height: 42px; display: flex; align-items: center; gap: 7px; margin-top: 8px; color: var(--gold-dark); font-size: 12px; font-weight: 700; }
+    .icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .icon.small { width: 15px; height: 15px; }
+
+    .progress { height: 7px; margin: 13px 0 7px; overflow: hidden; border-radius: 999px; background: rgba(28,33,27,.10); }
+    .progress > span { display: block; height: 100%; border-radius: inherit; background: var(--gold); }
+    .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .metric { padding: 12px; border-radius: 14px; background: var(--paper-2); }
+    .metric b { display: block; font: 600 17px "IBM Plex Mono", monospace; }
+    .metric span { color: var(--muted); font-size: 10px; }
+    .list-row { min-height: 58px; display: flex; align-items: center; gap: 11px; padding: 10px 0; border-top: 1px solid var(--line); }
+    .list-row:first-child { border-top: 0; }
+    .row-icon { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 11px; color: var(--gold-dark); background: var(--gold-soft); }
+    .row-icon.green { color: var(--green); background: var(--green-soft); }
+    .row-icon.red { color: var(--red); background: var(--red-soft); }
+    .row-main { min-width: 0; flex: 1; }
+    .row-main b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+    .row-main span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .chevron { color: #999c94; font-size: 21px; }
+    .group-badge { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 50%; color: #fff9e9; background: linear-gradient(145deg, #9b741c, #d1a431); font: 600 11px "IBM Plex Mono", monospace; }
+    .role-chip { padding: 4px 7px; border-radius: 999px; color: var(--muted); background: var(--paper-2); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .member-line { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 8px 0; color: var(--muted); font-size: 11px; }
+    .member-line strong { color: var(--ink); font-size: 12px; }
+
+    .bottom-nav {
+      position: absolute;
+      inset: auto 10px 8px;
+      height: 62px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: center;
+      border: 1px solid rgba(255,255,255,.62);
+      border-radius: 22px;
+      background: rgba(255,253,247,.72);
+      box-shadow: 0 12px 34px rgba(40,35,20,.16);
+      backdrop-filter: blur(22px) saturate(145%);
+    }
+    .nav-item { display: grid; place-items: center; gap: 3px; border: 0; color: #898d84; background: transparent; font-size: 9px; font-weight: 600; cursor: pointer; }
+    .nav-item.active { color: var(--gold-dark); }
+    .nav-item .nav-icon { width: 21px; height: 21px; position: relative; }
+    .nav-badge { position: absolute; top: -6px; right: -8px; min-width: 16px; height: 16px; padding: 0 4px; display: grid; place-items: center; border-radius: 9px; color: white; background: var(--red); font: 600 9px "IBM Plex Mono", monospace; }
+    .waiting-summary { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 3px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .waiting-summary b { color: var(--ink); font: 600 12px "IBM Plex Mono", monospace; }
+
+    .notes { position: sticky; top: 24px; }
+    .note-card { margin-top: 12px; padding: 16px; border: 1px solid rgba(255,255,255,.11); border-radius: 16px; background: rgba(255,255,255,.045); }
+    .note-card strong { display: block; margin-bottom: 6px; color: #e0bd65; font: 600 11px "IBM Plex Mono", monospace; letter-spacing: .07em; text-transform: uppercase; }
+    .note-card p { margin: 0; font-size: 13px; }
+    .principles { margin: 12px 0 0; padding: 0; list-style: none; }
+    .principles li { display: flex; gap: 9px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.08); color: rgba(246,241,229,.72); font-size: 13px; line-height: 1.4; }
+    .principles li::before { content: ""; width: 6px; height: 6px; flex: 0 0 6px; margin-top: 6px; border-radius: 50%; background: #d3a43b; }
+    .footer-note { margin-top: 28px; color: rgba(246,241,229,.4); font: 500 11px/1.5 "IBM Plex Mono", monospace; }
+
+    @media (max-width: 1040px) {
+      .workspace { grid-template-columns: minmax(230px, 300px) minmax(360px, 430px); justify-content: center; }
+      .notes { position: static; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .notes h2, .notes > p, .footer-note { grid-column: 1 / -1; }
+      .note-card { margin: 0; }
+    }
+    @media (max-width: 760px) {
+      .page { width: min(100% - 20px, 520px); padding-top: 20px; }
+      .masthead { grid-template-columns: 1fr; }
+      .legend { text-align: left; }
+      .workspace { grid-template-columns: 1fr; padding-top: 24px; }
+      .rail { position: static; }
+      .segmented.roles { grid-template-columns: repeat(3, 1fr); }
+      .role-button { justify-content: center; padding: 9px 5px; }
+      .role-button small, .role-button .mark { display: none; }
+      .segmented.screens { grid-template-columns: repeat(2, 1fr); }
+      .screen-button { min-height: 42px; padding: 8px 10px; }
+      .phone { width: min(100%, 398px); }
+      .notes { grid-template-columns: 1fr; }
+      .notes h2, .notes > p, .footer-note { grid-column: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-groups" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.4-3 2.2-5 5.5-5s5.1 2 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.2 14.4c3.2-.7 5.1 1.1 5.3 4.1"/></symbol>
+    <symbol id="i-actions" viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="m8 9 1.5 1.5L12 8M8 15h8"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-money" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M7 9h.01M17 15h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4m0 3h.01"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20c.5-4 2.7-6 7-6s6.5 2 7 6"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8"/><path d="M4 4v4h4M12 8v5l3 2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.5 8.1 7 10 4.5-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+  </svg>
+
+  <main class="page">
+    <header class="masthead">
+      <div>
+        <div class="eyebrow">Expo SDK 56 implementation study · 09 July 2026</div>
+        <h1>One next step. Everything else waits its turn.</h1>
+        <p class="lede">Switch roles and screens below. Today shows one executable action, Actions holds the ordered queue, and work owned by someone else stays in a separate waiting shelf.</p>
+      </div>
+      <div class="legend"><strong>Njangi · simpler direction</strong>Static mock data · no screen-code changes at capture</div>
+    </header>
+
+    <section class="workspace">
+      <aside class="rail" aria-label="Mockup controls">
+        <h2>Choose a person</h2>
+        <p>The shell stays familiar. What leads the screen changes with the person’s responsibility in each group.</p>
+        <div class="control-label">Role in this group</div>
+        <div class="segmented roles" id="role-controls"></div>
+        <div class="control-label">Screen example</div>
+        <div class="segmented screens" id="screen-controls"></div>
+      </aside>
+
+      <div class="phone-stage">
+        <div class="phone" aria-label="Interactive Njangi mobile mockup">
+          <div class="phone-screen">
+            <div class="status-bar"><span>09:41</span><div class="status-icons"><span></span><span></span><span></span></div></div>
+            <div class="app-view" id="app-view" aria-live="polite"></div>
+            <nav class="bottom-nav" id="bottom-nav" aria-label="Primary navigation"></nav>
+          </div>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <h2>What to judge</h2>
+        <p>This is an information-design proposal, not a visual rebrand.</p>
+        <div class="note-card">
+          <strong id="note-title">One dominant action</strong>
+          <p id="note-copy">The first card tells the user what to do and why. Secondary information waits below.</p>
+        </div>
+        <div class="note-card">
+          <strong>Shared rules</strong>
+          <ul class="principles">
+            <li>No negative balance notation.</li>
+            <li>Only three permanent native tabs.</li>
+            <li>Ledger states become human sentences.</li>
+            <li>Waiting never becomes a disabled action.</li>
+            <li>Current round appears before rotation.</li>
+            <li>Full history stays available, but never leads.</li>
+          </ul>
+        </div>
+        <div class="footer-note">Tip: use the controls to compare the same screen as Member, Treasurer, and President.</div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const icons = (name, cls = "") => `<svg class="icon ${cls}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
+
+    const roles = [
+      { id: "member", label: "Member", hint: "Paul", mark: "M" },
+      { id: "treasurer", label: "Treasurer", hint: "Marie", mark: "T" },
+      { id: "president", label: "President", hint: "Alice", mark: "P" }
+    ];
+    const screens = [
+      { id: "today", label: "Today", hint: "Next step", icon: "today" },
+      { id: "groups", label: "Groups", hint: "All circles", icon: "groups" },
+      { id: "actions", label: "Actions", hint: "Needs you", icon: "actions" },
+      { id: "group", label: "Group detail", hint: "One circle", icon: "people" }
+    ];
+    let activeRole = "member";
+    let activeScreen = "today";
+
+    const screenTop = (context, initials, title, subtitle) => `
+      <div class="app-top"><span class="context">${context}</span><span class="avatar">${initials}</span></div>
+      <h2 class="screen-title">${title}</h2>
+      <p class="screen-subtitle">${subtitle}</p>`;
+
+    const row = (iconName, title, copy, tone = "", trailing = "›") => `
+      <div class="list-row">
+        <span class="row-icon ${tone}">${icons(iconName, "small")}</span>
+        <span class="row-main"><b>${title}</b><span>${copy}</span></span>
+        <span class="chevron">${trailing}</span>
+      </div>`;
+
+    const groupRow = (name, role, copy, status, tone = "") => `
+      <div class="list-row">
+        <span class="group-badge">${name.split(" ").map(x => x[0]).join("").slice(0,2)}</span>
+        <span class="row-main"><b>${name} <span class="role-chip">${role}</span></b><span>${copy}</span></span>
+        <span class="pill ${tone}">${status}</span>
+      </div>`;
+
+    const views = {
+      member: {
+        today: () => `${screenTop("Thursday · Member", "PN", "Good afternoon, Paul", "Here is the one thing that needs you first.")}
+          <div class="section-label">Your next step</div>
+          <section class="card primary">
+            <div class="card-head"><div><div class="card-kicker">Njangi Solidarité · due Friday</div><div class="card-title">Contribute to Round 1</div></div><span class="pill warn">Due soon</span></div>
+            <div class="amount">10,000 F</div>
+            <div class="card-copy">Alice receives this round. Your money goes to Marie, the treasurer.</div>
+            <button class="cta gold">${icons("money")} Contribute 10,000 F</button>
+          </section>
+          <div class="text-action">3 more actions ${icons("arrow", "small")}</div>
+          <div class="section-label">Waiting</div>
+          <div class="waiting-summary"><span>Marie is confirming your 4,000 F declaration</span><b>1 ›</b></div>
+          <div class="section-label">Next meeting</div>
+          <section class="card success">${row("calendar", "Friday at 6:00 PM", "Njangi Solidarité · Alice receives", "green", "")}</section>`,
+
+        groups: () => `${screenTop("Your circles", "PN", "Groups", "Every group appears in one place, with one clear status.")}
+          <section class="card">
+            ${groupRow("Njangi Solidarité", "Member", "Round 1 · Friday", "10,000 F due", "warn")}
+            ${groupRow("Family Circle", "Member", "Round 6 of 10 · Sunday", "Up to date")}
+            ${groupRow("Office Njangi", "Member", "Your turn · 18 July", "Receiving")}
+          </section>
+          <button class="cta">Join another group</button>`,
+
+        actions: () => `${screenTop("Member · 4 open", "PN", "Actions", "Everything that needs you—regardless of which group it belongs to.")}
+          <div class="section-label">Needs you now</div>
+          <section class="card">
+            ${row("money", "Contribute 10,000 F", "Njangi Solidarité · due Friday", "", "›")}
+            ${row("check", "Confirm 6,000 F cash", "Marie recorded your contribution", "green", "›")}
+            ${row("check", "Confirm 10,000 F cash", "Marie recorded your contribution", "green", "›")}
+          </section>
+          <div class="waiting-summary"><span>Waiting on someone else</span><b>1 ›</b></div>`,
+
+        group: () => `${screenTop("Member · Njangi Solidarité", "PN", "Round 1", "Alice receives · Friday at 6:00 PM")}
+          <section class="card primary">
+            <div class="card-kicker">Your contribution</div><div class="card-title">10,000 F still due</div>
+            <div class="card-copy">Pay Marie before Friday. The app never holds your money.</div>
+            <button class="cta gold">Contribute now</button>
+          </section>
+          <section class="card">
+            <div class="card-head"><div><div class="card-title">Round progress</div><div class="card-copy">12 of 15 members recorded</div></div><span class="pill">80%</span></div>
+            <div class="progress"><span style="width:80%"></span></div>
+            <div class="member-line"><span>Cash recorded with</span><strong>Marie Ngono</strong></div>
+            <div class="member-line"><span>Expected pot</span><strong>150,000 F</strong></div>
+          </section>
+          <div class="section-label">Rotation preview</div>
+          <section class="card">${row("people", "Alice receives now", "Marie next · Paul after", "", "›")}</section>
+          <section class="card">${row("history", "History", "Payments and corrections", "", "›")}${row("people", "Members", "15 active members", "", "›")}${row("shield", "Rules", "Contribution, schedule and custody", "", "›")}</section>`
+      },
+
+      treasurer: {
+        today: () => `${screenTop("Thursday · Treasurer", "MN", "Run today’s meeting", "Njangi Solidarité meets at 6:00 PM. This is your highest-impact action.")}
+          <section class="card primary">
+            <div class="card-head"><div><div class="card-kicker">Round 1 · Alice receives</div><div class="card-title">12 of 15 contributions recorded</div></div><span class="pill warn">3 left</span></div>
+            <div class="progress"><span style="width:80%"></span></div>
+            <button class="cta gold">${icons("actions")} Open Meeting Mode</button>
+          </section>
+          <div class="text-action">3 more actions ${icons("arrow", "small")}</div>
+          <div class="section-label">Waiting</div>
+          <div class="waiting-summary"><span>2 member confirmations are still pending</span><b>2 ›</b></div>
+          <div class="section-label">Next event</div>
+          <section class="card success">${row("calendar", "Meeting closes at 8:00 PM", "Njangi Solidarité · Alice receives", "green", "")}</section>`,
+
+        groups: () => `${screenTop("Your circles", "MN", "Groups", "Officer responsibilities are visible without opening every group.")}
+          <section class="card">
+            ${groupRow("Njangi Solidarité", "Treasurer", "12 of 15 recorded", "Meeting today", "warn")}
+            ${groupRow("Family Circle", "Member", "Round 6 of 10 · Sunday", "Up to date")}
+            ${groupRow("Market Women", "Treasurer", "Getting set up", "Add members", "warn")}
+          </section>
+          <button class="cta">Create or join a group</button>`,
+
+        actions: () => `${screenTop("Treasurer · 4 open", "MN", "Actions", "Collection, confirmations, disputes, and handovers in one queue.")}
+          <div class="section-label">Needs you now</div>
+          <section class="card">
+            ${row("check", "Confirm Paul’s 4,000 F", "MTN MoMo · Njangi Solidarité", "green", "›")}
+            ${row("alert", "Review disputed contribution", "Paul says the amount is wrong", "red", "›")}
+            ${row("money", "Record 2 missing members", "Meeting ends at 8:00 PM", "", "›")}
+          </section>
+          <div class="section-label">After collection</div>
+          <section class="card">${row("shield", "Hand the pot to Alice", "150,000 F expected", "green", "›")}</section>
+          <div class="waiting-summary"><span>Waiting on other people</span><b>2 ›</b></div>`,
+
+        group: () => `${screenTop("Treasurer · Njangi Solidarité", "MN", "Collect Round 1", "Alice receives · Friday at 6:00 PM")}
+          <section class="card primary">
+            <div class="card-head"><div><div class="card-kicker">Collection progress</div><div class="card-title">12 of 15 recorded</div></div><span class="pill warn">3 left</span></div>
+            <div class="progress"><span style="width:80%"></span></div>
+            <button class="cta gold">Open Meeting Mode</button>
+          </section>
+          <div class="metric-row"><div class="metric"><b>120,000 F</b><span>recorded with you</span></div><div class="metric"><b>30,000 F</b><span>still expected</span></div></div>
+          <div class="section-label">Follow-up</div>
+          <section class="card">${row("alert", "1 disputed entry", "Resolve before closing the round", "red", "›")}${row("people", "2 missing members", "Awa and Tata", "", "›")}</section>
+          <section class="card">${row("history", "History", "Payments and corrections", "", "›")}${row("people", "Members", "15 active members", "", "›")}${row("shield", "Rules", "Contribution, schedule and custody", "", "›")}</section>`
+      },
+
+      president: {
+        today: () => `${screenTop("Thursday · President", "AM", "One decision needs you first", "Routine collection stays quiet unless presidential authority is required.")}
+          <section class="card issue">
+            <div class="card-head"><div><div class="card-kicker">Njangi Solidarité</div><div class="card-title">Disputed contribution</div></div><span class="pill red">Review</span></div>
+            <div class="amount">4,000 F</div>
+            <div class="card-copy">Paul declared payment. Marie says the amount is wrong.</div>
+            <button class="cta">Review dispute</button>
+          </section>
+          <div class="text-action">1 more decision ${icons("arrow", "small")}</div>
+          <div class="section-label">Waiting</div>
+          <div class="waiting-summary"><span>Marie is completing Round 1 collection</span><b>1 ›</b></div>
+          <div class="section-label">Next event</div>
+          <section class="card success">${row("calendar", "Friday at 6:00 PM", "Njangi Solidarité · Alice receives", "green", "")}</section>`,
+
+        groups: () => `${screenTop("Your circles", "AM", "Groups", "Governance issues are visible; routine ledger details stay quiet.")}
+          <section class="card">
+            ${groupRow("Njangi Solidarité", "President", "Round 1 · 12 of 15 recorded", "2 decisions", "red")}
+            ${groupRow("Family Circle", "Member", "Round 6 of 10 · Sunday", "Up to date")}
+            ${groupRow("Office Njangi", "President", "Between cycles", "Plan next cycle", "warn")}
+          </section>
+          <button class="cta">Create or join a group</button>`,
+
+        actions: () => `${screenTop("President · 3 open", "AM", "Actions", "Only decisions that require presidential authority appear here.")}
+          <div class="section-label">Decisions</div>
+          <section class="card">
+            ${row("alert", "Resolve Paul’s dispute", "4,000 F · amount contested", "red", "›")}
+            ${row("people", "Approve Carine", "Requested to join today", "", "›")}
+            ${row("shield", "Review treasurer handover", "Marie proposes Paul", "green", "›")}
+          </section>
+          <div class="waiting-summary"><span>Waiting on other people</span><b>1 ›</b></div>`,
+
+        group: () => `${screenTop("President · Njangi Solidarité", "AM", "Round 1 oversight", "Alice receives · Friday at 6:00 PM")}
+          <section class="card issue">
+            <div class="card-head"><div><div class="card-kicker">Decision required</div><div class="card-title">Resolve Paul’s dispute</div></div><span class="pill red">Open</span></div>
+            <div class="card-copy">The disputed 4,000 F entry prevents a clean round close.</div>
+            <button class="cta">Review dispute</button>
+          </section>
+          <section class="card success"><div class="card-head"><div><div class="card-title">Round health</div><div class="card-copy">12 of 15 members recorded</div></div><span class="pill">On track</span></div><div class="progress"><span style="width:80%"></span></div><div class="member-line"><span>Cash recorded with</span><strong>Marie Ngono</strong></div></section>
+          <div class="section-label">Governance</div>
+          <section class="card">${row("people", "Members", "15 active · 1 request", "", "›")}${row("shield", "Officers and handover", "Marie is treasurer", "green", "›")}${row("history", "History", "Payments, disputes and corrections", "", "›")}${row("calendar", "Rotation and schedule", "Alice now · Marie next", "", "›")}</section>`
+      }
+    };
+
+    const notes = {
+      today: ["One dominant action", "The first card tells the person what to do and why. No aggregate balance competes with the task."],
+      groups: ["One home for every group", "The full group list exists only here. Today no longer repeats it in a second visual style."],
+      actions: ["One responsibility queue", "Confirmations, disputes, approvals, and handovers are ordered once. Work owned by others stays collapsed below."],
+      group: ["Current round before history", "The live round and role-specific action lead. Rotation, members, history, and rules become clear destinations."]
+    };
+
+    function renderControls() {
+      document.getElementById("role-controls").innerHTML = roles.map(role => `
+        <button class="role-button ${role.id === activeRole ? "active" : ""}" data-role="${role.id}" aria-pressed="${role.id === activeRole}">
+          <span class="role-name"><span class="mark">${role.mark}</span><span>${role.label}</span></span><small>${role.hint}</small>
+        </button>`).join("");
+      document.getElementById("screen-controls").innerHTML = screens.map(screen => `
+        <button class="screen-button ${screen.id === activeScreen ? "active" : ""}" data-screen="${screen.id}" aria-pressed="${screen.id === activeScreen}">
+          <span class="role-name">${icons(screen.icon, "small")}<span>${screen.label}</span></span><small>${screen.hint}</small>
+        </button>`).join("");
+    }
+
+    function renderNav() {
+      const navScreens = screens.slice(0, 3);
+      document.getElementById("bottom-nav").innerHTML = navScreens.map(screen => `
+        <button class="nav-item ${screen.id === activeScreen ? "active" : ""}" type="button" aria-label="Open ${screen.label}">
+          <span class="nav-icon">${icons(screen.icon)}${screen.id === "actions" ? `<span class="nav-badge">${activeRole === "member" ? 4 : activeRole === "treasurer" ? 4 : 3}</span>` : ""}</span>
+          <span>${screen.label}</span>
+        </button>`).join("");
+    }
+
+    function render() {
+      renderControls();
+      renderNav();
+      const appView = document.getElementById("app-view");
+      appView.innerHTML = views[activeRole][activeScreen]();
+      appView.scrollTop = 0;
+      document.getElementById("note-title").textContent = notes[activeScreen][0];
+      document.getElementById("note-copy").textContent = notes[activeScreen][1];
+
+      document.querySelectorAll("[data-role]").forEach(button => button.addEventListener("click", () => {
+        activeRole = button.dataset.role;
+        render();
+      }));
+      document.querySelectorAll("[data-screen]").forEach(button => button.addEventListener("click", () => {
+        activeScreen = button.dataset.screen;
+        render();
+      }));
+      document.querySelectorAll(".bottom-nav .nav-item").forEach((item, index) => item.addEventListener("click", () => {
+        activeScreen = screens[index].id;
+        render();
+      }));
+    }
+    render();
+  </script>
+</body>
+</html>

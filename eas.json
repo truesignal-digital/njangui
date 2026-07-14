@@ -27,6 +27,12 @@
       },
       "channel": "preview"
     },
+    "testflight": {
+      "environment": "preview",
+      "distribution": "store",
+      "autoIncrement": true,
+      "channel": "preview"
+    },
     "e2e-test": {
       "environment": "preview",
       "withoutCredentials": true,
@@ -41,6 +47,18 @@
       "environment": "production",
       "autoIncrement": true,
       "channel": "production"
+    }
+  },
+  "submit": {
+    "testflight": {
+      "ios": {}
+    },
+    "production": {
+      "ios": {},
+      "android": {
+        "track": "internal",
+        "releaseStatus": "completed"
+      }
     }
   }
 }

@@ -1,40 +1,38 @@
-import { Pressable, RefreshControl, Text, View } from 'react-native';
-import { Redirect, router } from 'expo-router';
-import { useConvexAuth, useQuery } from 'convex/react';
-import type { FunctionReturnType } from 'convex/server';
+import {
+  RefreshControl,
+  SectionList,
+  Text,
+  View,
+} from 'react-native';
+import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { ChevronRightIcon } from 'react-native-heroicons/outline';
-import { CheckCircleIcon } from 'react-native-heroicons/solid';
+import { CheckCircleIcon } from 'react-native-heroicons/outline';
 
-import { api } from '../../../src/lib/convex-api';
-import { useAuth } from '../../../src/lib/clerk-client';
-import { formatCurrencyXAF } from '../../../src/lib/format-currency';
-import { useAppTheme } from '../../../src/lib/theme';
-import { Skeleton } from '../../../src/components/skeleton';
-import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
+import { AttentionRow } from '@/components/attention/attention-card';
+import { WaitingShelf } from '@/components/attention/waiting-shelf';
+import { Skeleton } from '@/components/skeleton';
+import { StatusBarCover } from '@/components/ui/status-bar-cover';
+import { useAttention } from '@/hooks/use-attention';
+import { usePullRefresh } from '@/hooks/use-pull-refresh';
+import { openAttentionDestination } from '@/lib/attention-navigation';
+import {
+  presentAttentionAction,
+  type AttentionAction,
+} from '@/lib/attention-presentation';
+import { useAuth } from '@/lib/clerk-client';
+import { useAppTheme } from '@/lib/theme';
 
-type InboxItem = FunctionReturnType<typeof api.paymentRecords.myInbox>[number];
-
-/**
- * À confirmer (docs/03 B5): claims awaiting MY answer, cross-group. Each
- * row opens the per-payment screen where confirm / dispute live. This tab
- * is the objection window's guaranteed channel (03 §E) — push is layered
- * on top later, never instead.
- */
-export default function InboxScreen() {
-  const { t } = useTranslation();
+/** The complete executable queue. Waiting is a separate, collapsed shelf. */
+export default function ActionsScreen() {
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
-  const { isAuthenticated } = useConvexAuth();
-  const inbox = useQuery(api.paymentRecords.myInbox, isAuthenticated ? {} : 'skip');
+  const { data, isLoading } = useAttention();
   const { refreshing, onRefresh } = usePullRefresh();
 
-  if (isLoaded && !isSignedIn) {
-    return <Redirect href="/sign-in" />;
-  }
+  if (isLoaded && !isSignedIn) return <Redirect href="/sign-in" />;
 
   const screenPadding = {
     paddingTop: insets.top + theme.spacing.lg,
@@ -42,44 +40,85 @@ export default function InboxScreen() {
     paddingHorizontal: theme.spacing.lg,
   };
 
-  if (!isLoaded || inbox === undefined) {
+  if (!isLoaded || isLoading || data === undefined) {
     return (
       <View className="flex-1 bg-background" style={screenPadding}>
-        <Skeleton className="h-[32px] w-[200px]" />
-        <View className="mt-lg gap-sm">
-          <Skeleton className="h-[88px] rounded-xl" />
-          <Skeleton className="h-[88px] rounded-xl" />
+        <Skeleton className="h-[36px] w-[180px]" />
+        <Skeleton className="mt-xs h-[18px] w-[280px]" />
+        <View className="mt-xl gap-sm">
+          <Skeleton className="h-[96px] rounded-xl" />
+          <Skeleton className="h-[96px] rounded-xl" />
+          <Skeleton className="h-[96px] rounded-xl" />
         </View>
       </View>
     );
   }
 
+  const groupedActions = groupActions(data.actions);
+
   return (
     <View className="flex-1 bg-background">
-      <FlashList
-        data={inbox}
-        keyExtractor={(item) => item.paymentRecordId}
-        renderItem={({ item }: ListRenderItemInfo<InboxItem>) => (
-          <InboxRow item={item} />
+      <SectionList
+        sections={groupedActions}
+        keyExtractor={(action) => action.id}
+        renderItem={({ item }) => (
+          <AttentionRow
+            model={presentAttentionAction(item, t, i18n.language)}
+            onPress={() => openAttentionDestination(item.destination)}
+          />
+        )}
+        renderSectionHeader={({ section }) => (
+          <View className="flex-row items-center justify-between bg-background pb-sm pt-lg">
+            <View className="flex-row items-center gap-xs">
+              <View className="h-[8px] w-[8px] rounded-full bg-success" />
+              <Text className="font-body-semi text-body-sm text-foreground">
+                {section.title}
+              </Text>
+            </View>
+            <Text className="font-body text-caption text-muted">
+              {t('attention.actions.groupCount', { count: section.data.length })}
+            </Text>
+          </View>
         )}
         contentContainerStyle={screenPadding}
-        ItemSeparatorComponent={() => <View className="h-sm" />}
+        ItemSeparatorComponent={ListSeparator}
         ListHeaderComponent={
-          <Text className="pb-lg font-heading text-display-lg text-foreground">
-            {t('inbox.title', { count: inbox.length })}
-          </Text>
+          <View className="flex-row items-end justify-between gap-lg pb-sm">
+            <Text className="max-w-[55%] font-heading text-display-lg text-foreground">
+              {t('attention.actions.title')}
+            </Text>
+            <Text className="max-w-[42%] pb-[3px] font-body text-caption text-muted">
+              {t('attention.actions.subtitle')}
+            </Text>
+          </View>
         }
         ListEmptyComponent={
-          <View className="items-center gap-md pt-xxl">
-            <View className="h-[72px] w-[72px] items-center justify-center rounded-full bg-success-bg">
-              <CheckCircleIcon size={40} color={theme.successDark} />
-            </View>
-            <Text className="text-center font-body-semi text-body text-foreground">
-              {t('inbox.empty')}
+          <View className="items-center gap-sm rounded-2xl border border-success bg-success-bg p-xl">
+            <CheckCircleIcon size={34} color={theme.successDark} />
+            <Text className="text-center font-heading text-headline text-foreground">
+              {t('attention.actions.emptyTitle')}
             </Text>
             <Text className="text-center font-body text-body-sm text-muted">
-              {t('inbox.emptyHint')}
+              {t('attention.actions.emptyBody')}
             </Text>
+          </View>
+        }
+        ListFooterComponent={
+          <View className="pt-lg">
+            <WaitingShelf
+              waiting={data.waiting}
+              t={t}
+              onOpen={(waiting) => {
+                if (waiting.destination) {
+                  openAttentionDestination(waiting.destination);
+                }
+              }}
+            />
+            {data.truncated ? (
+              <Text className="pt-lg font-body text-caption text-warning-dark">
+                {t('attention.actions.truncated')}
+              </Text>
+            ) : null}
           </View>
         }
         showsVerticalScrollIndicator={false}
@@ -87,43 +126,35 @@ export default function InboxScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
+      <StatusBarCover />
     </View>
   );
 }
 
-function InboxRow({ item }: { item: InboxItem }) {
-  const { t } = useTranslation();
-  const theme = useAppTheme();
+function ListSeparator() {
+  return <View className="h-xs" />;
+}
 
-  return (
-    <Pressable
-      accessibilityRole="button"
-      testID={`inbox-row-${item.paymentRecordId}`}
-      onPress={() =>
-        router.push({
-          pathname: '/payments/[paymentId]',
-          params: { paymentId: item.paymentRecordId },
-        })
-      }
-      className="flex-row items-center gap-sm rounded-xl border border-border-subtle bg-surface p-md active:bg-surface-muted"
-    >
-      <View className="min-w-0 flex-1 gap-[2px]">
-        <Text className="font-body-semi text-body text-foreground">
-          {item.counterpartyName} · {formatCurrencyXAF(item.amount)}
-          {item.method ? ` · ${t(`payments.method.${item.method}`)}` : ''}
-        </Text>
-        <Text className="font-body text-body-sm text-muted" numberOfLines={1}>
-          {item.groupName}
-          {item.reference ? ` · ${item.reference}` : ''}
-          {item.momoTxnId ? ` · ID ${item.momoTxnId}` : ''}
-        </Text>
-        <Text className="font-body text-caption text-muted">
-          {item.claimedBySide === 'payer'
-            ? t('inbox.claimedByPayer', { name: item.counterpartyName })
-            : t('inbox.claimedByPayee', { name: item.counterpartyName })}
-        </Text>
-      </View>
-      <ChevronRightIcon size={18} color={theme.textMuted} />
-    </Pressable>
-  );
+type ActionSection = {
+  key: string;
+  title: string;
+  data: AttentionAction[];
+};
+
+function groupActions(actions: AttentionAction[]): ActionSection[] {
+  const sections = new Map<string, ActionSection>();
+  for (const action of actions) {
+    const key = action.group.groupId;
+    const existing = sections.get(key);
+    if (existing) {
+      existing.data.push(action);
+    } else {
+      sections.set(key, {
+        key,
+        title: action.group.name,
+        data: [action],
+      });
+    }
+  }
+  return [...sections.values()];
 }

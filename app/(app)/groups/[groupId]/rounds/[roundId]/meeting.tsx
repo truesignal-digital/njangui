@@ -7,6 +7,7 @@ import type { FunctionReturnType } from 'convex/server';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import {
   ArrowUturnLeftIcon,
   CheckCircleIcon,
@@ -37,9 +38,11 @@ import {
   Badge,
   PaymentStateBadge,
 } from '../../../../../../src/components/ui/badge';
-import { GroupGradientWash } from '../../../../../../src/components/ui/group-identity';
 import { TextField } from '../../../../../../src/components/ui/text-field';
 import { Skeleton } from '../../../../../../src/components/skeleton';
+import { mobileUiConfig } from '../../../../../../src/lib/mobile-ui-config';
+import { toIntlLocale } from '../../../../../../src/lib/app-locale';
+import { NjangiMark } from '../../../../../../src/components/brand/njangi-mark';
 
 type PaymentRow = FunctionReturnType<
   typeof api.rounds.listRoundPayments
@@ -334,43 +337,67 @@ export default function MeetingModeScreen() {
     paddingBottom: insets.bottom + theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
   };
+  const gatheringDate = round
+    ? new Date(round.dueAt).toLocaleDateString(
+        toIntlLocale(i18n.language),
+        { day: '2-digit', month: 'long' }
+      )
+    : null;
 
   return (
     <View className="flex-1 bg-background" style={screenPadding}>
-      {/* The group's colors over ITS meeting — identity wash, content unchanged */}
-      <View
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 170 }}
-        pointerEvents="none"
-      >
-        <GroupGradientWash
-          colorSeed={group?.colorSeed ?? null}
-          groupId={groupId ?? ''}
-          opacity={0.45}
-        />
-      </View>
       {/* Header — cash custody named, always (00 red line) */}
-      <View className="flex-row items-start justify-between gap-sm">
-        <View className="min-w-0 flex-1">
-          <Text className="font-heading text-headline text-foreground">
-            {t('meeting.title')}
-          </Text>
-          {round ? (
-            <Text className="font-body-semi text-body-sm text-muted">
-              {t('meeting.custodyHeader', {
-                name: round.custodianName,
-              }).toUpperCase()}
+      <View
+        className="bg-success-bg p-md"
+        style={{
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 10,
+          borderBottomRightRadius: 28,
+          borderBottomLeftRadius: 10,
+          borderCurve: 'continuous',
+        }}
+      >
+        <View className="flex-row items-start justify-between gap-sm">
+          <View className="min-w-0 flex-1 gap-[3px]">
+            {gatheringDate ? (
+              <Text className="font-heading text-display-lg text-warning-dark">
+                {gatheringDate}
+              </Text>
+            ) : null}
+            <Text className="font-heading text-headline text-foreground">
+              {group?.name ?? t('meeting.title')}
             </Text>
-          ) : null}
+            {round ? (
+              <Text className="font-body-semi text-body-sm text-foreground">
+                {t('meeting.roundContext', {
+                  n: round.index,
+                  name: round.beneficiaryName,
+                })}
+              </Text>
+            ) : null}
+            {round ? (
+              <Text className="font-body text-caption text-muted">
+                {t('meeting.custodyHeader', {
+                  name: round.custodianName,
+                })}
+              </Text>
+            ) : null}
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            onPress={() => router.back()}
+            className="h-[44px] w-[44px] items-center justify-center rounded-full bg-surface active:bg-surface-muted"
+          >
+            <XMarkIcon size={22} color={theme.textMuted} />
+          </Pressable>
+          <View className="absolute bottom-md right-md opacity-20">
+            <NjangiMark size={62} color={theme.successDark} />
+          </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={() => router.back()}
-          className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
-        >
-          <XMarkIcon size={22} color={theme.textMuted} />
-        </Pressable>
       </View>
+
+      <MeetingSteps reviewing={finishing} />
 
       <MeetingSyncStatus
         pendingCount={pendingSync}
@@ -530,6 +557,67 @@ export default function MeetingModeScreen() {
           )}
         </>
       )}
+    </View>
+  );
+}
+
+function MeetingSteps({ reviewing }: { reviewing: boolean }) {
+  const { t } = useTranslation();
+  const theme = useAppTheme();
+  const steps = [
+    { label: t('meeting.steps.record'), state: reviewing ? 'done' : 'current' },
+    { label: t('meeting.steps.review'), state: reviewing ? 'current' : 'next' },
+    { label: t('meeting.steps.share'), state: 'next' },
+  ] as const;
+
+  return (
+    <View className="mt-md">
+      <Text className="pb-xs font-body-semi text-overline uppercase text-muted">
+        {t('groups.cycle.thisRound')}
+      </Text>
+      <View className="overflow-hidden rounded-2xl bg-surface px-md">
+        {steps.map((step, index) => (
+          <View
+            key={step.label}
+            className={`min-h-[56px] flex-row items-center gap-sm py-xs ${
+              index > 0 ? 'border-t border-border-faint' : ''
+            }`}
+          >
+          <Animated.View
+            key={step.state}
+            entering={FadeIn.duration(
+              mobileUiConfig.motion.successDuration
+            ).reduceMotion(ReduceMotion.System)}
+            className={`h-[28px] w-[28px] items-center justify-center rounded-full ${
+              step.state === 'current'
+                ? 'bg-accent'
+                : step.state === 'done'
+                  ? 'bg-success'
+                  : 'bg-surface-muted'
+            }`}
+          >
+            {step.state === 'done' ? (
+              <CheckCircleIcon size={16} color={theme.textInverted} />
+            ) : (
+              <Text
+                className={`font-body-semi text-caption ${
+                  step.state === 'current' ? 'text-primary-fg' : 'text-muted'
+                }`}
+              >
+                {index + 1}
+              </Text>
+            )}
+          </Animated.View>
+          <Text
+            className={`font-body-semi text-body-sm ${
+              step.state === 'next' ? 'text-muted' : 'text-foreground'
+            }`}
+          >
+            {step.label}
+          </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }

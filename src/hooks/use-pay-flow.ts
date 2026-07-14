@@ -1,6 +1,12 @@
 import { useConvexAuth, useQuery } from 'convex/react';
 import type { FunctionReturnType } from 'convex/server';
 
+import {
+  availableMobileMoneyMethod,
+  mobileMoneyAvailability,
+  type MethodAvailability,
+  type MobileMoneyMethod,
+} from '../../convex/lib/paymentMethods';
 import { api, type Id } from '../lib/convex-api';
 
 type PaymentRow = FunctionReturnType<
@@ -23,12 +29,6 @@ export function usePayFlow(roundId: string | undefined, recordId?: string) {
       : ('skip' as const);
   const round = useQuery(api.rounds.getRound, roundArgs);
   const rows = useQuery(api.rounds.listRoundPayments, roundArgs);
-  const members = useQuery(
-    api.memberships.listMembers,
-    isAuthenticated && round
-      ? { groupId: round.groupId }
-      : ('skip' as const)
-  );
 
   const myRow =
     round && rows
@@ -42,18 +42,16 @@ export function usePayFlow(roundId: string | undefined, recordId?: string) {
       : (myRow.records.find((r) => r.state === 'pending') ?? null);
   }
 
-  let payee: { displayName: string; phone?: string } | null = null;
-  if (round && members) {
-    const payeeMembershipId =
-      round.collectionMode === 'via_treasurer'
-        ? (members.find((m) => m.role === 'treasurer' && m.status === 'active')
-            ?.membershipId ?? null)
-        : round.beneficiaryMembershipId;
-    const match = members.find((m) => m.membershipId === payeeMembershipId);
-    if (match) {
-      payee = { displayName: match.displayName, phone: match.phone };
-    }
-  }
+  // Server-resolved payee (getRound.payeeContact): the roster projection
+  // gates phones to officers, so a member's pay flow must NOT read the
+  // payee number from listMembers.
+  const payee: { displayName: string; phone?: string } | null =
+    round?.payeeContact ?? null;
+
+  const methodAvailability: Record<MobileMoneyMethod, MethodAvailability> = {
+    momo_mtn: mobileMoneyAvailability('momo_mtn', payee?.phone),
+    orange_money: mobileMoneyAvailability('orange_money', payee?.phone),
+  };
 
   return {
     loading: round === undefined || rows === undefined,
@@ -61,6 +59,8 @@ export function usePayFlow(roundId: string | undefined, recordId?: string) {
     myRow,
     record,
     payee,
+    methodAvailability,
+    suggestedMethod: availableMobileMoneyMethod(payee?.phone),
     reference: round ? `NJG-T${round.index}` : '',
   };
 }

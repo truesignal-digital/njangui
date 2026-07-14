@@ -8,6 +8,7 @@ import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 import { type Id } from '../../../../src/lib/convex-api';
 import { useAppTheme } from '../../../../src/lib/theme';
 import { ActivityFeed } from '../../../../src/components/groups/activity-feed';
+import { NjangiMark } from '../../../../src/components/brand/njangi-mark';
 
 /**
  * Full group activity — the complete immutable who-did-what-when (trust
@@ -46,6 +47,9 @@ export default function GroupActivityScreen() {
         <Text className="font-heading text-headline text-foreground">
           {t('feed.fullTitle')}
         </Text>
+        <View className="ml-auto">
+          <NjangiMark size={32} color={theme.successDark} />
+        </View>
       </View>
       <View className="rounded-xl border border-border-subtle bg-surface p-lg">
         <ActivityFeed groupId={groupId as Id<'groups'>} />

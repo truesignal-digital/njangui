@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 
@@ -59,8 +59,12 @@ type MonthSection = {
 };
 
 /** One row per group-round: contribution + my payout folded together. */
-function toSessions(events: AgendaEvent[], upcomingOnly: boolean): SessionRow[] {
-  const todayStart = new Date();
+function toSessions(
+  events: AgendaEvent[],
+  upcomingOnly: boolean,
+  selectedDate?: Date
+): SessionRow[] {
+  const todayStart = selectedDate ? new Date(selectedDate) : new Date();
   todayStart.setHours(0, 0, 0, 0);
   const sessions = new Map<string, SessionRow>();
   for (const event of events) {
@@ -125,18 +129,20 @@ function SessionLine({
   row,
   mode,
   locale,
+  isNext = false,
 }: {
   row: SessionRow;
   mode: 'my' | 'group';
   locale: string;
+  /** First upcoming session — the eye should land here, not on past rows. */
+  isNext?: boolean;
 }) {
   const { t } = useTranslation();
   const past = row.date < Date.now();
   const dimmed = row.estimated || (mode === 'group' && past);
-  const day = new Date(row.date).toLocaleDateString(locale, {
-    weekday: 'short',
-    day: 'numeric',
-  });
+  const date = new Date(row.date);
+  const day = date.toLocaleDateString(locale, { day: 'numeric' });
+  const weekday = date.toLocaleDateString(locale, { weekday: 'short' });
 
   const parts: string[] = [];
   if (row.contribution > 0) {
@@ -164,20 +170,34 @@ function SessionLine({
   }
 
   return (
-    <View className="flex-row items-baseline gap-sm py-xs">
-      <Text className="w-[64px] font-body-medium text-body-sm text-muted">
-        {day}
-      </Text>
-      <View className="min-w-0 flex-1">
-        <Text
-          className={`font-body-medium text-body-sm ${dimmed ? 'text-placeholder' : 'text-foreground'}`}
-          numberOfLines={1}
-        >
-          {mode === 'my'
-            ? `${row.groupName} · ${t('calendar.roundLabel', { n: row.roundIndex })}`
-            : t('calendar.roundLabel', { n: row.roundIndex })}
-          {row.estimated ? ` ${t('calendar.estimated')}` : ''}
+    <View className="min-h-[58px] flex-row items-center gap-sm py-xs">
+      <View className="w-[42px] items-center">
+        <Text className="font-heading text-title-lg text-warning-dark">
+          {day}
         </Text>
+        <Text className="font-body-semi text-caption uppercase text-muted">
+          {weekday}
+        </Text>
+      </View>
+      <View className="min-w-0 flex-1">
+        <View className="flex-row items-center gap-xs">
+          <Text
+            className={`shrink font-body-medium text-body-sm ${dimmed ? 'text-placeholder' : 'text-foreground'}`}
+            numberOfLines={1}
+          >
+            {mode === 'my'
+              ? `${row.groupName} · ${t('calendar.roundLabel', { n: row.roundIndex })}`
+              : t('calendar.roundLabel', { n: row.roundIndex })}
+            {row.estimated ? ` ${t('calendar.estimated')}` : ''}
+          </Text>
+          {isNext ? (
+            <View className="rounded-pill bg-accent-light px-xs py-[1px]">
+              <Text className="font-body-semi text-caption text-accent">
+                {t('calendar.next')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
         <Text
           className={`font-body text-body-sm ${
             dimmed
@@ -199,11 +219,14 @@ export function CalendarAgenda({
   groupId,
   mode,
   showMonthSummary = false,
+  selectedDate,
 }: {
   groupId?: string;
   mode: 'my' | 'group';
   /** Money-hero planner header: current-month sorties/entrées cells. */
   showMonthSummary?: boolean;
+  /** In My Calendar, the agenda begins at the OS-native selected date. */
+  selectedDate?: Date;
 }) {
   const { t, i18n } = useTranslation();
   const locale = toIntlLocale(i18n.language);
@@ -219,9 +242,22 @@ export function CalendarAgenda({
 
   const sections = useMemo(
     () =>
-      events ? toSections(toSessions(events, mode === 'my'), locale) : [],
-    [events, mode, locale]
+      events
+        ? toSections(toSessions(events, mode === 'my', selectedDate), locale)
+        : [],
+    [events, mode, locale, selectedDate]
   );
+
+  // First upcoming session across all sections — gets the « Next » badge.
+  const nextKey = useMemo(() => {
+    const now = Date.now();
+    for (const section of sections) {
+      for (const row of section.rows) {
+        if (row.date >= now) return `${row.groupId}:${row.roundIndex}`;
+      }
+    }
+    return null;
+  }, [sections]);
 
   // Current-month in/out from the events already subscribed — no extra
   // query. Same upcoming-only scope as the rows below: the cells and the
@@ -281,13 +317,18 @@ export function CalendarAgenda({
       {sections.map((section, index) => (
         <Animated.View
           key={section.key}
-          entering={FadeInDown.duration(240).delay(Math.min(index, 5) * 45)}
+          entering={FadeInDown.duration(180)
+            .delay(Math.min(index, 5) * 35)
+            .reduceMotion(ReduceMotion.System)}
           className="gap-xs"
         >
           <Text className="font-body-semi text-body text-foreground">
             {section.label}
           </Text>
-          {section.contrib > 0 || section.receive > 0 ? (
+          {/* Aggregate line only when it aggregates — with a single row it
+              would repeat the row's own sentence word for word. */}
+          {section.rows.length > 1 &&
+          (section.contrib > 0 || section.receive > 0) ? (
             <Text className="font-body text-caption text-muted">
               {section.receive > 0
                 ? t('calendar.monthSummaryBoth', {
@@ -299,14 +340,19 @@ export function CalendarAgenda({
                   })}
             </Text>
           ) : null}
-          <View className="rounded-xl bg-surface p-sm">
-            {section.rows.map((row) => (
-              <SessionLine
+          <View className="overflow-hidden rounded-2xl border border-border-subtle bg-surface px-sm">
+            {section.rows.map((row, rowIndex) => (
+              <View
                 key={`${row.groupId}:${row.roundIndex}`}
-                row={row}
-                mode={mode}
-                locale={locale}
-              />
+                className={rowIndex > 0 ? 'border-t border-border-faint' : ''}
+              >
+                <SessionLine
+                  row={row}
+                  mode={mode}
+                  locale={locale}
+                  isNext={nextKey === `${row.groupId}:${row.roundIndex}`}
+                />
+              </View>
             ))}
           </View>
         </Animated.View>

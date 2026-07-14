@@ -828,3 +828,27 @@ export const devStartAndOpenRound = mutation({
     return { roundId: nextScheduled._id, opened };
   },
 });
+
+/**
+ * HARNESS-ONLY: set (or clear) a membership's phone by display name, so the
+ * pay-flow gating verification can exercise the enabled mobile-money path
+ * without re-seeding. Patches every membership matching the name.
+ */
+export const devSetMembershipPhone = mutation({
+  args: {
+    displayName: v.string(),
+    phone: v.optional(v.string()),
+  },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    // No auth check: runnable from `npx convex run` — DEV_SEED_ENABLED is
+    // the guard, matching the harness contract at the top of this file.
+    assertDevSeedEnabled();
+    const all = await ctx.db.query('memberships').collect();
+    const matches = all.filter((m) => m.displayName === args.displayName);
+    for (const membership of matches) {
+      await ctx.db.patch(membership._id, { phone: args.phone });
+    }
+    return matches.length;
+  },
+});

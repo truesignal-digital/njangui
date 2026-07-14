@@ -3,7 +3,11 @@ import { internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { mutation, type MutationCtx, query } from './_generated/server';
 import { notifyMemberships } from './push';
-import { membershipRoleValidator, membershipStatusValidator } from './schema';
+import {
+  membershipRoleValidator,
+  membershipStatusValidator,
+  scheduleValidator,
+} from './schema';
 import { logActivityEvent } from './utils/activity';
 import { getCurrentUser, getCurrentUserOrNull, requireMembership, requireRole } from './utils/auth';
 import { isValidE164, normalizePhone } from './utils/phone';
@@ -24,6 +28,24 @@ const joinViaCodeResultValidator = v.object({
   groupName: v.string(),
   membershipStatus: membershipStatusValidator,
 });
+
+const invitePreviewValidator = v.union(
+  v.object({
+    groupName: v.string(),
+    schedule: scheduleValidator,
+    meetingDayOfWeek: v.optional(v.number()),
+    contributionAmount: v.number(),
+    memberCount: v.number(),
+    atCapacity: v.boolean(),
+    viewerState: v.union(
+      v.literal('eligible'),
+      v.literal('already_active'),
+      v.literal('already_pending'),
+      v.literal('unavailable')
+    ),
+  }),
+  v.null()
+);
 
 const memberListItemValidator = v.object({
   membershipId: v.id('memberships'),
@@ -55,13 +77,91 @@ const treasurerHandoverPreviewValidator = v.object({
 // ============================================================================
 
 async function countActiveAndPending(ctx: MutationCtx, groupId: Id<'groups'>): Promise<number> {
-  const memberships = await ctx.db
-    .query('memberships')
-    .withIndex('by_group', (q) => q.eq('groupId', groupId))
-    .collect();
-  return memberships.filter((m) => m.status === 'active' || m.status === 'pending_approval')
-    .length;
+  const [active, pending] = await Promise.all([
+    ctx.db
+      .query('memberships')
+      .withIndex('by_group_and_status', (q) =>
+        q.eq('groupId', groupId).eq('status', 'active')
+      )
+      .take(MEMBERSHIP_CAP + 1),
+    ctx.db
+      .query('memberships')
+      .withIndex('by_group_and_status', (q) =>
+        q.eq('groupId', groupId).eq('status', 'pending_approval')
+      )
+      .take(MEMBERSHIP_CAP + 1),
+  ]);
+  return active.length + pending.length;
 }
+
+// ============================================================================
+// Queries
+// ============================================================================
+
+/**
+ * Privacy-safe confirmation shown before a join request is created. This is
+ * deliberately a narrow projection: enough to recognise the collective,
+ * never its roster, officers, ledger, phone numbers, or invite code.
+ */
+export const previewInvite = query({
+  args: {
+    code: v.string(),
+  },
+  returns: invitePreviewValidator,
+  handler: async (ctx, args) => {
+    const { user } = await getCurrentUser(ctx);
+    const code = args.code.trim().toUpperCase();
+    const group = await ctx.db
+      .query('groups')
+      .withIndex('by_invite_code', (q) => q.eq('inviteCode', code))
+      .unique();
+
+    if (!group || group.status === 'archived') return null;
+
+    const [active, pending, existing] = await Promise.all([
+      ctx.db
+        .query('memberships')
+        .withIndex('by_group_and_status', (q) =>
+          q.eq('groupId', group._id).eq('status', 'active')
+        )
+        .take(MEMBERSHIP_CAP + 1),
+      ctx.db
+        .query('memberships')
+        .withIndex('by_group_and_status', (q) =>
+          q.eq('groupId', group._id).eq('status', 'pending_approval')
+        )
+        .take(MEMBERSHIP_CAP + 1),
+      ctx.db
+        .query('memberships')
+        .withIndex('by_group_and_user', (q) =>
+          q.eq('groupId', group._id).eq('userId', user._id)
+        )
+        .first(),
+    ]);
+
+    const memberCount = active.length + pending.length;
+    const viewerState =
+      existing?.status === 'active'
+        ? ('already_active' as const)
+        : existing?.status === 'pending_approval'
+          ? ('already_pending' as const)
+          : existing
+            ? ('unavailable' as const)
+            : ('eligible' as const);
+
+    return {
+      groupName: group.name,
+      schedule: group.schedule,
+      ...(group.meetingDayOfWeek !== undefined && {
+        meetingDayOfWeek: group.meetingDayOfWeek,
+      }),
+      contributionAmount: group.contributionAmount,
+      memberCount,
+      atCapacity: memberCount >= MEMBERSHIP_CAP,
+      viewerState,
+    };
+  },
+});
 
 // ============================================================================
 // Mutations
@@ -111,6 +211,10 @@ export const joinViaCode = mutation({
       // rejected / exited / deceased are terminal (02 §a membership states);
       // re-admission is an officer decision, not a self-serve rejoin.
       throw new Error('You cannot rejoin this group with the invite code');
+    }
+
+    if ((await countActiveAndPending(ctx, group._id)) >= MEMBERSHIP_CAP) {
+      throw new Error('This group is full');
     }
 
     const membershipId = await ctx.db.insert('memberships', {

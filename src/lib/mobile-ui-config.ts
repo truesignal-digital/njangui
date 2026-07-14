@@ -16,12 +16,17 @@ type ThemeColors = {
   borderFaint: string;
   borderSubtle: string;
   accent: string;
+  accentHero: string;
+  collectiveHero: string;
   accentHover: string;
   accentFaint: string;
   accentLight: string;
   accentMuted: string;
   accentSoft: string;
   primaryForeground: string;
+  highlight: string;
+  highlightHover: string;
+  highlightForeground: string;
   success: string;
   successDark: string;
   successBg: string;
@@ -135,9 +140,18 @@ export type MobileUiConfig = {
     metricCompactMinHeight: number;
     iconSm: number;
     iconMd: number;
+    iconLg: number;
     searchBarHeight: number;
     propertyImageHeight: number;
     heroImageHeight: number;
+  };
+  motion: {
+    pressScale: number;
+    pressDuration: number;
+    enterDuration: number;
+    exitDuration: number;
+    successDuration: number;
+    reducedDuration: number;
   };
   layout: {
     compact: {

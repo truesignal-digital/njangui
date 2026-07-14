@@ -11,7 +11,9 @@ import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
 import { api, type Id } from '../../../src/lib/convex-api';
 import { useAuth } from '../../../src/lib/clerk-client';
+import { showErrorToast } from '../../../src/lib/error-toast';
 import { formatCurrencyXAF } from '../../../src/lib/format-currency';
+import { formatDateTime } from '../../../src/lib/format-date';
 import { haptics } from '../../../src/lib/haptics';
 import { useAppTheme, useShadow } from '../../../src/lib/theme';
 import {
@@ -34,7 +36,7 @@ type DisputeReason = 'not_received' | 'wrong_amount' | 'other';
  * auditable president-only correction for a mistaken confirmed entry.
  */
 export default function PaymentDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const { paymentId } = useLocalSearchParams<{ paymentId: string }>();
@@ -92,57 +94,87 @@ export default function PaymentDetailScreen() {
       contentContainerStyle={screenPadding}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <View className="flex-row items-start gap-xs">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-          className="mt-[2px] h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
-        >
-          <ChevronLeftIcon size={22} color={theme.textMuted} />
-        </Pressable>
-        <View className="min-w-0 flex-1 gap-xs">
-          <Text className="font-heading text-headline text-foreground">
-            {t(`payment.kind.${record.kind}`)} · {formatCurrencyXAF(record.amount)}
-          </Text>
-          <PaymentStateBadge
-            state={record.state as PaymentState}
-            label={t(`payments.state.${record.state}`)}
-          />
+      {/* One record, not an account balance: amount + people + state. */}
+      <View
+        className="bg-success-bg p-md"
+        style={{
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 10,
+          borderBottomRightRadius: 28,
+          borderBottomLeftRadius: 10,
+          borderCurve: 'continuous',
+        }}
+      >
+        <View className="flex-row items-start gap-xs">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back')}
+            onPress={() =>
+              router.canGoBack() ? router.back() : router.replace('/')
+            }
+            className="h-[40px] w-[40px] items-center justify-center rounded-full bg-surface active:bg-surface-muted"
+          >
+            <ChevronLeftIcon size={22} color={theme.textMuted} />
+          </Pressable>
+          <View className="min-w-0 flex-1 gap-[3px]">
+            <Text className="font-body-semi text-overline uppercase text-success-dark">
+              {record.groupName}
+            </Text>
+            <Text selectable className="font-heading text-display-lg text-foreground">
+              {formatCurrencyXAF(record.amount)}
+            </Text>
+            <Text className="font-heading text-title-lg text-foreground">
+              {t(`payment.kind.${record.kind}`)}
+            </Text>
+            <Text className="font-body text-caption text-muted">
+              {record.payerName} → {record.payeeName}
+            </Text>
+            <View className="self-start pt-xs">
+              <PaymentStateBadge
+                state={record.state as PaymentState}
+                label={t(`payments.state.${record.state}`)}
+              />
+            </View>
+          </View>
         </View>
       </View>
 
+      {/* Owner + next transition — the answer to “what happens now?” leads;
+          raw ledger metadata stays in the Details card below. */}
+      <StatusBlock record={record} />
+
       {/* Facts */}
       <Card>
-        <FactRow label={t('payment.group')} value={record.groupName} />
-        {record.roundIndex !== null ? (
-          <FactRow
-            label={t('round.title', { n: record.roundIndex })}
-            value={record.reference}
-          />
-        ) : null}
+        <FactRow
+          label={t('payment.group')}
+          value={
+            record.roundIndex !== null
+              ? `${record.groupName} · ${t('round.title', { n: record.roundIndex })}`
+              : record.groupName
+          }
+        />
         <FactRow label={t('payment.payer')} value={record.payerName} />
         <FactRow label={t('payment.payee')} value={record.payeeName} />
         {record.method ? (
           <FactRow
             label={t('payment.method')}
-            value={t(`payments.method.${record.method}`)}
+            value={capitalize(t(`payments.method.${record.method}`))}
           />
         ) : null}
+        <FactRow label={t('pay.reference')} value={record.reference} />
         {record.momoTxnId ? (
           <FactRow label={t('pay.txnId')} value={record.momoTxnId} />
         ) : null}
         {record.claimedAt ? (
           <FactRow
             label={t('payment.claimedAt')}
-            value={new Date(record.claimedAt).toLocaleString()}
+            value={formatDateTime(record.claimedAt, i18n.language)}
           />
         ) : null}
         {record.confirmedAt ? (
           <FactRow
             label={t('payment.confirmedAt')}
-            value={new Date(record.confirmedAt).toLocaleString()}
+            value={formatDateTime(record.confirmedAt, i18n.language)}
           />
         ) : null}
       </Card>
@@ -225,7 +257,7 @@ export default function PaymentDetailScreen() {
                 {t('payment.correctedBy', { name: correction.presidentName })}
               </Text>
               <Text className="pt-[2px] font-body text-caption text-muted">
-                {new Date(correction.createdAt).toLocaleString()}
+                {formatDateTime(correction.createdAt, i18n.language)}
               </Text>
               <Text className="pt-xs font-body text-body-sm text-foreground">
                 « {correction.note} »
@@ -247,6 +279,79 @@ export default function PaymentDetailScreen() {
 type RecordDetail = NonNullable<
   FunctionReturnType<typeof api.paymentRecords.getPaymentRecord>
 >;
+
+function capitalize(value: string): string {
+  return value.length > 0 ? value[0].toUpperCase() + value.slice(1) : value;
+}
+
+const STATUS_TONE_CLASSES = {
+  accent: 'border-accent bg-accent-light',
+  warning: 'border-warning-dark bg-warning-bg',
+  success: 'border-success bg-success-bg',
+  neutral: 'border-border-subtle bg-surface',
+} as const;
+
+/** Who owns the next step, in one sentence — before any ledger metadata. */
+function StatusBlock({ record }: { record: RecordDetail }) {
+  const { t } = useTranslation();
+  const shadow = useShadow();
+
+  // The side that did NOT record the claim is the one whose answer counts.
+  const confirmerName =
+    record.claimedBySide === 'payer' ? record.payeeName : record.payerName;
+
+  let title: string;
+  let body: string;
+  let tone: keyof typeof STATUS_TONE_CLASSES;
+  switch (record.state) {
+    case 'claimed':
+      if (record.viewerCanConfirm) {
+        title = t('payment.status.needsYouTitle');
+        body = t('payment.status.needsYouBody');
+        tone = 'accent';
+      } else {
+        title = t('payment.status.waitingTitle', { name: confirmerName });
+        body = t('payment.status.waitingBody', { name: confirmerName });
+        tone = 'neutral';
+      }
+      break;
+    case 'disputed':
+      title = t('payment.status.disputedTitle');
+      body =
+        record.viewerIsClaimant && record.viewerCanCancel
+          ? t('payment.status.disputedYoursBody', { name: confirmerName })
+          : t('payment.status.disputedBody', {
+              payer: record.payerName,
+              payee: record.payeeName,
+            });
+      tone = 'warning';
+      break;
+    case 'confirmed':
+      title = t('payment.status.confirmedTitle');
+      body = t('payment.status.confirmedBody');
+      tone = 'success';
+      break;
+    case 'cancelled':
+      title = t('payment.status.cancelledTitle');
+      body = t('payment.status.cancelledBody');
+      tone = 'neutral';
+      break;
+    default:
+      title = t('payment.status.pendingTitle');
+      body = t('payment.status.pendingBody');
+      tone = 'neutral';
+  }
+
+  return (
+    <View
+      className={`mt-md gap-xs rounded-2xl border p-md ${STATUS_TONE_CLASSES[tone]}`}
+      style={shadow('card')}
+    >
+      <Text className="font-body-semi text-body text-foreground">{title}</Text>
+      <Text className="font-body text-body-sm text-muted">{body}</Text>
+    </View>
+  );
+}
 
 function PaymentActions({ record }: { record: RecordDetail }) {
   const { t } = useTranslation();
@@ -270,8 +375,7 @@ function PaymentActions({ record }: { record: RecordDetail }) {
       toast.success(t(successKey));
       setMode('idle');
     } catch (err) {
-      haptics.error();
-      toast.error(err instanceof Error ? err.message : t('common.error'));
+      showErrorToast(err, t);
     } finally {
       setBusy(false);
     }
@@ -530,7 +634,7 @@ function Card({ children }: { children: ReactNode }) {
   const shadow = useShadow();
   return (
     <View
-      className="mt-lg rounded-xl border border-border-subtle bg-surface p-lg"
+      className="mt-md rounded-2xl border border-border-subtle bg-surface p-md"
       style={shadow('card')}
     >
       {children}

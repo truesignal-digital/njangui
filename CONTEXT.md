@@ -32,10 +32,20 @@ _Avoid_: activate, finalize, start (when the actor matters)
 A PaymentRecord whose payer and payee are the same membership; the holder's claim confirms it immediately, with no timers and no counterparty step.
 _Avoid_: auto-record, treasurer record
 
+**Attention action**:
+A viewer-relative, non-authoritative description of one useful next step the viewer can perform now. It is derived from canonical ledger and governance state and is never completed directly.
+_Avoid_: task row, notification, persisted to-do
+
+**Waiting fact**:
+A viewer-relative explanation that the next transition belongs to another person or a scheduled event. Waiting facts never become the primary Attention action and never count toward the Actions badge.
+_Avoid_: blocked task, disabled action
+
 ## Relationships
 
 - A **Claim** by one side obligates the other side to **Confirm** (or dispute) the **PaymentRecord**
 - A **Self-record** has exactly one party and skips **Confirm** entirely
+- An **Attention action** points to the canonical screen where a domain transition can be attempted; the authoritative mutation revalidates it
+- A **Waiting fact** explains why no action is currently available without pretending that the viewer owns the next transition
 
 ## Example dialogue
 

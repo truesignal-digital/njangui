@@ -1,6 +1,7 @@
-import { useColorScheme, type TextStyle, type ViewStyle } from 'react-native';
+import type { TextStyle, ViewStyle } from 'react-native';
 
 import { mobileUiConfig, type MobileThemeColors } from './mobile-ui-config';
+import { useThemePreference } from './theme-preference';
 
 export type TypographyToken = keyof typeof mobileUiConfig.typography;
 export type ShadowToken = keyof typeof mobileUiConfig.shadows;
@@ -48,8 +49,8 @@ export function getAppTheme(mode: 'light' | 'dark'): AppTheme {
 }
 
 export function useAppTheme(): AppTheme {
-  const scheme = useColorScheme();
-  return getAppTheme(scheme === 'dark' ? 'dark' : 'light');
+  const { mode } = useThemePreference();
+  return getAppTheme(mode);
 }
 
 /* ─── Standalone exports for NativeWind components ─── */
@@ -61,8 +62,7 @@ export function getShadow(token: ShadowToken, mode: 'light' | 'dark' = 'light'):
 
 /** Hook that returns only shadow helper — lightweight alternative to full useAppTheme */
 export function useShadow() {
-  const scheme = useColorScheme();
-  const mode = scheme === 'dark' ? 'dark' : 'light';
+  const { mode } = useThemePreference();
   return (token: ShadowToken) => getShadow(token, mode);
 }
 

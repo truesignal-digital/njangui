@@ -1,80 +1,105 @@
-import { Tabs } from 'expo-router';
-import { useConvexAuth, useQuery } from 'convex/react';
+import { useMemo } from 'react';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  CalendarDaysIcon,
-  CheckCircleIcon,
-  HomeIcon,
-  UserIcon,
-  UsersIcon,
-} from 'react-native-heroicons/outline';
 
-import { api } from '../../../src/lib/convex-api';
-import { useAppTheme } from '../../../src/lib/theme';
+import { useAttention } from '@/hooks/use-attention';
+import { useAppTheme } from '@/lib/theme';
 
 /**
- * Resting-state tab shell (docs/03 §A): Accueil · Groupe · À confirmer
- * (badge = claims awaiting me — the guaranteed in-app channel, 03 §E) ·
- * Profil. Everything under groups/ and payments/ pushes onto the stack
- * above these tabs.
+ * Three stable native destinations. Calendar and Profile are secondary Stack
+ * screens so the resting shell answers Today · Groups · Actions only.
  */
 export default function TabsLayout() {
   const { t } = useTranslation();
   const theme = useAppTheme();
-  const { isAuthenticated } = useConvexAuth();
-  const inbox = useQuery(api.paymentRecords.myInbox, isAuthenticated ? {} : 'skip');
-  const inboxCount = inbox?.length ?? 0;
+  const { data } = useAttention();
+  const badge = data?.badgeCount
+    ? data.badgeCount > 99
+      ? '99+'
+      : String(data.badgeCount)
+    : undefined;
+
+  // Referentially stable across attention re-renders: fresh style/color
+  // objects each render make the native tab bar re-apply its appearance,
+  // which is what intermittently blanks an unselected item on iOS 18.
+  const iconColor = useMemo(
+    () => ({ default: theme.textMuted, selected: theme.accent }),
+    [theme]
+  );
+  const labelStyle = useMemo(
+    () => ({
+      default: {
+        color: theme.textMuted,
+        fontFamily: 'PlusJakartaSans_600SemiBold',
+      },
+      selected: {
+        color: theme.accent,
+        fontFamily: 'PlusJakartaSans_600SemiBold',
+      },
+    }),
+    [theme]
+  );
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.accent,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarStyle: { backgroundColor: theme.surface },
-        tabBarLabelStyle: { fontFamily: 'PlusJakartaSans_600SemiBold' },
-      }}
+    <NativeTabs
+      tintColor={theme.accent}
+      iconColor={iconColor}
+      labelStyle={labelStyle}
+      backgroundColor={theme.surface}
+      blurEffect={
+        process.env.EXPO_OS === 'ios'
+          ? theme.isDark
+            ? 'systemChromeMaterialDark'
+            : 'systemChromeMaterialLight'
+          : undefined
+      }
+      shadowColor={theme.borderSubtle}
+      indicatorColor={theme.accentLight}
+      rippleColor={theme.accentMuted}
+      labelVisibilityMode="labeled"
+      tabBarRespectsIMEInsets
+      badgeBackgroundColor={theme.destructive}
+      backBehavior="history"
+      minimizeBehavior={
+        process.env.EXPO_OS === 'ios' && Number(Platform.Version) >= 26
+          ? 'never'
+          : undefined
+      }
+      disableTransparentOnScrollEdge
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.home'),
-          tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="group"
-        options={{
-          title: t('tabs.group'),
-          tabBarIcon: ({ color, size }) => <UsersIcon color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: t('tabs.calendar'),
-          tabBarIcon: ({ color, size }) => (
-            <CalendarDaysIcon color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="inbox"
-        options={{
-          title: t('tabs.inbox'),
-          tabBarIcon: ({ color, size }) => (
-            <CheckCircleIcon color={color} size={size} />
-          ),
-          tabBarBadge: inboxCount > 0 ? inboxCount : undefined,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: t('tabs.profile'),
-          tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
-        }}
-      />
-    </Tabs>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Icon sf={ICONS.index.sf} md={ICONS.index.md} />
+        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="group">
+        <NativeTabs.Trigger.Icon sf={ICONS.group.sf} md={ICONS.group.md} />
+        <NativeTabs.Trigger.Label>{t('tabs.group')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="inbox">
+        <NativeTabs.Trigger.Icon sf={ICONS.inbox.sf} md={ICONS.inbox.md} />
+        <NativeTabs.Trigger.Label>{t('tabs.inbox')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={!badge}>
+          {badge}
+        </NativeTabs.Trigger.Badge>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
+
+const ICONS = {
+  index: {
+    sf: { default: 'sun.max', selected: 'sun.max.fill' },
+    md: { default: 'today', selected: 'today' },
+  },
+  group: {
+    sf: { default: 'person.3', selected: 'person.3.fill' },
+    md: { default: 'groups', selected: 'groups' },
+  },
+  inbox: {
+    sf: { default: 'checkmark.circle', selected: 'checkmark.circle.fill' },
+    md: { default: 'check_circle', selected: 'check_circle' },
+  },
+} as const;

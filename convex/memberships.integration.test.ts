@@ -207,3 +207,61 @@ describe('treasurer handover integration', () => {
     expect(roles.newTreasurer?.role).toBe('member');
   });
 });
+
+describe('invitation preview and join', () => {
+  test('shows only a safe group projection before creating a pending request', async () => {
+    const t = convexTest({ schema, modules });
+    await t.run(async (ctx) => {
+      const creatorId = await ctx.db.insert('users', {
+        clerkId: 'invite-creator',
+        name: 'Creator',
+        language: 'en',
+      });
+      await ctx.db.insert('users', {
+        clerkId: 'invite-guest',
+        name: 'Guest',
+        language: 'en',
+      });
+      const groupId = await ctx.db.insert('groups', {
+        name: 'Bonaberi Circle',
+        schedule: 'weekly',
+        meetingDayOfWeek: 6,
+        contributionAmount: 10_000,
+        graceDays: 2,
+        finesEnabled: false,
+        beneficiaryContributes: true,
+        collectionMode: 'direct_to_beneficiary',
+        inviteCode: 'JOIN23',
+        status: 'setup',
+        createdByUserId: creatorId,
+      });
+      await ctx.db.insert('memberships', {
+        groupId,
+        userId: creatorId,
+        displayName: 'Creator',
+        role: 'president',
+        status: 'active',
+        joinedAt: 1,
+      });
+    });
+
+    const guest = t.withIdentity({ subject: 'invite-guest' });
+    const preview = await guest.query(api.memberships.previewInvite, { code: 'join23' });
+    expect(preview).toEqual({
+      groupName: 'Bonaberi Circle',
+      schedule: 'weekly',
+      meetingDayOfWeek: 6,
+      contributionAmount: 10_000,
+      memberCount: 1,
+      atCapacity: false,
+      viewerState: 'eligible',
+    });
+    expect(await guest.query(api.memberships.previewInvite, { code: 'BAD999' })).toBeNull();
+
+    const joined = await guest.mutation(api.memberships.joinViaCode, { code: 'JOIN23' });
+    expect(joined.membershipStatus).toBe('pending_approval');
+    expect(
+      await guest.query(api.memberships.previewInvite, { code: 'JOIN23' })
+    ).toMatchObject({ viewerState: 'already_pending', memberCount: 2 });
+  });
+});

@@ -1,294 +1,249 @@
-import type { ReactNode } from 'react';
-import { Pressable, RefreshControl, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
-import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import {
-  ArrowUpIcon,
-  CalendarDaysIcon,
-  KeyIcon,
-  PlusIcon,
-  UsersIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
 } from 'react-native-heroicons/outline';
 
-import { api } from '../../../src/lib/convex-api';
-import { useAuth } from '../../../src/lib/clerk-client';
-import { toIntlLocale } from '../../../src/lib/app-locale';
-import { cn } from '../../../src/lib/cn';
-import { formatCurrencyXAF } from '../../../src/lib/format-currency';
-import { haptics } from '../../../src/lib/haptics';
-import { useAppTheme } from '../../../src/lib/theme';
-import { Skeleton } from '../../../src/components/skeleton';
-import { AppButton } from '../../../src/components/ui/button';
-import { InOutCells } from '../../../src/components/ui/in-out-cells';
-import { GroupRow } from '../../../src/components/groups/group-row';
-import type { GroupListItem } from '../../../src/components/groups/group-card';
-import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
+import {
+  AttentionPrimaryCard,
+  AttentionRow,
+} from '@/components/attention/attention-card';
+import { WaitingShelf } from '@/components/attention/waiting-shelf';
+import { Skeleton } from '@/components/skeleton';
+import { AppButton } from '@/components/ui/button';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { StatusBarCover } from '@/components/ui/status-bar-cover';
+import { useAttention } from '@/hooks/use-attention';
+import { useAuth } from '@/lib/clerk-client';
+import { openAttentionDestination } from '@/lib/attention-navigation';
+import {
+  presentAttentionAction,
+  waitingFactCount,
+} from '@/lib/attention-presentation';
+import { toIntlLocale } from '@/lib/app-locale';
+import { useAppTheme } from '@/lib/theme';
+import { ICON_SIZE } from '@/lib/icons';
 
 /**
- * Home — money-hero direction (docs/ui-proposals-iter3-money-hero.html):
- * the screen answers « where does my money stand across all my njangis? »
- * with a net-position hero, a quick-action row and In/Out cells, all
- * server-computed by listMyGroups (myDue/receiving) — no client money math.
- * Auth gating follows piol mobile's screen-level pattern: queries pass
- * 'skip' until authenticated; signed-out users are redirected to sign-in.
+ * Today answers one question: what can I move forward now? Waiting and the
+ * next meeting stay visible but cannot compete with the primary action.
  */
-export default function HomeScreen() {
+export default function TodayScreen() {
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
-  const { isAuthenticated } = useConvexAuth();
-  const myGroups = useQuery(api.groups.listMyGroups, isAuthenticated ? {} : 'skip');
-  const { refreshing, onRefresh } = usePullRefresh();
+  const { data, currentUser, isLoading } = useAttention();
 
-  if (isLoaded && !isSignedIn) {
-    return <Redirect href="/sign-in" />;
-  }
+  if (isLoaded && !isSignedIn) return <Redirect href="/sign-in" />;
 
-  const screenPadding = {
-    paddingTop: insets.top + theme.spacing.lg,
-    paddingBottom: insets.bottom + theme.spacing.xxl,
-  };
-
-  // Loading — skeletons matching final geometry, never flash the empty state (docs/03 §D)
-  if (!isLoaded || myGroups === undefined) {
+  if (!isLoaded || isLoading || data === undefined) {
     return (
-      <View className="flex-1 bg-background px-lg" style={screenPadding}>
-        <Skeleton className="h-[28px] w-[140px]" />
-        <Skeleton className="mt-lg h-[44px] w-[220px]" />
-        <View className="mt-lg flex-row gap-sm">
-          <Skeleton className="h-[72px] flex-1 rounded-lg" />
-          <Skeleton className="h-[72px] flex-1 rounded-lg" />
-          <Skeleton className="h-[72px] flex-1 rounded-lg" />
-          <Skeleton className="h-[72px] flex-1 rounded-lg" />
+      <View
+        className="flex-1 bg-background px-lg"
+        style={{ paddingTop: insets.top + theme.spacing.lg }}
+      >
+        <View className="flex-row items-center justify-between">
+          <Skeleton className="h-[36px] w-[150px]" />
+          <Skeleton className="h-[42px] w-[42px] rounded-full" />
         </View>
-        <View className="mt-lg gap-sm">
-          <Skeleton className="h-[64px] rounded-lg" />
-          <Skeleton className="h-[64px] rounded-lg" />
-          <Skeleton className="h-[64px] rounded-lg" />
-        </View>
+        <Skeleton className="mt-xs h-[18px] w-[280px]" />
+        <Skeleton className="mt-xl h-[240px] rounded-2xl" />
+        <Skeleton className="mt-lg h-[64px] rounded-xl" />
       </View>
     );
   }
 
-  if (myGroups.length === 0) {
-    return <HomeEmptyState topInset={insets.top} bottomInset={insets.bottom} />;
-  }
+  const primary = data.actions[0] ?? null;
+  const primaryModel = primary
+    ? presentAttentionAction(primary, t, i18n.language)
+    : null;
+  const secondaryActions = data.actions.slice(1, 3);
+  const moreCount = Math.max(data.actions.length - 3, 0);
+  const userName = currentUser?.name?.trim() || 'Njangi';
+  const firstName = userName.split(/\s+/)[0];
+  const initials = userName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+  const hour = new Date().getHours();
+  const greetingKey =
+    hour < 12
+      ? 'attention.today.greetingMorning'
+      : hour < 18
+        ? 'attention.today.greetingAfternoon'
+        : 'attention.today.greetingEvening';
+  const waitingCount = waitingFactCount(data.waiting);
+  const nextEventShort = data.nextEvent
+    ? new Date(data.nextEvent.dueAt).toLocaleDateString(
+        toIntlLocale(i18n.language),
+        { weekday: 'short' }
+      )
+    : null;
 
   return (
     <View className="flex-1 bg-background">
-      <FlashList
-        data={myGroups as GroupListItem[]}
-        keyExtractor={(group) => group.membershipId}
-        renderItem={({ item }: ListRenderItemInfo<GroupListItem>) => <GroupRow group={item} />}
+      <ScrollView
+        className="flex-1"
         contentContainerStyle={{
-          ...screenPadding,
-          paddingHorizontal: theme.spacing.lg,
+          paddingTop: insets.top + theme.spacing.sm,
+          paddingBottom: insets.bottom + theme.spacing.xxl,
+          paddingHorizontal: 17,
         }}
-        ItemSeparatorComponent={ListSeparator}
-        ListHeaderComponent={<HomeHeader groups={myGroups as GroupListItem[]} />}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
+      >
+        <View className="flex-row items-start justify-between gap-md">
+          <View className="min-w-0 flex-1">
+            <Text className="font-body text-caption text-muted">
+              {t(greetingKey, { name: firstName })}
+            </Text>
+            <Text className="max-w-[300px] pt-[3px] font-heading text-display text-foreground">
+              {t('attention.today.collectiveTitle')}
+            </Text>
+          </View>
+          <SoftPressable
+            accessibilityRole="button"
+            accessibilityLabel={t('attention.today.profileAccessibility')}
+            onPress={() => router.push('/profile')}
+            className="mt-xs h-[40px] w-[40px] items-center justify-center rounded-full bg-accent active:opacity-80"
+          >
+            <Text className="font-mono-semi text-caption text-inverted">
+              {initials || 'N'}
+            </Text>
+          </SoftPressable>
+        </View>
+
+        <View className="flex-row flex-wrap gap-xs pt-md">
+          <SummaryPill
+            label={t('attention.today.needsYou', { count: data.actions.length })}
+            tone="warm"
+          />
+          {waitingCount > 0 ? (
+            <SummaryPill
+              label={t('attention.today.withOthers', { count: waitingCount })}
+            />
+          ) : null}
+          {nextEventShort ? (
+            <SummaryPill
+              label={t('attention.today.meetShort', { date: nextEventShort })}
+            />
+          ) : null}
+        </View>
+
+        <Text className="pb-xs pt-md font-body-semi text-overline uppercase text-muted">
+          {t('attention.today.primary')}
+        </Text>
+
+        {primary && primaryModel ? (
+          <AttentionPrimaryCard
+            model={primaryModel}
+            onPress={() => openAttentionDestination(primary.destination)}
+          />
+        ) : (
+          <View
+            className="gap-sm rounded-2xl border border-success bg-success-bg p-lg"
+            style={{ borderCurve: 'continuous' }}
+          >
+            <CheckCircleIcon size={28} color={theme.successDark} />
+            <Text className="font-heading text-headline text-foreground">
+              {t('attention.today.allClearTitle')}
+            </Text>
+            <Text className="font-body text-body-sm text-muted">
+              {t('attention.today.allClearBody')}
+            </Text>
+          </View>
+        )}
+
+        {secondaryActions.length > 0 ? (
+          <View className="gap-xs pt-md">
+            <Text className="pb-[2px] font-body-semi text-overline uppercase text-muted">
+              {t('attention.today.secondary')}
+            </Text>
+            {secondaryActions.map((action) => (
+              <AttentionRow
+                key={action.id}
+                model={presentAttentionAction(action, t, i18n.language)}
+                onPress={() => openAttentionDestination(action.destination)}
+                compact
+              />
+            ))}
+          </View>
+        ) : null}
+
+        {data.actions.length > 1 ? (
+          <SoftPressable
+            accessibilityRole="button"
+            onPress={() => router.push('/inbox')}
+            scaleOnPress={false}
+            className="min-h-[38px] flex-row items-center gap-xs self-start active:opacity-70"
+          >
+            <Text className="font-body-semi text-body-sm text-accent">
+              {moreCount > 0
+                ? t('attention.today.moreActions', { count: moreCount })
+                : t('attention.today.seeAllActions')}
+            </Text>
+            <ArrowRightIcon size={ICON_SIZE.metadata} color={theme.accent} />
+          </SoftPressable>
+        ) : null}
+
+        <View className="pt-xs">
+          <WaitingShelf
+            waiting={data.waiting}
+            t={t}
+            onOpen={(waiting) => {
+              if (waiting.destination) {
+                openAttentionDestination(waiting.destination);
+              }
+            }}
+          />
+        </View>
+
+        {data.truncated ? (
+          <Text className="pt-lg font-body text-caption text-warning-dark">
+            {t('attention.today.truncated')}
+          </Text>
+        ) : null}
+
+        {!primary && data.waiting.length === 0 && data.nextEvent === null ? (
+          <View className="pt-lg">
+            <AppButton
+              variant="outline"
+              label={t('tabs.group')}
+              onPress={() => router.push('/group')}
+            />
+          </View>
+        ) : null}
+      </ScrollView>
+      <StatusBarCover />
     </View>
   );
 }
 
-function ListSeparator() {
-  return <View className="h-xs" />;
-}
-
-/** One quick-action tile — icon + short label, whole tile pressable. */
-function QuickAction({
-  icon,
+function SummaryPill({
   label,
-  onPress,
-  disabled = false,
-  hot = false,
+  tone = 'sage',
 }: {
-  icon: ReactNode;
   label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  hot?: boolean;
+  tone?: 'sage' | 'warm';
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={() => {
-        haptics.select();
-        onPress();
-      }}
-      className={cn(
-        'flex-1 items-center gap-1 rounded-lg border border-border-subtle bg-surface py-sm active:opacity-90',
-        hot && 'border-accent bg-accent',
-        disabled && 'opacity-50'
-      )}
+    <View
+      className={`rounded-pill px-sm py-xs ${
+        tone === 'warm' ? 'bg-warning-bg' : 'bg-success-bg'
+      }`}
     >
-      {icon}
       <Text
-        numberOfLines={1}
-        className={cn(
-          'font-body-semi text-caption text-foreground',
-          hot && 'text-primary-fg'
-        )}
+        className={`font-body-semi text-caption ${
+          tone === 'warm' ? 'text-warning-dark' : 'text-success-dark'
+        }`}
       >
         {label}
       </Text>
-    </Pressable>
-  );
-}
-
-/**
- * Hero + quick actions + In/Out cells. All amounts come server-computed
- * (myDue/receiving on each listMyGroups item); this only sums for display.
- */
-function HomeHeader({ groups }: { groups: GroupListItem[] }) {
-  const { t, i18n } = useTranslation();
-  const theme = useAppTheme();
-  const locale = toIntlLocale(i18n.language);
-
-  const dues = groups.filter((g) => g.myDue !== null);
-  const totalDue = dues.reduce((sum, g) => sum + (g.myDue?.amount ?? 0), 0);
-  const nearestDue = [...dues].sort(
-    (a, b) => (a.myDue?.dueAt ?? 0) - (b.myDue?.dueAt ?? 0)
-  )[0];
-  const receivings = groups.filter((g) => g.receiving !== null);
-  const totalReceiving = receivings.reduce(
-    (sum, g) => sum + (g.receiving?.amount ?? 0),
-    0
-  );
-  const nextReceivingDate = [...receivings].sort(
-    (a, b) => (a.receiving?.date ?? 0) - (b.receiving?.date ?? 0)
-  )[0]?.receiving?.date;
-
-  const shortDate = (ts: number) =>
-    new Date(ts).toLocaleDateString(locale, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    });
-
-  return (
-    <View className="pb-sm">
-      <Text className="font-heading text-display-lg text-foreground">
-        {t('home.greeting')}
-      </Text>
-
-      {/* Net-position hero — the amount to pay leads, receiving is the delta line */}
-      <View className="pt-lg">
-        <Text className="font-body-semi text-overline uppercase text-muted">
-          {t('home.hero.due')}
-        </Text>
-        <Text className="pt-1 font-mono-bold text-stat-lg text-foreground">
-          {formatCurrencyXAF(-totalDue)}
-        </Text>
-        {totalReceiving > 0 && nextReceivingDate !== undefined ? (
-          <Text className="pt-1 font-body-medium text-body-sm text-success-dark">
-            {t('home.hero.toReceive', {
-              amount: formatCurrencyXAF(totalReceiving),
-              date: shortDate(nextReceivingDate),
-            })}
-          </Text>
-        ) : null}
-      </View>
-
-      <View className="flex-row gap-xs pt-lg">
-        <QuickAction
-          hot
-          icon={<ArrowUpIcon size={18} color={theme.primaryForeground} />}
-          label={t('home.actions.contribute')}
-          disabled={!nearestDue?.myDue}
-          onPress={() => {
-            if (!nearestDue?.myDue) return;
-            router.push({
-              pathname: '/groups/[groupId]/rounds/[roundId]/pay',
-              params: {
-                groupId: nearestDue.groupId,
-                roundId: nearestDue.myDue.roundId,
-              },
-            });
-          }}
-        />
-        <QuickAction
-          icon={<KeyIcon size={18} color={theme.accent} />}
-          label={t('home.actions.join')}
-          onPress={() => router.push('/join-by-code')}
-        />
-        <QuickAction
-          icon={<PlusIcon size={18} color={theme.accent} />}
-          label={t('home.actions.new')}
-          onPress={() => router.push('/groups/new')}
-        />
-        <QuickAction
-          icon={<CalendarDaysIcon size={18} color={theme.accent} />}
-          label={t('home.actions.calendar')}
-          onPress={() => router.push('/calendar')}
-        />
-      </View>
-
-      <View className="pt-md">
-        <InOutCells
-          payLabel={t('home.inOut.toPay')}
-          payAmount={formatCurrencyXAF(totalDue)}
-          receiveLabel={t('home.inOut.toReceive')}
-          receiveAmount={formatCurrencyXAF(totalReceiving)}
-        />
-      </View>
-
-      <Text className="pb-sm pt-lg font-body-semi text-overline uppercase text-muted">
-        {t('home.groupsSection', { count: groups.length })}
-      </Text>
-    </View>
-  );
-}
-
-/** Empty state per docs/03 §D — warm copy, one-thumb CTAs in the bottom zone. */
-function HomeEmptyState({ topInset, bottomInset }: { topInset: number; bottomInset: number }) {
-  const { t } = useTranslation();
-  const theme = useAppTheme();
-
-  return (
-    <View
-      className="flex-1 bg-background px-lg"
-      style={{ paddingTop: topInset, paddingBottom: bottomInset + theme.spacing.xl }}
-    >
-      <View className="flex-1 items-center justify-center gap-xl">
-        <View className="h-[64px] w-[64px] items-center justify-center rounded-full bg-surface-muted">
-          <UsersIcon size={30} color={theme.textMuted} />
-        </View>
-        <View className="items-center gap-xs">
-          <Text className="text-center font-heading text-headline text-foreground">
-            {t('home.emptyTitle')}
-          </Text>
-          <Text className="max-w-[300px] text-center font-body text-body-sm text-muted">
-            {t('home.emptyBody')}
-          </Text>
-        </View>
-      </View>
-      <View className="gap-sm">
-        <AppButton
-          label={t('home.emptyCreate')}
-          icon={<PlusIcon size={18} color={theme.primaryForeground} />}
-          onPress={() => router.push('/groups/new')}
-        />
-        <AppButton
-          variant="outline"
-          label={t('home.emptyHaveLink')}
-          icon={<KeyIcon size={18} color={theme.accent} />}
-          onPress={() => router.push('/join-by-code')}
-        />
-        <Text className="pt-xs text-center font-body text-caption text-placeholder">
-          {t('auth.custodyNote')}
-        </Text>
-      </View>
     </View>
   );
 }

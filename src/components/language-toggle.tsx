@@ -31,9 +31,11 @@ export function LanguageToggle({ className }: { className?: string }) {
   };
 
   return (
+    // accessible={false}: an accessible container collapses its children on
+    // iOS, hiding the FR/EN radios from VoiceOver and UI tests.
     <View
+      accessible={false}
       accessibilityRole="radiogroup"
-      accessibilityLabel="Language"
       className={cn(
         'flex-row items-center gap-1 self-start rounded-pill border border-border bg-surface-muted p-1',
         className
@@ -43,7 +45,9 @@ export function LanguageToggle({ className }: { className?: string }) {
         <Pressable
           key={locale}
           accessibilityRole="radio"
+          accessibilityLabel={locale === 'fr' ? 'Français' : 'English'}
           accessibilityState={{ selected: current === locale }}
+          testID={`language-${locale}`}
           onPress={() => setLanguage(locale)}
           className={cn(
             'min-w-[48px] items-center rounded-pill px-sm py-[6px]',

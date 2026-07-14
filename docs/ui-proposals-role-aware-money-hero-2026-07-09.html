@@ -1,0 +1,1992 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Njangi — Proposition fusionnée · money hero sombre × rôle d'abord</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ============ page frame (design study, not the app) ============ */
+    :root {
+      /* app dark tokens — verbatim from src/lib/mobile-ui-config.json colors.dark */
+      --bg: #0C1222;
+      --surface: #141E33;
+      --surface-muted: #1A2744;
+      --text: #F1F1F1;
+      --text-muted: #9BA4B5;
+      --border: #25314A;
+      --border-subtle: #25314A55;
+      --accent: #E8A838;
+      --accent-faint: #E8A8381F;
+      --accent-muted: #E8A83833;
+      --primary-fg: #0C1222;
+      --success: #34D399;
+      --success-bg: #11352A;
+      --warning: #FBBF24;
+      --warning-bg: #35270D;
+      --danger: #F87171;
+      --danger-bg: #3A1717;
+      --info: #60A5FA;
+      --info-bg: #172554;
+      /* study frame */
+      --page: #070B16;
+      --frame-line: rgba(241, 241, 241, .1);
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(232, 168, 56, .10), transparent 26rem),
+        radial-gradient(circle at 90% 85%, rgba(96, 165, 250, .07), transparent 30rem),
+        var(--page);
+    }
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+    .page { width: min(1280px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 56px; }
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 28px;
+      align-items: end;
+      padding: 0 4px 26px;
+      border-bottom: 1px solid var(--frame-line);
+    }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--accent);
+      font: 600 12px/1.2 "JetBrains Mono", monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 28px; height: 1px; background: currentColor; }
+    h1 { margin: 12px 0 8px; max-width: 820px; font: 800 clamp(30px, 4.4vw, 54px)/1.02 "Plus Jakarta Sans", sans-serif; letter-spacing: -.035em; }
+    .lede { margin: 0; max-width: 760px; color: var(--text-muted); font-size: 15px; line-height: 1.6; }
+    .legend { text-align: right; color: var(--text-muted); font-size: 12px; line-height: 1.55; }
+    .legend strong { display: block; color: var(--text); font-size: 14px; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(270px, 330px) minmax(370px, 430px) minmax(260px, 1fr);
+      gap: clamp(22px, 3.5vw, 52px);
+      align-items: start;
+      padding-top: 34px;
+    }
+    .rail, .notes { position: sticky; top: 20px; }
+    .rail h2, .notes h2 { margin: 0 0 10px; font: 700 21px/1.15 "Plus Jakarta Sans", sans-serif; letter-spacing: -.02em; }
+    .rail > p, .notes > p { color: var(--text-muted); line-height: 1.55; font-size: 13.5px; }
+    .control-label {
+      margin: 22px 0 8px;
+      color: rgba(155, 164, 181, .8);
+      font: 600 10.5px/1.2 "JetBrains Mono", monospace;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .segmented { display: grid; gap: 7px; }
+    .persona-button, .screen-button {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 9px 13px;
+      color: var(--text-muted);
+      border: 1px solid var(--frame-line);
+      border-radius: 12px;
+      background: rgba(241, 241, 241, .03);
+      cursor: pointer;
+      text-align: left;
+      transition: background .16s ease, border-color .16s ease, transform .16s ease;
+    }
+    .screen-button { min-height: 40px; }
+    .persona-button:hover, .screen-button:hover { background: rgba(241, 241, 241, .07); transform: translateX(2px); }
+    .persona-button.active, .screen-button.active { color: var(--primary-fg); border-color: var(--accent); background: var(--accent); }
+    .persona-button small, .screen-button small { opacity: .72; font-size: 10.5px; }
+    .persona-button .mark {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      border-radius: 50%;
+      font: 600 11px "JetBrains Mono", monospace;
+      color: #fff;
+    }
+    .persona-name { display: flex; align-items: center; gap: 10px; }
+    .screen-group-label { margin: 12px 2px 5px; color: rgba(155, 164, 181, .55); font: 600 10px "JetBrains Mono", monospace; letter-spacing: .09em; text-transform: uppercase; }
+    .screen-button.unavailable { opacity: .32; pointer-events: none; }
+
+    /* ============ phone ============ */
+    .phone-stage { display: grid; place-items: center; gap: 12px; }
+    .phone {
+      width: min(100%, 398px);
+      aspect-ratio: 398 / 830;
+      padding: 11px;
+      border: 1px solid rgba(241, 241, 241, .14);
+      border-radius: 52px;
+      background: #04060d;
+      box-shadow: 0 34px 90px rgba(0, 0, 0, .55), 0 0 0 1px rgba(241, 241, 241, .06);
+      position: relative;
+    }
+    .phone::before {
+      content: "";
+      position: absolute;
+      z-index: 5;
+      width: 112px;
+      height: 28px;
+      left: 50%;
+      top: 19px;
+      transform: translateX(-50%);
+      border-radius: 22px;
+      background: #04060d;
+    }
+    .phone-screen {
+      height: 100%;
+      overflow: hidden;
+      border-radius: 42px;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 100% 0, rgba(232, 168, 56, .07), transparent 16rem),
+        var(--bg);
+      position: relative;
+    }
+    .status-bar {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 24px 0;
+      font: 600 12px "JetBrains Mono", monospace;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 3;
+    }
+    .status-icons { display: flex; gap: 6px; align-items: center; }
+    .status-icons span { display: block; width: 13px; height: 7px; border-radius: 2px; background: var(--text-muted); }
+    .status-icons span:first-child { width: 8px; border-radius: 50%; }
+    .app-view {
+      position: absolute;
+      inset: 44px 0 72px;
+      padding: 13px 18px 28px;
+      overflow-y: auto;
+      scrollbar-width: none;
+      animation: enter .26s ease both;
+    }
+    .app-view::-webkit-scrollbar { display: none; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .phone-caption { color: rgba(155, 164, 181, .7); font: 500 11px "JetBrains Mono", monospace; letter-spacing: .06em; }
+
+    /* ============ app vocabulary (mirrors token classes) ============ */
+    .app-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .app-top .context { color: var(--text-muted); font: 600 10px "JetBrains Mono", monospace; letter-spacing: .09em; text-transform: uppercase; }
+    .avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      color: var(--primary-fg);
+      background: var(--accent);
+      font: 700 12px "JetBrains Mono", monospace;
+      box-shadow: 0 0 0 3px var(--accent-faint);
+      cursor: pointer;
+    }
+    .screen-title { margin: 15px 0 4px; font: 800 28px/1.05 "Plus Jakarta Sans", sans-serif; letter-spacing: -.03em; }
+    .screen-subtitle { margin: 0 0 16px; color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+    .section-label { margin: 18px 2px 8px; color: var(--text-muted); font: 600 10px "JetBrains Mono", monospace; letter-spacing: .09em; text-transform: uppercase; }
+    .card {
+      margin-bottom: 10px;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+    }
+    .card.primary { border-color: var(--accent-muted); background: linear-gradient(160deg, var(--surface), #241F26); }
+    .card.issue { border-color: rgba(248, 113, 113, .3); background: linear-gradient(160deg, var(--surface), var(--danger-bg)); }
+    .card.success { border-color: rgba(52, 211, 153, .28); background: linear-gradient(160deg, var(--surface), var(--success-bg)); }
+    .card.info { border-color: rgba(96, 165, 250, .3); background: linear-gradient(160deg, var(--surface), var(--info-bg)); }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .card-kicker { color: var(--accent); font: 600 9.5px "JetBrains Mono", monospace; letter-spacing: .07em; text-transform: uppercase; }
+    .card-title { margin: 4px 0 2px; font-size: 16px; font-weight: 700; letter-spacing: -.015em; }
+    .card-copy { color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+    .amount { margin: 8px 0 4px; font: 700 28px/1 "JetBrains Mono", monospace; letter-spacing: -.045em; }
+    .pill { white-space: nowrap; padding: 5px 9px; border-radius: 999px; color: var(--success); background: var(--success-bg); font-size: 10px; font-weight: 700; }
+    .pill.warn { color: var(--warning); background: var(--warning-bg); }
+    .pill.red { color: var(--danger); background: var(--danger-bg); }
+    .pill.info { color: var(--info); background: var(--info-bg); }
+    .pill.neutral { color: var(--text-muted); background: var(--surface-muted); }
+    .cta {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 13px;
+      border: 0;
+      border-radius: 13px;
+      color: var(--text);
+      background: var(--surface-muted);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .16s ease, filter .16s ease;
+    }
+    .cta:hover { transform: translateY(-1px); filter: brightness(1.12); }
+    .cta.gold { color: var(--primary-fg); background: var(--accent); }
+    .cta.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .cta[disabled] { opacity: .45; cursor: not-allowed; }
+    .text-action { min-height: 40px; display: flex; align-items: center; gap: 7px; margin-top: 6px; color: var(--accent); font-size: 12px; font-weight: 700; }
+    .icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .icon.small { width: 15px; height: 15px; }
+
+    .list-row { min-height: 56px; display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid var(--border-subtle); }
+    .list-row:first-child { border-top: 0; }
+    .row-icon { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border-radius: 11px; color: var(--accent); background: var(--accent-faint); }
+    .row-icon.green { color: var(--success); background: var(--success-bg); }
+    .row-icon.red { color: var(--danger); background: var(--danger-bg); }
+    .row-icon.info { color: var(--info); background: var(--info-bg); }
+    .row-main { min-width: 0; flex: 1; }
+    .row-main b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+    .row-main span { display: block; margin-top: 2px; color: var(--text-muted); font-size: 11px; line-height: 1.4; }
+    .chevron { color: var(--text-muted); font-size: 20px; opacity: .7; }
+
+    /* group hue: ring for live groups, dot for dormant — the ONE bold hue use */
+    .ring {
+      width: 42px; height: 42px; flex: 0 0 42px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font: 700 9.5px "JetBrains Mono", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(closest-side, var(--surface) 73%, transparent 74%),
+        conic-gradient(hsl(var(--hue) 55% 62%) calc(var(--pct) * 1%), #202C47 0);
+    }
+    .dot { width: 11px; height: 11px; flex: 0 0 11px; margin: 0 15px; border-radius: 50%; background: hsl(var(--hue) 45% 55%); }
+    .role-chip { margin-left: 5px; padding: 3px 7px; border-radius: 999px; color: var(--text-muted); background: var(--surface-muted); font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; vertical-align: 2px; }
+
+    .money-strip { display: flex; gap: 9px; margin: 4px 0 6px; }
+    .money-strip .cell { flex: 1; padding: 11px 13px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-muted); }
+    .money-strip .k { display: block; color: var(--text-muted); font: 600 9.5px "JetBrains Mono", monospace; letter-spacing: .08em; }
+    .money-strip .v { display: block; margin-top: 3px; font: 700 17px "JetBrains Mono", monospace; letter-spacing: -.03em; }
+    .money-strip .v.in { color: var(--success); }
+    .money-strip .v.muted { color: var(--text-muted); }
+
+    .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 10px; }
+    .metric { padding: 12px; border-radius: 14px; background: var(--surface-muted); }
+    .metric b { display: block; font: 700 16px "JetBrains Mono", monospace; letter-spacing: -.03em; }
+    .metric span { color: var(--text-muted); font-size: 10px; line-height: 1.35; display: block; margin-top: 2px; }
+
+    .progress { height: 7px; margin: 12px 0 7px; overflow: hidden; border-radius: 999px; background: #202C47; }
+    .progress > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #C98F26, var(--accent)); }
+
+    .banner { margin: 2px 0 10px; padding: 10px 13px; border-radius: 12px; font-size: 12px; font-weight: 600; line-height: 1.45; border: 1px solid var(--border); background: var(--surface-muted); color: var(--text); }
+    .banner.success { color: var(--success); background: var(--success-bg); border-color: rgba(52, 211, 153, .25); }
+    .banner.warn { color: var(--warning); background: var(--warning-bg); border-color: rgba(251, 191, 36, .25); }
+    .banner.danger { color: var(--danger); background: var(--danger-bg); border-color: rgba(248, 113, 113, .25); }
+
+    .member-line { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 7px 0; color: var(--text-muted); font-size: 11px; }
+    .member-line strong { color: var(--text); font-size: 12px; }
+
+    .field { display: block; margin-bottom: 9px; padding: 11px 13px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-muted); }
+    .f-label { display: block; color: var(--text-muted); font: 600 9.5px "JetBrains Mono", monospace; letter-spacing: .07em; text-transform: uppercase; }
+    .f-value { display: block; margin-top: 3px; font-size: 14px; font-weight: 600; }
+
+    .radio-row { display: flex; align-items: center; gap: 11px; padding: 11px 0; border-top: 1px solid var(--border-subtle); cursor: pointer; }
+    .radio-row:first-child { border-top: 0; }
+    .radio { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%; border: 2px solid var(--border); }
+    .radio-row.selected .radio { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 42%, transparent 46%); }
+
+    .code-row { display: flex; gap: 8px; justify-content: center; margin: 14px 0; }
+    .code-box { width: 44px; height: 54px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-muted); font: 700 22px "JetBrains Mono", monospace; }
+    .code-box.empty { color: var(--text-muted); border-style: dashed; }
+
+    .step-dots { display: flex; gap: 7px; justify-content: center; margin: 16px 0 4px; }
+    .step-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--surface-muted); }
+    .step-dots span.on { width: 20px; background: var(--accent); }
+
+    .bottom-nav {
+      position: absolute;
+      inset: auto 0 0;
+      height: 72px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: center;
+      border-top: 1px solid var(--border);
+      background: rgba(12, 18, 34, .92);
+      backdrop-filter: blur(14px);
+    }
+    .nav-item { display: grid; place-items: center; gap: 3px; border: 0; color: var(--text-muted); background: transparent; font-size: 9px; font-weight: 600; cursor: pointer; }
+    .nav-item.active { color: var(--accent); }
+    .nav-item .nav-icon { width: 21px; height: 21px; position: relative; }
+    .nav-badge { position: absolute; top: -6px; right: -9px; min-width: 16px; height: 16px; padding: 0 4px; display: grid; place-items: center; border-radius: 9px; color: #fff; background: var(--danger); font: 600 9px "JetBrains Mono", monospace; }
+
+    /* ============ notes rail ============ */
+    .note-card { margin-top: 12px; padding: 15px; border: 1px solid var(--frame-line); border-radius: 16px; background: rgba(241, 241, 241, .035); }
+    .note-card strong { display: block; margin-bottom: 6px; color: var(--accent); font: 600 10.5px "JetBrains Mono", monospace; letter-spacing: .07em; text-transform: uppercase; }
+    .note-card p { margin: 0; font-size: 13px; line-height: 1.5; color: rgba(241, 241, 241, .85); }
+    .principles { margin: 10px 0 0; padding: 0; list-style: none; }
+    .principles li { display: flex; gap: 9px; padding: 9px 0; border-top: 1px solid rgba(241, 241, 241, .07); color: rgba(241, 241, 241, .78); font-size: 12.5px; line-height: 1.45; }
+    .principles li::before { content: ""; width: 6px; height: 6px; flex: 0 0 6px; margin-top: 6px; border-radius: 50%; background: var(--accent); }
+    .footer-note { margin-top: 26px; color: rgba(155, 164, 181, .6); font: 500 11px/1.6 "JetBrains Mono", monospace; }
+
+    @media (max-width: 1060px) {
+      .workspace { grid-template-columns: minmax(240px, 300px) minmax(360px, 430px); justify-content: center; }
+      .notes { position: static; grid-column: 1 / -1; }
+    }
+    @media (max-width: 780px) {
+      .page { width: min(100% - 20px, 520px); padding-top: 20px; }
+      .masthead { grid-template-columns: 1fr; }
+      .legend { text-align: left; }
+      .workspace { grid-template-columns: 1fr; padding-top: 22px; }
+      .rail { position: static; }
+      .segmented.personas { grid-template-columns: repeat(3, 1fr); }
+      .persona-button { justify-content: center; padding: 9px 5px; }
+      .persona-button small, .persona-button .mark { display: none; }
+      .segmented.screens { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-groups" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.4-3 2.2-5 5.5-5s5.1 2 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.2 14.4c3.2-.7 5.1 1.1 5.3 4.1"/></symbol>
+    <symbol id="i-actions" viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="m8 9 1.5 1.5L12 8M8 15h8"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-money" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M7 9h.01M17 15h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4m0 3h.01"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20c.5-4 2.7-6 7-6s6.5 2 7 6"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8"/><path d="M4 4v4h4M12 8v5l3 2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.5 8.1 7 10 4.5-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  </svg>
+
+  <main class="page">
+    <header class="masthead">
+      <div>
+        <div class="eyebrow">Proposition fusionnée · 09 juillet 2026</div>
+        <h1>Le rôle décide de ce qui mène. L'argent reste toujours visible.</h1>
+        <p class="lede">Fusion des deux directions retenues : l'architecture « qu'est-ce qui a besoin de moi ? » de la proposition rôle-d'abord, portée par le langage visuel sombre « money hero » (iter-3) et les vrais tokens de <code>mobile-ui-config.json</code>. Copies en français d'abord, montants « 10 000 F », mains — jamais des membres, états serveur traduits en phrases humaines.</p>
+      </div>
+      <div class="legend"><strong>Njangi · direction fusionnée</strong>Données fictives · aucun changement produit</div>
+    </header>
+
+    <section class="workspace">
+      <aside class="rail" aria-label="Contrôles de la maquette">
+        <h2>Choisir une personne</h2>
+        <p>Le rôle est porté par l'adhésion, pas par la personne : Marie est trésorière dans un groupe et simple membre dans un autre — son écran mélange les deux.</p>
+        <div class="control-label">Personne</div>
+        <div class="segmented personas" id="persona-controls"></div>
+        <div class="control-label">Écran</div>
+        <div class="segmented screens" id="screen-controls"></div>
+      </aside>
+
+      <div class="phone-stage">
+        <div class="phone" aria-label="Maquette mobile interactive Njangi">
+          <div class="phone-screen">
+            <div class="status-bar"><span>09:41</span><div class="status-icons"><span></span><span></span><span></span></div></div>
+            <div class="app-view" id="app-view" aria-live="polite"></div>
+            <nav class="bottom-nav" id="bottom-nav" aria-label="Navigation principale"></nav>
+          </div>
+        </div>
+        <div class="phone-caption" id="phone-caption"></div>
+      </div>
+
+      <aside class="notes">
+        <h2>Quoi juger</h2>
+        <p>Architecture de l'information + langage visuel. Les flux réels du code sont respectés.</p>
+        <div class="note-card">
+          <strong id="note-title">—</strong>
+          <p id="note-copy">—</p>
+        </div>
+        <div class="note-card">
+          <strong>Règles partagées</strong>
+          <ul class="principles">
+            <li>La prochaine étape mène ; l'argent suit en bandeau « à payer / à recevoir » — jamais de signe négatif.</li>
+            <li>On compte des mains, pas des membres.</li>
+            <li>Trois destinations permanentes : Aujourd'hui, Njangis, Actions. Le profil vit sous l'avatar.</li>
+            <li>États serveur = phrases humaines, avec les minuteurs automatiques annoncés.</li>
+            <li>Teinte du groupe = anneau de progression + point, rien d'autre (colorSeed).</li>
+            <li>« Njangi ne détient jamais vos fonds » partout où l'argent apparaît.</li>
+            <li>L'historique existe toujours, mais ne mène jamais.</li>
+          </ul>
+        </div>
+        <div class="note-card">
+          <strong>Implications backend</strong>
+          <p>Le badge Actions exige un compteur dénormalisé par adhésion (pas de comptage <code>.collect()</code> dans listMyGroups). Migration 5 → 3 onglets : allowlist des deep-links push et routes calendrier/inbox à replier. Litige : raisons du schéma, résolution présidentielle only.</p>
+        </div>
+        <div class="footer-note">Astuce : comparez le même écran entre Paul (membre), Marie (trésorière + membre) et Alice (présidente + bénéficiaire).</div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const icons = (name, cls = "") => `<svg class="icon ${cls}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
+
+    const personas = [
+      { id: "paul", label: "Paul", hint: "Membre partout", mark: "PN", hue: 24 },
+      { id: "marie", label: "Marie", hint: "Trésorière + membre", mark: "MN", hue: 158 },
+      { id: "alice", label: "Alice", hint: "Présidente + bénéficiaire", mark: "AM", hue: 262 }
+    ];
+
+    const screenGroups = [
+      { label: "Onglets", screens: [
+        { id: "aujourdhui", label: "Aujourd'hui", hint: "Prochaine étape" },
+        { id: "njangis", label: "Njangis", hint: "Tous les cercles" },
+        { id: "actions", label: "Actions", hint: "File unique" }
+      ]},
+      { label: "Groupe", screens: [
+        { id: "groupe", label: "Détail groupe", hint: "Njangi Solidarité" },
+        { id: "tour", label: "Détail tour", hint: "Tour 1 sur 18" },
+        { id: "reunion", label: "Mode réunion", hint: "Trésorière" }
+      ]},
+      { label: "Argent", screens: [
+        { id: "payer", label: "Cotiser", hint: "Choix du moyen" },
+        { id: "ussd", label: "USSD", hint: "Hors ligne" },
+        { id: "reclamer", label: "Réclamer", hint: "Le pot du Bureau" },
+        { id: "paiement", label: "Détail paiement", hint: "Deux côtés" }
+      ]},
+      { label: "Gouvernance", screens: [
+        { id: "litige", label: "Trancher litige", hint: "Présidente" },
+        { id: "membres", label: "Membres", hint: "Approbation" }
+      ]},
+      { label: "Cycle de vie", screens: [
+        { id: "cycle", label: "Démarrer cycle", hint: "Femmes du Marché" },
+        { id: "creer", label: "Créer un njangi", hint: "—" },
+        { id: "rejoindre", label: "Rejoindre", hint: "Code 6 caractères" },
+        { id: "onboarding", label: "Onboarding", hint: "Confiance" },
+        { id: "profil", label: "Profil", hint: "Sous l'avatar" }
+      ]}
+    ];
+    const allScreens = screenGroups.flatMap(g => g.screens);
+
+    const availability = {
+      aujourdhui: ["paul", "marie", "alice"],
+      njangis: ["paul", "marie", "alice"],
+      actions: ["paul", "marie", "alice"],
+      groupe: ["paul", "marie", "alice"],
+      tour: ["paul", "marie"],
+      reunion: ["marie"],
+      payer: ["paul"],
+      ussd: ["shared"],
+      reclamer: ["paul"],
+      paiement: ["paul", "marie"],
+      litige: ["alice"],
+      membres: ["alice"],
+      cycle: ["marie"],
+      creer: ["shared"],
+      rejoindre: ["shared"],
+      onboarding: ["shared"],
+      profil: ["shared"]
+    };
+
+    const actionBadge = { paul: 1, marie: 2, alice: 2 };
+
+    const notes = {
+      aujourdhui: ["Une action dominante, l'argent en bandeau", "La première carte dit quoi faire et pourquoi. Juste dessous, « à payer / à recevoir » répond à la question money-hero — sans jamais rivaliser avec la tâche."],
+      njangis: ["Un seul foyer pour les groupes", "Anneau de teinte = progression du tour. Puce de rôle par adhésion. Un statut humain par ligne, pas un tableau de bord."],
+      actions: ["Une file de responsabilités", "Confirmations, litiges, approbations groupés par urgence — pas par type d'enregistrement. « En attente de quelqu'un d'autre » tue l'anxiété du sans-optimisme."],
+      groupe: ["Le tour courant avant la rotation", "Ce qui mène dépend du rôle porté par l'adhésion. Historique, membres et règles deviennent des destinations claires."],
+      tour: ["Deux lectures du même tour", "Paul lit l'état de SA cotisation ; Marie lit la collecte main par main. Même vérité serveur, focales différentes."],
+      reunion: ["Le mode réunion protège le registre", "Pointages en file hors ligne, synchronisés à l'ack serveur. La clôture reste verrouillée tant qu'un litige est ouvert."],
+      payer: ["Déclarer n'est pas payer", "L'app ne déplace pas l'argent : elle enregistre une déclaration que la contrepartie confirme. Le moyen choisi mène au bon écran."],
+      ussd: ["Le hors-ligne est un cas normal", "Instructions USSD embarquées (hors catalogue i18n, OTA-écrasables). Le code se compose sans réseau de données."],
+      reclamer: ["Réclamer, c'est déclarer aussi", "Un seul tap, clé d'idempotence, état « Envoi… ». Les deux parties confirment le mouvement du pot."],
+      paiement: ["Un enregistrement, deux côtés", "Le payeur voit sa chronologie et les minuteurs automatiques ; la bénéficiaire confirme ou conteste avec une raison du schéma."],
+      litige: ["Seule la présidente tranche", "Les deux déclarations face à face, la conséquence sous chaque décision. La capture d'écran est un artefact, jamais une preuve."],
+      membres: ["L'approbation est explicite", "Rejoindre par code crée une adhésion en attente. Les mains par membre sont visibles ici."],
+      cycle: ["L'ordre se fige au démarrage", "Rotation par mains, délai de grâce configurable (0–7 j). L'avertissement précède le bouton."],
+      creer: ["Créer = trois décisions", "Nom, cotisation, rythme. Le reste attend le démarrage du cycle."],
+      rejoindre: ["Six caractères, pas de lien web", "Décision assumée : pas de liens d'invitation universels. Le code s'échange de vive voix ou par WhatsApp."],
+      onboarding: ["La confiance avant les fonctionnalités", "Trois promesses : l'app ne détient jamais l'argent, le registre fait foi, les deux parties confirment."],
+      profil: ["Le profil n'est plus un onglet", "Identité, langue fr/en, téléphone optionnel vérifié par possession, notifications. Accessible via l'avatar sur chaque onglet."]
+    };
+
+    const views = {};
+    views.paul = views.paul || {};
+    views.paul["aujourdhui"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MEMBRE</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Bonjour, Paul</h2>
+    <p class="screen-subtitle">Votre prochaine action · jeudi 9 juillet, 9 h 41</p>
+
+    <div class="section-label">Votre prochaine étape</div>
+
+    <section class="card primary">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · VENDREDI 18 H</div>
+          <div class="card-title">Cotiser au tour 1</div>
+        </div>
+        <span class="pill warn">Bientôt dû</span>
+      </div>
+      <div class="amount">10 000 F</div>
+      <div class="card-copy">Vous remettez cette somme à Marie, la trésorière. Njangi ne détient jamais vos fonds.</div>
+      <button class="cta gold"><svg class="icon"><use href="#i-money"></use></svg> Cotiser 10 000 F</button>
+    </section>
+
+    <div class="money-strip">
+      <div class="cell"><span class="k">À PAYER</span><span class="v">10 000 F</span></div>
+      <div class="cell"><span class="k">À RECEVOIR</span><span class="v in">540 000 F</span></div>
+    </div>
+
+    <div class="section-label">En cours dans vos njangis</div>
+
+    <section class="card info">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI DU BUREAU · 18 JUILLET</div>
+          <div class="card-title">Vous recevez le pot</div>
+        </div>
+        <span class="pill">Tour 6 sur 18</span>
+      </div>
+      <div class="amount">540 000 F</div>
+      <div class="card-copy">Le pot vous sera remis par la trésorière lors de la réunion du 18 juillet. Espèces ou Mobile Money — jamais par l'appli.</div>
+      <div class="text-action">Voir le tour <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">FAMILLE BAYERE · TOUR 6 · DIMANCHE</div>
+          <div class="card-title">Déclaration en attente de confirmation</div>
+        </div>
+        <span class="pill info">Déclaré</span>
+      </div>
+      <div class="card-copy">Vous avez déclaré 25 000 F par MTN MoMo. Jean B., le trésorier, doit confirmer la réception — sinon, litige automatique dans 3 j.</div>
+      <div class="text-action">Voir la déclaration <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <div class="section-label">Prochaine réunion</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ</div>
+          <div class="card-title">Vendredi 10 juillet · 18 h</div>
+        </div>
+        <span class="pill warn">Demain</span>
+      </div>
+      <div class="card-copy">Alice reçoit le pot · 180 000 F attendus. 14 mains cotisées sur 18 — pensez à apporter vos espèces.</div>
+      <div class="text-action">Voir le calendrier <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>`;
+
+    views.paul = views.paul || {};
+    views.paul["njangis"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MES NJANGIS</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Njangis</h2>
+    <p class="screen-subtitle">3 cercles · 1 action attendue</p>
+
+    <div class="section-label">En cours</div>
+
+    <div class="list-row">
+      <span class="ring" style="--hue:158;--pct:78">14/18</span>
+      <span class="row-main">
+        <b>Njangi Solidarité <span class="role-chip">Membre</span></b>
+        <span>Tour 1 sur 18 · vendredi · 10 000 F à cotiser</span>
+      </span>
+      <span class="pill warn">Réunion demain</span>
+    </div>
+
+    <div class="list-row">
+      <span class="ring" style="--hue:24;--pct:56">10/18</span>
+      <span class="row-main">
+        <b>Njangi du Bureau <span class="role-chip">Membre</span></b>
+        <span>Tour 6 sur 18 · vous recevez le 18/07</span>
+      </span>
+      <span class="pill">Vous recevez</span>
+    </div>
+
+    <div class="list-row">
+      <span class="ring" style="--hue:262;--pct:75">9/12</span>
+      <span class="row-main">
+        <b>Famille Bayere <span class="role-chip">Membre</span></b>
+        <span>Tour 6 sur 12 · dimanche · déclaré, en attente de Jean</span>
+      </span>
+      <span class="pill info">Déclaré</span>
+    </div>
+
+    <button class="cta"><svg class="icon"><use href="#i-plus"></use></svg> Créer ou rejoindre un njangi</button>`;
+
+    views.paul = views.paul || {};
+    views.paul["actions"] = () => `
+    <div class="app-top"><span class="context">JEUDI · ACTIONS</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Actions</h2>
+    <p class="screen-subtitle">1 action vous attend</p>
+
+    <div class="section-label">Maintenant</div>
+
+    <section class="card primary">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · COTISATION TOUR 1</div>
+          <div class="card-title">Cotiser 10 000 F avant vendredi</div>
+        </div>
+        <span class="pill warn">Bientôt dû</span>
+      </div>
+      <div class="card-copy">Vous remettez les espèces à Marie lors de la réunion, ou déclarez un virement Mobile Money maintenant.</div>
+      <button class="cta gold"><svg class="icon"><use href="#i-money"></use></svg> Cotiser 10 000 F</button>
+    </section>
+
+    <div class="section-label">En attente de quelqu'un d'autre</div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">FAMILLE BAYERE · TOUR 6</div>
+          <div class="card-title">Votre déclaration en attente de Jean</div>
+        </div>
+        <span class="pill info">Déclaré</span>
+      </div>
+      <div class="card-copy">Vous avez déclaré 25 000 F par MTN MoMo. Jean B., le trésorier, doit confirmer la réception. Litige automatique dans 3 j si non confirmé.</div>
+      <div class="text-action">Voir la déclaration <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <div class="banner warn">⏱ Réunion Solidarité demain à 18 h — pensez à apporter 10 000 F en espèces.</div>`;
+
+    views.marie = views.marie || {};
+    views.marie["aujourdhui"] = () => `
+    <div class="app-top"><span class="context">JEUDI · TRÉSORIÈRE</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Bonjour, Marie</h2>
+    <p class="screen-subtitle">Réunion demain · 4 mains à régler</p>
+
+    <div class="section-label">Votre prochaine étape</div>
+
+    <section class="card primary">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · TRÉSORIÈRE · VENDREDI 18 H</div>
+          <div class="card-title">Ouvrir le mode réunion</div>
+        </div>
+        <span class="pill warn">Demain</span>
+      </div>
+      <div class="progress"><span style="width:78%"></span></div>
+      <div class="card-copy">14 mains cotisées sur 18 · 140 000 F au registre (dont 1 déclaration à confirmer). Reste 4 mains · 40 000 F à collecter. Alice reçoit le pot (180 000 F attendus).</div>
+      <div class="member-line"><span>Collecte enregistrée auprès de</span><strong>vous · selon le registre</strong></div>
+      <button class="cta gold"><svg class="icon"><use href="#i-people"></use></svg> Ouvrir le mode réunion</button>
+    </section>
+
+    <div class="money-strip">
+      <div class="cell"><span class="k">À PAYER</span><span class="v">25 000 F</span></div>
+      <div class="cell"><span class="k">À RECEVOIR</span><span class="v muted">—</span></div>
+    </div>
+
+    <div class="section-label">À confirmer</div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · TOUR 1</div>
+          <div class="card-title">Confirmer la déclaration de Sophie T.</div>
+        </div>
+        <span class="pill info">À confirmer</span>
+      </div>
+      <div class="card-copy">Sophie a déclaré 10 000 F par MTN MoMo (main 2/2). Votre confirmation la rend officielle dans le registre.</div>
+      <div class="text-action">Confirmer ou contester <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <div class="section-label">En attente de la présidente</div>
+
+    <section class="card issue">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · LITIGE ACTIF</div>
+          <div class="card-title">Montant contesté · Emmanuel N.</div>
+        </div>
+        <span class="pill red">Contesté</span>
+      </div>
+      <div class="card-copy">Emmanuel a déclaré 10 000 F · vous avez enregistré 6 000 F. La présidente (Alice) doit trancher — en attente de sa décision.</div>
+      <div class="text-action">Voir le litige <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <div class="section-label">Dans vos autres njangis</div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">FAMILLE BAYERE · DIMANCHE · MEMBRE</div>
+          <div class="card-title">Cotiser 25 000 F</div>
+        </div>
+        <span class="pill warn">Dimanche</span>
+      </div>
+      <div class="card-copy">Tour 6 sur 12. Vous remettez les espèces à la trésorière lors de la réunion de dimanche.</div>
+      <button class="cta"><svg class="icon"><use href="#i-money"></use></svg> Cotiser 25 000 F</button>
+    </section>
+
+    <div class="section-label">Prochaine réunion</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ</div>
+          <div class="card-title">Vendredi 10 juillet · 18 h</div>
+        </div>
+        <span class="pill warn">Demain</span>
+      </div>
+      <div class="card-copy">Alice reçoit · 180 000 F attendus. Vous encaissez les cotisations et remettez le pot.</div>
+      <div class="text-action">Voir le calendrier <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>`;
+
+    views.marie = views.marie || {};
+    views.marie["njangis"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MES NJANGIS</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Njangis</h2>
+    <p class="screen-subtitle">3 cercles · 2 actions attendues</p>
+
+    <div class="section-label">En cours</div>
+
+    <div class="list-row">
+      <span class="ring" style="--hue:158;--pct:78">14/18</span>
+      <span class="row-main">
+        <b>Njangi Solidarité <span class="role-chip">Trésorière</span></b>
+        <span>Tour 1 sur 18 · vendredi · litige ouvert</span>
+      </span>
+      <span class="pill warn">Réunion demain</span>
+    </div>
+
+    <div class="list-row">
+      <span class="ring" style="--hue:262;--pct:75">9/12</span>
+      <span class="row-main">
+        <b>Famille Bayere <span class="role-chip">Membre</span></b>
+        <span>Tour 6 sur 12 · dimanche · 25 000 F à cotiser</span>
+      </span>
+      <span class="pill warn">Bientôt dû</span>
+    </div>
+
+    <div class="section-label">En préparation</div>
+
+    <div class="list-row">
+      <span class="dot" style="--hue:340"></span>
+      <span class="row-main">
+        <b>Femmes du Marché <span class="role-chip">Trésorière</span></b>
+        <span>En préparation · invitez des membres pour démarrer</span>
+      </span>
+      <span class="pill neutral">En préparation</span>
+    </div>
+
+    <button class="cta"><svg class="icon"><use href="#i-plus"></use></svg> Créer ou rejoindre un njangi</button>`;
+
+    views.marie = views.marie || {};
+    views.marie["actions"] = () => `
+    <div class="app-top"><span class="context">JEUDI · ACTIONS</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Actions</h2>
+    <p class="screen-subtitle">2 actions vous attendent</p>
+
+    <div class="section-label">Maintenant</div>
+
+    <section class="card primary">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · TRÉSORIÈRE · TOUR 1</div>
+          <div class="card-title">Confirmer la déclaration de Sophie T.</div>
+        </div>
+        <span class="pill info">À confirmer</span>
+      </div>
+      <div class="card-copy">Sophie a déclaré 10 000 F par MTN MoMo (main 2/2). Confirmez la réception pour la rendre officielle dans le registre.</div>
+      <button class="cta gold"><svg class="icon"><use href="#i-check"></use></svg> Voir la déclaration</button>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">FAMILLE BAYERE · TOUR 6 · MEMBRE</div>
+          <div class="card-title">Cotiser 25 000 F avant dimanche</div>
+        </div>
+        <span class="pill warn">Dimanche</span>
+      </div>
+      <div class="card-copy">Vous remettez les espèces à la trésorière lors de la réunion de dimanche. Njangi ne détient jamais vos fonds.</div>
+      <button class="cta"><svg class="icon"><use href="#i-money"></use></svg> Cotiser 25 000 F</button>
+    </section>
+
+    <div class="section-label">En attente de quelqu'un d'autre</div>
+
+    <section class="card issue">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · LITIGE · TOUR 1</div>
+          <div class="card-title">Montant contesté — Emmanuel N.</div>
+        </div>
+        <span class="pill red">Contesté</span>
+      </div>
+      <div class="card-copy">Emmanuel a déclaré 10 000 F · vous avez enregistré 6 000 F en espèces. Alice, la présidente, doit trancher — en attente de sa décision.</div>
+      <div class="text-action">Voir le litige <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · MAINS NON ENREGISTRÉES</div>
+          <div class="card-title">Awa et Tata · rien d'enregistré</div>
+        </div>
+        <span class="pill neutral">Attendu</span>
+      </div>
+      <div class="card-copy">Ces 2 mains sont attendues, plus celle de Paul. Sans enregistrement à la fin du délai de grâce, elles passeront en arriéré.</div>
+      <div class="text-action">Voir les cotisations <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>`;
+
+    views.alice = views.alice || {};
+    views.alice["aujourdhui"] = () => `
+    <div class="app-top"><span class="context">JEUDI · PRÉSIDENTE</span><span class="avatar">AM</span></div>
+    <h2 class="screen-title">Bonjour, Alice</h2>
+    <p class="screen-subtitle">2 décisions vous attendent · réunion demain</p>
+
+    <div class="section-label">Votre prochaine étape</div>
+
+    <section class="card issue">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · LITIGE ACTIF</div>
+          <div class="card-title">Trancher · Emmanuel vs Marie</div>
+        </div>
+        <span class="pill red">Décision requise</span>
+      </div>
+      <div class="amount">10 000 F / 6 000 F</div>
+      <div class="card-copy">Emmanuel a déclaré avoir remis 10 000 F en espèces. Marie dit en avoir reçu 6 000 F. Votre décision sera inscrite au registre avec votre nom.</div>
+      <button class="cta gold"><svg class="icon"><use href="#i-shield"></use></svg> Trancher le litige</button>
+    </section>
+
+    <div class="money-strip">
+      <div class="cell"><span class="k">À PAYER</span><span class="v muted">—</span></div>
+      <div class="cell"><span class="k">À RECEVOIR</span><span class="v in">180 000 F</span></div>
+    </div>
+
+    <div class="section-label">Deuxième décision</div>
+
+    <section class="card info">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · ADHÉSION EN ATTENTE</div>
+          <div class="card-title">Approuver Carine</div>
+        </div>
+        <span class="pill info">En attente</span>
+      </div>
+      <div class="card-copy">Carine a rejoint via le code d'invitation. Vérifiez qu'elle est connue du groupe avant d'approuver — les njangis sont des cercles fermés de confiance.</div>
+      <button class="cta"><svg class="icon"><use href="#i-people"></use></svg> Approuver ou refuser</button>
+    </section>
+
+    <div class="section-label">Votre tour · bénéficiaire</div>
+
+    <section class="card success">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · TOUR 1</div>
+          <div class="card-title">Vous recevez le pot demain</div>
+        </div>
+        <span class="pill">Votre tour</span>
+      </div>
+      <div class="amount">180 000 F</div>
+      <div class="card-copy">Le pot vous sera remis par Marie lors de la réunion de vendredi. Espèces collectées auprès de la trésorière — jamais par l'appli.</div>
+      <div class="member-line"><span>Pot collecté auprès de</span><strong>Marie Ngono, trésorière</strong></div>
+      <div class="text-action">Voir la remise du pot <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <div class="section-label">Prochaine réunion</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ</div>
+          <div class="card-title">Vendredi 10 juillet · 18 h</div>
+        </div>
+        <span class="pill warn">Demain</span>
+      </div>
+      <div class="card-copy">14/18 mains cotisées · reste 40 000 F à collecter. Pot attendu : 180 000 F.</div>
+      <div class="text-action">Voir le tour 1 <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>`;
+
+    views.alice = views.alice || {};
+    views.alice["njangis"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MES NJANGIS</span><span class="avatar">AM</span></div>
+    <h2 class="screen-title">Njangis</h2>
+    <p class="screen-subtitle">2 cercles · 2 décisions requises</p>
+
+    <div class="section-label">En cours</div>
+
+    <div class="list-row">
+      <span class="ring" style="--hue:158;--pct:78">14/18</span>
+      <span class="row-main">
+        <b>Njangi Solidarité <span class="role-chip">Présidente</span></b>
+        <span>Tour 1 sur 18 · vendredi · vous recevez le pot</span>
+      </span>
+      <span class="pill red">2 décisions</span>
+    </div>
+
+    <div class="list-row">
+      <span class="ring" style="--hue:262;--pct:75">9/12</span>
+      <span class="row-main">
+        <b>Famille Bayere <span class="role-chip">Membre</span></b>
+        <span>Tour 6 sur 12 · dimanche · à jour ✓</span>
+      </span>
+      <span class="pill neutral">À jour</span>
+    </div>
+
+    <button class="cta"><svg class="icon"><use href="#i-plus"></use></svg> Créer ou rejoindre un njangi</button>`;
+
+    views.alice = views.alice || {};
+    views.alice["actions"] = () => `
+    <div class="app-top"><span class="context">JEUDI · ACTIONS</span><span class="avatar">AM</span></div>
+    <h2 class="screen-title">Actions</h2>
+    <p class="screen-subtitle">2 décisions requises · présidente Solidarité</p>
+
+    <div class="section-label">Maintenant</div>
+
+    <section class="card issue">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · LITIGE · TOUR 1</div>
+          <div class="card-title">Trancher · Emmanuel vs Marie</div>
+        </div>
+        <span class="pill red">Votre décision</span>
+      </div>
+      <div class="amount">10 000 F / 6 000 F</div>
+      <div class="card-copy">Emmanuel a déclaré 10 000 F en espèces. Marie a enregistré 6 000 F. Votre décision sera inscrite au registre avec votre nom.</div>
+      <div class="list-row">
+        <span class="row-icon red"><svg class="icon small"><use href="#i-alert"></use></svg></span>
+        <span class="row-main"><b>Raison du litige</b><span>Le montant est faux</span></span>
+      </div>
+      <button class="cta gold"><svg class="icon"><use href="#i-shield"></use></svg> Trancher le litige</button>
+    </section>
+
+    <section class="card info">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · ADHÉSION</div>
+          <div class="card-title">Approuver Carine</div>
+        </div>
+        <span class="pill info">En attente</span>
+      </div>
+      <div class="card-copy">Carine a rejoint via code d'invitation. Son adhésion attend une approbation — la vôtre ou celle de Marie, la trésorière. Vérifiez qu'elle est connue du groupe.</div>
+      <button class="cta"><svg class="icon"><use href="#i-people"></use></svg> Approuver ou refuser</button>
+    </section>
+
+    <div class="section-label">En attente de quelqu'un d'autre</div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · COLLECTE TOUR 1</div>
+          <div class="card-title">4 mains à régler · 40 000 F</div>
+        </div>
+        <span class="pill neutral">Attendu</span>
+      </div>
+      <div class="card-copy">Awa et Tata n'ont rien déclaré, Paul doit encore cotiser, et la main d'Emmanuel dépend de votre décision. Marie suit la collecte.</div>
+      <div class="text-action">Voir les cotisations du tour <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <div class="banner warn">⏱ Réunion Solidarité demain à 18 h — vous recevez le pot de 180 000 F.</div>`;
+
+    views.paul = views.paul || {};
+    views.paul["groupe"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MEMBRE</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Njangi Solidarité</h2>
+    <p class="screen-subtitle">Tour 1 sur 18 · Alice reçoit · réunion demain 18 h</p>
+
+    <div class="section-label">Votre prochaine étape</div>
+    <section class="card primary">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">TOUR 1 · VENDREDI 10 JUILLET</div>
+          <div class="card-title">Cotiser pour Alice</div>
+        </div>
+        <span class="pill warn">Bientôt dû</span>
+      </div>
+      <div class="amount">10 000 F</div>
+      <div class="card-copy">Vous remettez l'argent à Marie, la trésorière. Njangi ne détient jamais vos fonds.</div>
+      <button class="cta gold"><svg class="icon"><use href="#i-money"></use></svg> Cotiser 10 000 F</button>
+    </section>
+
+    <div class="section-label">Rotation · Cycle 1</div>
+    <div class="list-row">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Alice M. — Tour 1</b><span>bénéficiaire · réunion vendredi</span></span>
+      <span class="pill">CE TOUR</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon info"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Marie N. — Tour 2</b><span>trésorière · prochain tour</span></span>
+      <span class="pill neutral">À venir</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Paul N. — Tour 7 · main 1/1</b><span>votre tour · vendredi 21 août</span></span>
+      <span class="pill neutral">À venir</span>
+    </div>
+
+    <div class="section-label">Pot du tour</div>
+    <div class="money-strip">
+      <div class="cell"><span class="k">COLLECTÉ</span><span class="v">140 000 F</span></div>
+      <div class="cell"><span class="k">POT ATTENDU</span><span class="v">180 000 F</span></div>
+    </div>
+    <div class="progress"><span style="width:78%"></span></div>
+    <div class="card-copy" style="margin-top:6px">14/18 mains cotisées · reste 4 mains · Collecte enregistrée auprès de Marie, la trésorière · selon le registre.</div>
+
+    <div class="section-label">Navigation</div>
+    <div class="list-row"><span class="row-icon info"><svg class="icon small"><use href="#i-history"></use></svg></span><span class="row-main"><b>Historique des paiements</b><span>vos cotisations confirmées</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-people"></use></svg></span><span class="row-main"><b>Membres · 15</b><span>rotation et rôles</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-shield"></use></svg></span><span class="row-main"><b>Règles du groupe</b><span>10 000 F · hebdomadaire · vendredi</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Calendrier du groupe</b><span>18 tours planifiés</span></span><span class="chevron">›</span></div>`;
+
+    views.marie = views.marie || {};
+    views.marie["groupe"] = () => `
+    <div class="app-top"><span class="context">JEUDI · TRÉSORIÈRE</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Njangi Solidarité</h2>
+    <p class="screen-subtitle">Tour 1 · collecte en cours · réunion demain 18 h</p>
+
+    <div class="section-label">Collecte — Tour 1</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">VENDREDI 10 JUILLET · 18 H</div>
+          <div class="card-title">État de la collecte</div>
+        </div>
+        <span class="pill warn">Réunion demain</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><b>140 000 F</b><span>au registre · dont 1 déclaration à confirmer</span></div>
+        <div class="metric"><b>40 000 F</b><span>encore attendus</span></div>
+      </div>
+      <div class="progress"><span style="width:78%"></span></div>
+      <div class="card-copy">14/18 mains cotisées · restent 4 mains, dont 2 sans rien d'enregistré (Awa, Tata)</div>
+      <button class="cta gold"><svg class="icon"><use href="#i-people"></use></svg> Ouvrir le mode réunion</button>
+      <div class="member-line"><span>Collecte enregistrée auprès de</span><strong>vous · selon le registre</strong></div>
+    </section>
+
+    <div class="section-label">À traiter</div>
+    <section class="card issue">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">LITIGE OUVERT</div>
+          <div class="card-title">Cotisation Emmanuel N. · montant contesté</div>
+        </div>
+        <span class="pill red">Contesté</span>
+      </div>
+      <div class="card-copy">Emmanuel a déclaré 10 000 F en espèces · vous avez enregistré 6 000 F reçus. En attente de décision de la présidente.</div>
+      <div class="text-action">Voir le litige <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <section class="card info">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">ADHÉSION EN ATTENTE</div>
+          <div class="card-title">Carine a rejoint via un code</div>
+        </div>
+        <span class="pill info">En attente</span>
+      </div>
+      <div class="card-copy">Carine doit être approuvée par la présidente ou par vous avant de rejoindre le groupe.</div>
+      <div class="text-action">Voir la demande <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    </section>
+
+    <div class="section-label">Rotation · Cycle 1</div>
+    <div class="list-row">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Alice M. — Tour 1</b><span>bénéficiaire · réunion demain</span></span>
+      <span class="pill">CE TOUR</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon info"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Marie N. — Tour 2</b><span>vous recevez · prochain tour</span></span>
+      <span class="pill neutral">À venir</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Paul N. — Tour 7</b><span>membre · vendredi 21 août</span></span>
+      <span class="pill neutral">À venir</span>
+    </div>
+
+    <div class="section-label">Navigation</div>
+    <div class="list-row"><span class="row-icon info"><svg class="icon small"><use href="#i-history"></use></svg></span><span class="row-main"><b>Historique des paiements</b><span>registre complet</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-people"></use></svg></span><span class="row-main"><b>Membres · 15</b><span>dont 1 en attente d'approbation</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-shield"></use></svg></span><span class="row-main"><b>Règles du groupe</b><span>10 000 F · hebdomadaire · vendredi</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Calendrier du groupe</b><span>18 tours planifiés</span></span><span class="chevron">›</span></div>`;
+
+    views.alice = views.alice || {};
+    views.alice["groupe"] = () => `
+    <div class="app-top"><span class="context">JEUDI · PRÉSIDENTE</span><span class="avatar">AM</span></div>
+    <h2 class="screen-title">Njangi Solidarité</h2>
+    <p class="screen-subtitle">Tour 1 · vous recevez · réunion demain 18 h</p>
+
+    <div class="banner warn">⏱ Deux décisions ouvertes vous attendent avant la réunion de demain.</div>
+
+    <div class="section-label">Vos décisions</div>
+    <section class="card issue">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">LITIGE · DÉCISION DE LA PRÉSIDENTE</div>
+          <div class="card-title">Emmanuel vs Marie — montant contesté</div>
+        </div>
+        <span class="pill red">À trancher</span>
+      </div>
+      <div class="card-copy">Emmanuel a déclaré 10 000 F en espèces. Marie dit avoir reçu 6 000 F. Les trois options et leurs conséquences sont sur l'écran du litige.</div>
+      <button class="cta gold"><svg class="icon"><use href="#i-shield"></use></svg> Trancher le litige</button>
+    </section>
+
+    <section class="card info">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">ADHÉSION EN ATTENTE</div>
+          <div class="card-title">Carine — code d'invitation</div>
+        </div>
+        <span class="pill info">En attente</span>
+      </div>
+      <div class="card-copy">Carine a rejoint avec un code. Approuvez-la pour l'intégrer au groupe, ou refusez.</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="cta"><svg class="icon"><use href="#i-check"></use></svg> Approuver</button>
+        <button class="cta ghost">Refuser</button>
+      </div>
+    </section>
+
+    <div class="section-label">Santé du tour 1</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">COLLECTE EN COURS · VOUS RECEVEZ CE TOUR</div>
+          <div class="card-title">Pot attendu : 180 000 F</div>
+        </div>
+        <span class="pill warn">78 %</span>
+      </div>
+      <div class="progress"><span style="width:78%"></span></div>
+      <div class="metric-row">
+        <div class="metric"><b>14 / 18</b><span>mains cotisées</span></div>
+        <div class="metric"><b>40 000 F</b><span>encore attendus</span></div>
+      </div>
+      <div class="card-copy">Awa et Tata n'ont rien déclaré, Paul doit encore cotiser. 1 litige en cours (Emmanuel · 10 000 F contestés).</div>
+      <div class="member-line"><span>Collecte enregistrée auprès de</span><strong>Marie Ngono, la trésorière · selon le registre</strong></div>
+    </section>
+
+    <div class="section-label">Rotation · Cycle 1</div>
+    <div class="list-row">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Alice M. — Tour 1</b><span>vous recevez · réunion demain</span></span>
+      <span class="pill">CE TOUR</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon info"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Marie N. — Tour 2</b><span>trésorière · prochain tour</span></span>
+      <span class="pill neutral">À venir</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Paul N. — Tour 7</b><span>membre · vendredi 21 août</span></span>
+      <span class="pill neutral">À venir</span>
+    </div>
+
+    <div class="section-label">Navigation</div>
+    <div class="list-row"><span class="row-icon info"><svg class="icon small"><use href="#i-history"></use></svg></span><span class="row-main"><b>Historique des paiements</b><span>registre complet</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-people"></use></svg></span><span class="row-main"><b>Membres · 15</b><span>dont 1 en attente d'approbation</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-shield"></use></svg></span><span class="row-main"><b>Règles du groupe</b><span>10 000 F · hebdomadaire · vendredi</span></span><span class="chevron">›</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Calendrier du groupe</b><span>18 tours · remise du pot vendredi</span></span><span class="chevron">›</span></div>`;
+
+    views.paul = views.paul || {};
+    views.paul["tour"] = () => `
+    <div class="app-top"><span class="context">NJANGI SOLIDARITÉ · TOUR 1</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Tour 1 sur 18</h2>
+    <p class="screen-subtitle">Bénéficiaire : Alice M. · réunion vendredi 10 juillet 18 h</p>
+
+    <div class="section-label">Ma cotisation</div>
+    <section class="card primary">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">COTISATION · TOUR 1</div>
+          <div class="card-title">10 000 F — à cotiser</div>
+        </div>
+        <span class="pill warn">Attendu</span>
+      </div>
+      <div class="card-copy">Rien d'enregistré pour votre main. Remettez les espèces à Marie à la réunion, ou déclarez un paiement MoMo maintenant.</div>
+      <div class="member-line"><span>Argent à remettre à</span><strong>Marie Ngono, la trésorière</strong></div>
+      <button class="cta gold"><svg class="icon"><use href="#i-money"></use></svg> Cotiser 10 000 F</button>
+    </section>
+
+    <div class="section-label">Pot du tour</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">COLLECTE EN COURS</div>
+          <div class="card-title">Pot attendu : 180 000 F</div>
+        </div>
+        <span class="pill warn">78 %</span>
+      </div>
+      <div class="progress"><span style="width:78%"></span></div>
+      <div class="money-strip">
+        <div class="cell"><span class="k">ENREGISTRÉ</span><span class="v in">140 000 F</span></div>
+        <div class="cell"><span class="k">ENCORE ATTENDU</span><span class="v">40 000 F</span></div>
+      </div>
+      <div class="card-copy">14/18 mains cotisées · Collecte enregistrée auprès de Marie Ngono, la trésorière · selon le registre.</div>
+    </section>
+
+    <div class="section-label">Cotisations des membres</div>
+    <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Alice M. <span style="font-weight:400;opacity:.6">(bénéficiaire)</span></b><span>confirmé · 10 000 F</span></span><span class="pill">Confirmé</span></div>
+    <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Marie N.</b><span>confirmé · 10 000 F</span></span><span class="pill">Confirmé</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Paul N. <span style="font-weight:400;font-size:.8em">(Vous)</span></b><span>attendu · 10 000 F — rien d'enregistré</span></span><span class="pill warn">Attendu</span></div>
+    <div class="list-row"><span class="row-icon red"><svg class="icon small"><use href="#i-alert"></use></svg></span><span class="row-main"><b>Emmanuel N.</b><span>contesté · 10 000 F déclarés / 6 000 F enregistrés</span></span><span class="pill red">Contesté</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Awa B.</b><span>attendu · 10 000 F</span></span><span class="pill neutral">Attendu</span></div>
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Tata M.</b><span>attendu · 10 000 F</span></span><span class="pill neutral">Attendu</span></div>
+    <div class="card-copy" style="margin-top:4px;font-size:.8em;opacity:.6">+ 9 autres membres · 12 mains cotisées</div>
+
+    <div class="text-action" style="margin-top:16px">Voir l'historique complet <svg class="icon small"><use href="#i-arrow"></use></svg></div>`;
+
+    views.marie = views.marie || {};
+    views.marie["tour"] = () => `
+    <div class="app-top"><span class="context">NJANGI SOLIDARITÉ · TOUR 1 · TRÉSORIÈRE</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Tour 1 sur 18</h2>
+    <p class="screen-subtitle">Alice M. reçoit · réunion vendredi 10 juillet 18 h</p>
+
+    <div class="section-label">Collecte — vos actions</div>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">COLLECTE EN COURS · VENDREDI 18 H</div>
+          <div class="card-title">14 / 18 mains cotisées</div>
+        </div>
+        <span class="pill warn">78 %</span>
+      </div>
+      <div class="progress"><span style="width:78%"></span></div>
+      <div class="metric-row">
+        <div class="metric"><b>140 000 F</b><span>au registre · dont 1 déclaration à confirmer</span></div>
+        <div class="metric"><b>40 000 F</b><span>encore attendus</span></div>
+      </div>
+      <div class="card-copy">Awa et Tata n'ont rien déclaré, Paul doit encore cotiser. 1 litige ouvert (Emmanuel · montant contesté).</div>
+      <div class="member-line"><span>Collecte enregistrée auprès de</span><strong>vous · selon le registre</strong></div>
+      <button class="cta gold"><svg class="icon"><use href="#i-people"></use></svg> Ouvrir le mode réunion</button>
+    </section>
+
+    <div class="section-label">Cotisations — détail par main</div>
+
+    <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Alice M. <span style="font-weight:400;opacity:.6">(bénéficiaire)</span></b><span>confirmé · espèces · 10 000 F</span></span><span class="pill">Confirmé</span></div>
+
+    <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Marie N. <span style="font-weight:400;font-size:.8em">(Vous)</span></b><span>confirmé · auto — même personne · 10 000 F</span></span><span class="pill">Confirmé</span></div>
+
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Paul N.</b><span>attendu · 10 000 F — rien d'enregistré</span></span><span class="pill neutral">Attendu</span></div>
+
+    <div class="list-row"><span class="row-icon red"><svg class="icon small"><use href="#i-alert"></use></svg></span><span class="row-main"><b>Emmanuel N.</b><span>contesté — il a déclaré 10 000 F · vous avez enregistré 6 000 F</span></span><span class="pill red">Contesté</span></div>
+
+    <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Brigitte E.</b><span>confirmé · MTN MoMo · 10 000 F</span></span><span class="pill">Confirmé</span></div>
+
+    <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Claire F.</b><span>confirmé · espèces · 10 000 F</span></span><span class="pill">Confirmé</span></div>
+
+    <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Sophie T. · main 1/2</b><span>confirmé · MTN MoMo · 10 000 F</span></span><span class="pill">Confirmé</span></div>
+
+    <div class="list-row"><span class="row-icon info"><svg class="icon small"><use href="#i-alert"></use></svg></span><span class="row-main"><b>Sophie T. · main 2/2</b><span>déclaré par elle · 10 000 F — touchez pour confirmer</span></span><span class="pill info">À confirmer</span></div>
+
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Awa B.</b><span>attendu · 10 000 F — rien d'enregistré</span></span><span class="pill neutral">Attendu</span></div>
+
+    <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>Tata M.</b><span>attendu · 10 000 F — rien d'enregistré</span></span><span class="pill neutral">Attendu</span></div>
+
+    <div class="card-copy" style="margin-top:4px;font-size:.8em;opacity:.6">+ 6 autres membres · 8 mains confirmées (dont Bernadette K., 2 mains)</div>
+
+    <div class="section-label">Remise du pot</div>
+    <section class="card info">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">POT · COLLECTE EN COURS</div>
+          <div class="card-title">Prêt à remettre le pot à Alice</div>
+        </div>
+        <span class="pill neutral">Dès la réunion</span>
+      </div>
+      <div class="card-copy">Le pot peut être remis à Alice avant même la clôture de la collecte. Vous saisissez le montant réel remis — l'appli enregistre la réalité.</div>
+      <button class="cta"><svg class="icon"><use href="#i-money"></use></svg> Marquer le pot remis</button>
+    </section>
+
+    <div class="text-action" style="margin-top:16px">Voir l'historique complet <svg class="icon small"><use href="#i-arrow"></use></svg></div>`;
+
+    views.marie = views.marie || {};
+    views.marie["reunion"] = () => `
+    <div class="app-top"><span class="context">MODE RÉUNION · TRÉSORIÈRE</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Mode réunion</h2>
+    <p class="screen-subtitle">Espèces chez vous · Njangi Solidarité · Tour 1</p>
+
+    <div class="banner warn">☁ 2 entrées sauvegardées sur ce téléphone · synchronisation en cours. Vous pouvez changer d'application sans les perdre.</div>
+
+    <div class="section-label">Appel · 18 mains</div>
+    <div class="card-copy" style="margin-bottom:8px;font-size:.82em;opacity:.7">Touchez un nom pour enregistrer les espèces reçues. Appui long pour saisir un montant partiel. Les pointages sont conservés hors ligne puis synchronisés.</div>
+
+    <!-- Settled rows -->
+    <div class="list-row" style="opacity:.55">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Alice M. <span style="font-weight:400;opacity:.7">(bénéficiaire)</span></b><span>confirmé · espèces</span></span>
+      <span class="pill">Confirmé</span>
+    </div>
+    <div class="list-row" style="opacity:.55">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Marie N. <span style="font-weight:400;font-size:.8em">(Vous)</span></b><span>confirmé · auto — même personne</span></span>
+      <span class="pill">Confirmé</span>
+    </div>
+    <div class="list-row" style="opacity:.55">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Brigitte E.</b><span>confirmé · MTN MoMo</span></span>
+      <span class="pill">Confirmé</span>
+    </div>
+    <div class="list-row" style="opacity:.55">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Claire F.</b><span>confirmé · espèces · mode réunion</span></span>
+      <span class="pill">Confirmé</span>
+    </div>
+    <div class="list-row" style="opacity:.55">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Sophie T. · main 1/2</b><span>confirmé · MTN MoMo</span></span>
+      <span class="pill">Confirmé</span>
+    </div>
+
+    <!-- Payer-claimed row — tap to confirm -->
+    <div class="list-row" style="background:var(--accent-faint);border-radius:8px;padding:10px 8px">
+      <span class="row-icon info"><svg class="icon small"><use href="#i-alert"></use></svg></span>
+      <span class="row-main"><b>Sophie T. · main 2/2</b><span>a déclaré (MTN MoMo) — touchez pour confirmer · 10 000 F</span></span>
+      <span class="pill info">À confirmer</span>
+    </div>
+
+    <!-- Pending rows — tap to record -->
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-money"></use></svg></span>
+      <span class="row-main"><b>Paul N.</b><span>attendu · 10 000 F</span></span>
+      <span class="pill neutral">Toucher</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-money"></use></svg></span>
+      <span class="row-main"><b>Awa B.</b><span>attendu · 10 000 F</span></span>
+      <span class="pill neutral">Toucher</span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-money"></use></svg></span>
+      <span class="row-main"><b>Tata M.</b><span>attendu · 10 000 F</span></span>
+      <span class="pill neutral">Toucher</span>
+    </div>
+
+    <!-- Disputed row — tapping opens the payment screen -->
+    <div class="list-row" style="background:var(--danger-bg);border-radius:8px;padding:10px 8px">
+      <span class="row-icon red"><svg class="icon small"><use href="#i-alert"></use></svg></span>
+      <span class="row-main"><b>Emmanuel N.</b><span>contesté — montant en litige · touchez pour ouvrir</span></span>
+      <span class="pill red">Contesté</span>
+    </div>
+
+    <div class="card-copy" style="margin-top:4px;font-size:.8em;opacity:.6">+ 6 autres membres · 8 mains confirmées (non affichés)</div>
+
+    <div class="section-label">Pot en cours</div>
+    <div class="money-strip">
+      <div class="cell"><span class="k">ENREGISTRÉ</span><span class="v in">140 000 F</span></div>
+      <div class="cell"><span class="k">ENCORE ATTENDU</span><span class="v">40 000 F</span></div>
+    </div>
+    <div class="member-line" style="margin-top:8px"><span>Collecte enregistrée auprès de</span><strong>vous · selon le registre</strong></div>
+
+    <div class="section-label">Clôturer la réunion</div>
+    <section class="card">
+      <div class="card-copy"><svg class="icon small" style="vertical-align:middle"><use href="#i-alert"></use></svg> Le litige d'Emmanuel N. doit être tranché par la présidente avant de pouvoir clôturer. Réglez d'abord le litige.</div>
+      <button class="cta" disabled style="opacity:.45;cursor:not-allowed">Terminer la réunion</button>
+    </section>
+
+    <div class="card-copy" style="margin-top:8px;font-size:.8em;opacity:.6">Lisez les saisies à voix haute — c'est le reçu des membres sans l'appli.</div>`;
+
+    views.paul = views.paul || {};
+    views.paul["payer"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MEMBRE</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Cotiser · Tour 1</h2>
+    <p class="screen-subtitle">Njangi Solidarité · Marie Ngono, trésorière</p>
+
+    <div class="section-label">Montant à payer</div>
+    <section class="card primary">
+      <div class="card-head"><div><div class="card-kicker">NJANGI SOLIDARITÉ · TOUR 1</div><div class="card-title">Votre cotisation</div></div><span class="pill warn">Réunion demain</span></div>
+      <div class="amount">10 000 F</div>
+      <div class="card-copy">Vous remettez cet argent à Marie Ngono, la trésorière. Njangi ne détient jamais vos fonds.</div>
+    </section>
+
+    <div class="section-label">Comment payez-vous ?</div>
+
+    <div class="radio-row"><span class="radio"></span><span class="row-main"><b>MTN MoMo</b><span>via le menu *126# — instructions pas à pas</span></span></div>
+    <div class="radio-row"><span class="radio"></span><span class="row-main"><b>Orange Money</b><span>via le menu #150# — instructions pas à pas</span></span></div>
+    <div class="radio-row selected"><span class="radio"></span><span class="row-main"><b>Espèces, à la réunion</b><span>Apportez 10 000 F demain · Marie cochera votre nom</span></span></div>
+
+    <section class="card info" style="margin-top:12px">
+      <div class="card-copy">Vous avez déjà remis les espèces à Marie ? Déclarez-le maintenant — Marie doit confirmer pour que ce soit officiel.</div>
+      <button class="cta gold" style="margin-top:10px"><svg class="icon"><use href="#i-money"></use></svg> J'ai remis les espèces → Déclarer</button>
+    </section>
+
+    <div class="banner warn" style="margin-top:14px">Déclarer n'est pas payer. C'est la confirmation de Marie qui rend votre cotisation officielle — pas votre déclaration.</div>
+
+    <div class="member-line" style="margin-top:10px"><span>Argent remis directement à</span><strong>Marie Ngono, trésorière</strong></div>`;
+
+    views.shared = views.shared || {};
+    views.shared["ussd"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MEMBRE</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Payer avec MTN MoMo</h2>
+    <p class="screen-subtitle">Tour 1 · 10 000 F → Marie Ngono</p>
+
+    <div class="banner warn">Les menus *126# / #150# peuvent changer. Vérifiez chaque étape sur l'écran de votre téléphone.</div>
+
+    <div class="section-label">Informations à copier</div>
+    <section class="card">
+      <label class="field"><span class="f-label">Numéro de Marie Ngono</span><span class="f-value" style="font-family:monospace">6 70 XX XX XX</span></label>
+      <label class="field" style="margin-top:8px"><span class="f-label">Montant</span><span class="f-value" style="font-family:monospace">10000</span></label>
+      <label class="field" style="margin-top:8px"><span class="f-label">Référence (motif)</span><span class="f-value" style="font-family:monospace">Solidarité T1</span></label>
+    </section>
+
+    <div class="section-label">Étapes</div>
+    <section class="card">
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">1.</span><span>Composez <b style="font-family:monospace">*126#</b> sur votre SIM MTN et appelez.</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">2.</span><span>Le menu MTN MoMo s'affiche. Choisissez <b>1 — Transfert d'argent</b>.</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">3.</span><span>Choisissez <b>1 — Vers un numéro MTN MoMo</b>.</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">4.</span><span>Entrez le numéro de <b>Marie Ngono</b> : <b style="font-family:monospace">6 70 XX XX XX</b> (copiez depuis ci-dessus).</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">5.</span><span>Entrez le montant : <b style="font-family:monospace">10000</b> (sans espaces ni points).</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">6.</span><span>Si MTN demande un motif, entrez : <b style="font-family:monospace">Solidarité T1</b>.</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">7.</span><span>Vérifiez l'écran : le nom affiché doit être celui de <b>Marie Ngono</b> et le montant correct.</span></div>
+      <div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:600;min-width:20px">8.</span><span>Entrez votre code PIN MoMo pour confirmer.</span></div>
+      <div style="display:flex;gap:10px"><span style="color:var(--accent);font-weight:600;min-width:20px">9.</span><span>Vous recevez un SMS de MTN. Gardez une capture d'écran — utile en cas de litige (elle ne vaut jamais confirmation).</span></div>
+    </section>
+
+    <div style="margin-top:4px;margin-bottom:6px;font-size:11px;color:var(--text-muted);text-align:center">Ces instructions fonctionnent hors connexion.</div>
+
+    <button class="cta gold" style="width:100%;margin-bottom:10px"><svg class="icon"><use href="#i-phone"></use></svg> Composer *126#</button>
+    <div class="text-action" style="text-align:center;margin-bottom:10px">Copier le code *126# <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+    <button class="cta" style="width:100%">J'ai envoyé → Déclarer <svg class="icon small"><use href="#i-arrow"></use></svg></button>`;
+
+    views.paul = views.paul || {};
+    views.paul["reclamer"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MEMBRE</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Réclamer le pot</h2>
+    <p class="screen-subtitle">Njangi du Bureau · Tour 6 sur 18 · 18 juillet</p>
+
+    <div class="section-label">Votre tour arrive</div>
+    <section class="card success">
+      <div class="card-head"><div><div class="card-kicker">NJANGI DU BUREAU · TOUR 6</div><div class="card-title">Vous recevez le pot</div></div><span class="pill">Votre tour</span></div>
+      <div class="amount">540 000 F</div>
+      <div class="card-copy">Le pot vous sera remis par la trésorière dès la réunion du samedi 18 juillet — la remise peut se faire avant même la clôture de la collecte.</div>
+    </section>
+
+    <div class="section-label">Comment ça marche</div>
+    <section class="card">
+      <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Les membres cotisent</b><span>18 mains confirment leur paiement auprès de la trésorière</span></span></div>
+      <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>La trésorière déclare la remise</b><span>Elle enregistre le pot remis — 540 000 F</span></span></div>
+      <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-money"></use></svg></span><span class="row-main"><b>Vous confirmez avoir reçu</b><span>Votre confirmation rend la remise officielle dans le registre</span></span></div>
+    </section>
+
+    <div class="banner">☁ La collecte du tour 6 est en cours (10/18 mains). La remise se fait en main propre — vous confirmerez la réception ici.</div>
+
+    <div class="section-label">Remise du pot</div>
+    <section class="card">
+      <div class="card-copy">Quand la trésorière vous remettra les 540 000 F, vous recevrez une notification. Confirmez la réception ici pour clôturer le tour dans le registre.</div>
+      <div class="member-line" style="margin-top:8px"><span>Fonds remis directement par la trésorière ·</span><strong>Njangi ne détient jamais vos fonds</strong></div>
+      <button class="cta gold" style="margin-top:12px"><svg class="icon"><use href="#i-check"></use></svg> J'ai reçu le pot — 540 000 F</button>
+      <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:8px">Envoi… (un seul appui suffit)</div>
+    </section>`;
+
+    views.paul = views.paul || {};
+    views.paul["paiement"] = () => `
+    <div class="app-top"><span class="context">JEUDI · MEMBRE</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Cotisation · 25 000 F</h2>
+    <p class="screen-subtitle">Famille Bayere · Tour 6</p>
+
+    <div class="section-label">État</div>
+    <section class="card info">
+      <div class="card-head"><div><div class="card-kicker">COTISATION · MTN MOMO</div><div class="card-title">Déclaré — en attente de confirmation</div></div><span class="pill info">Déclaré</span></div>
+      <div class="amount">25 000 F</div>
+      <div class="card-copy">Vous avez déclaré 25 000 F par MTN MoMo. Jean B., le trésorier, doit confirmer la réception — c'est sa confirmation qui rend la cotisation officielle dans le registre.</div>
+    </section>
+
+    <div class="banner warn">⏱ Sans réponse de Jean, un litige s'ouvrira automatiquement dans 3 j (72 h après la déclaration, jamais avant le jour de la réunion).</div>
+
+    <div class="section-label">Chronologie</div>
+    <section class="card">
+      <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Déclaré par vous</b><span>Jeudi 9 juillet · MTN MoMo · 25 000 F</span></span></div>
+      <div class="list-row"><span class="row-icon info"><svg class="icon small"><use href="#i-history"></use></svg></span><span class="row-main"><b>En attente de Jean B.</b><span>Sa confirmation rend le paiement officiel</span></span></div>
+      <div class="list-row"><span class="row-icon"><svg class="icon small"><use href="#i-shield"></use></svg></span><span class="row-main"><b>Ensuite</b><span>Confirmé — ou litige automatique le 12 juillet</span></span></div>
+    </section>
+
+    <div class="section-label">Preuve conservée</div>
+    <section class="card">
+      <div class="card-copy">Capture d'écran du SMS MTN jointe à votre déclaration. Elle ne vaut jamais confirmation — elle servira seulement en cas de litige.</div>
+    </section>
+
+    <div class="section-label">Votre option</div>
+    <section class="card">
+      <div class="card-copy">Vous pouvez retirer votre déclaration (erreur de saisie, mauvais destinataire). Votre cotisation de 25 000 F redeviendra due.</div>
+      <button class="cta ghost" style="width:100%;margin-top:10px">Retirer ma déclaration</button>
+    </section>
+
+    <div class="section-label">Détails du paiement</div>
+    <section class="card">
+      <div class="list-row"><span class="row-main"><b>Groupe</b></span><span>Famille Bayere</span></div>
+      <div class="list-row"><span class="row-main"><b>Tour</b></span><span>Tour 6 · dimanche 12 juillet</span></div>
+      <div class="list-row"><span class="row-main"><b>Payé par</b></span><span>Paul Nkengne</span></div>
+      <div class="list-row"><span class="row-main"><b>Reçu par</b></span><span>Jean B. (trésorier)</span></div>
+      <div class="list-row"><span class="row-main"><b>Moyen</b></span><span>MTN MoMo</span></div>
+      <div class="list-row"><span class="row-main"><b>Déclaré le</b></span><span>jeu. 9 juil. 2026</span></div>
+    </section>`;
+
+    views.marie = views.marie || {};
+    views.marie["paiement"] = () => `
+    <div class="app-top"><span class="context">JEUDI · TRÉSORIÈRE</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Cotisation · 10 000 F</h2>
+    <p class="screen-subtitle">Njangi Solidarité · Tour 1 · Sophie T. (main 2/2)</p>
+
+    <div class="section-label">Action requise</div>
+    <section class="card primary">
+      <div class="card-head"><div><div class="card-kicker">COTISATION · MTN MOMO</div><div class="card-title">À confirmer ou contester</div></div><span class="pill info">Déclaré</span></div>
+      <div class="amount">10 000 F</div>
+      <div class="card-copy">Sophie T. déclare vous avoir envoyé 10 000 F par MTN MoMo pour sa main 2/2. Confirmez si c'est exact — votre confirmation rend ce paiement officiel dans le registre.</div>
+      <div class="member-line" style="margin-top:8px"><span>Vérifiez la réception</span><strong>sur votre compte MoMo — pas dans l'appli</strong></div>
+    </section>
+
+    <div class="banner warn">⏱ Litige automatique dans 3 j si vous ne répondez pas (72 h après la déclaration, jamais avant le jour de la réunion).</div>
+
+    <div class="section-label">Confirmer la réception</div>
+    <section class="card">
+      <div class="card-copy">Vous confirmez avoir bien reçu 10 000 F de Sophie T. Cette confirmation restera dans l'historique — seule une correction motivée de la présidente peut la modifier.</div>
+      <button class="cta gold" style="width:100%;margin-top:10px"><svg class="icon"><use href="#i-check"></use></svg> Reçu — c'est exact</button>
+    </section>
+
+    <div class="section-label">Contester</div>
+    <section class="card issue">
+      <div class="card-copy"><b>Pourquoi contestez-vous ?</b></div>
+      <div class="radio-row" style="margin-top:8px"><span class="radio"></span><span class="row-main"><b>Je n'ai pas reçu</b><span>Aucun paiement reçu de votre part</span></span></div>
+      <div class="radio-row"><span class="radio"></span><span class="row-main"><b>Le montant est faux</b><span>Montant reçu différent de 10 000 F déclaré</span></span></div>
+      <div class="radio-row"><span class="radio"></span><span class="row-main"><b>Autre raison</b><span>Précisez ci-dessous</span></span></div>
+      <div style="margin-top:10px;padding:10px;background:var(--surface-muted);border-radius:8px;font-size:13px;color:var(--text-muted)">Précision (facultatif) — ex. rien reçu sur mon compte</div>
+      <button class="cta" style="width:100%;margin-top:10px"><svg class="icon"><use href="#i-alert"></use></svg> Ouvrir le litige</button>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center">Le groupe sera notifié · Alice, la présidente, tranchera</div>
+    </section>
+
+    <div class="section-label">Détails</div>
+    <section class="card">
+      <div class="list-row"><span class="row-main"><b>Payé par</b></span><span>Sophie T. · main 2/2</span></div>
+      <div class="list-row"><span class="row-main"><b>Moyen</b></span><span>MTN MoMo</span></div>
+      <div class="list-row"><span class="row-main"><b>Déclaré le</b></span><span>jeu. 9 juil. 2026</span></div>
+      <div class="list-row"><span class="row-main"><b>Tour</b></span><span>Tour 1 · vendredi 10 juillet</span></div>
+    </section>`;
+
+    views.alice = views.alice || {};
+    views.alice["litige"] = () => `
+    <div class="app-top"><span class="context">JEUDI · PRÉSIDENTE</span><span class="avatar">AM</span></div>
+    <h2 class="screen-title">Litige · Tour 1</h2>
+    <p class="screen-subtitle">Montants déclarés incompatibles — vous tranchez.</p>
+
+    <div class="section-label">Entrée contestée</div>
+    <section class="card issue">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">NJANGI SOLIDARITÉ · COTISATION</div>
+          <div class="card-title">Emmanuel N. → Marie (trésorière)</div>
+        </div>
+        <span class="pill red">Contesté</span>
+      </div>
+      <div class="amount">10 000 F <span style="font-size:0.7em;opacity:0.6">déclaré</span></div>
+      <div class="card-copy">Emmanuel a déclaré avoir remis <strong>10 000 F</strong> en espèces. Marie dit avoir reçu <strong>6 000 F</strong> — montant différent. Motif : le montant est faux.</div>
+    </section>
+
+    <div class="section-label">Ce que disent les deux parties</div>
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-people"></use></svg></span>
+      <span class="row-main"><b>Emmanuel N. · payeur</b><span>J'ai remis 10 000 F en espèces à Marie avant la réunion.</span></span>
+    </div>
+    <div class="list-row">
+      <span class="row-icon red"><svg class="icon small"><use href="#i-alert"></use></svg></span>
+      <span class="row-main"><b>Marie N. · trésorière</b><span>Je n'ai reçu que 6 000 F — le montant ne correspond pas.</span></span>
+    </div>
+
+    <div class="section-label">Preuve</div>
+    <div class="banner">Aucune preuve jointe — les espèces se remettent en main propre. Votre décision s'appuie sur les témoignages des deux parties.</div>
+
+    <div class="section-label">Votre décision</div>
+
+    <section class="card">
+      <div class="card-title">Confirmer 10 000 F (montant d'Emmanuel)</div>
+      <div class="card-copy">La cotisation sera marquée <strong>confirmée à 10 000 F</strong>. Emmanuel est à jour. L'écart de 4 000 F se règle entre Marie et lui, hors registre.</div>
+      <button class="cta"><svg class="icon"><use href="#i-check"></use></svg> Emmanuel a bien remis 10 000 F</button>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Confirmer 6 000 F (montant de Marie)</div>
+      <div class="card-copy">La cotisation sera <strong>confirmée à 6 000 F</strong> (partielle). Il restera 4 000 F en arriéré à la charge d'Emmanuel.</div>
+      <button class="cta"><svg class="icon"><use href="#i-check"></use></svg> Marie a bien reçu 6 000 F</button>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Annuler cette entrée</div>
+      <div class="card-copy">La déclaration d'Emmanuel sera <strong>annulée</strong>. Sa cotisation de 10 000 F redeviendra due — à enregistrer à nouveau à la prochaine réunion.</div>
+      <button class="cta ghost"><svg class="icon"><use href="#i-alert"></use></svg> Annuler l'entrée</button>
+    </section>
+
+    <div class="section-label">Note de décision (obligatoire)</div>
+    <section class="card">
+      <label class="field"><span class="f-label">Expliquez ce qui a été convenu</span><span class="f-value" style="opacity:0.4">ex. Vu ensemble à la réunion, Emmanuel complètera 4 000 F dimanche</span></label>
+    </section>
+
+    <div class="member-line"><span>Votre décision est inscrite au registre avec votre nom. Aucune trace n'est supprimée — une correction ultérieure reste possible, motivée et tracée.</span></div>`;
+
+    views.alice = views.alice || {};
+    views.alice["membres"] = () => `
+    <div class="app-top"><span class="context">JEUDI · PRÉSIDENTE</span><span class="avatar">AM</span></div>
+    <h2 class="screen-title">Membres</h2>
+    <p class="screen-subtitle">Njangi Solidarité · 15 membres · 18 mains</p>
+
+    <div class="section-label">En attente d'approbation</div>
+    <section class="card info">
+      <div class="card-head">
+        <div>
+          <div class="card-kicker">DEMANDE VIA CODE</div>
+          <div class="card-title">Carine M.</div>
+        </div>
+        <span class="pill info">En attente</span>
+      </div>
+      <div class="card-copy">Carine a rejoint via le code d'invitation. Elle ne rejoindra le groupe qu'après approbation — par vous ou par Marie, la trésorière.</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="cta" style="flex:1"><svg class="icon"><use href="#i-check"></use></svg> Approuver</button>
+        <button class="cta ghost" style="flex:1">Refuser</button>
+      </div>
+    </section>
+
+    <div class="section-label">Membres actifs · 15</div>
+
+    <div class="list-row">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-shield"></use></svg></span>
+      <span class="row-main"><b>Alice M. <span class="role-chip">Présidente</span> <span class="role-chip">Bénéficiaire</span></b><span>1 main · à jour ce tour</span></span>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-money"></use></svg></span>
+      <span class="row-main"><b>Marie N. <span class="role-chip">Trésorière</span></b><span>1 main · à jour ce tour</span></span>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Paul N.</b><span>1 main · 10 000 F à cotiser</span></span>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="list-row">
+      <span class="row-icon red"><svg class="icon small"><use href="#i-alert"></use></svg></span>
+      <span class="row-main"><b>Emmanuel N.</b><span>1 main · litige en cours</span></span>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Awa B.</b><span>1 main · rien d'enregistré ce tour</span></span>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="list-row">
+      <span class="row-icon"><svg class="icon small"><use href="#i-calendar"></use></svg></span>
+      <span class="row-main"><b>Tata M.</b><span>1 main · rien d'enregistré ce tour</span></span>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="list-row">
+      <span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span>
+      <span class="row-main"><b>Bernadette K.</b><span>2 mains · 20 000 F par tour · à jour</span></span>
+      <span class="chevron">›</span>
+    </div>
+
+    <div class="text-action">+ 8 autres membres <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+
+    <div class="section-label">Ajouter un membre</div>
+    <button class="cta"><svg class="icon"><use href="#i-plus"></use></svg> Ajouter un membre</button>
+    <div class="card-copy" style="margin-top:8px">Par identifiant (appli) ou par téléphone (sans smartphone — le registre est tenu pour eux).</div>`;
+
+    views.marie = views.marie || {};
+    views.marie["cycle"] = () => `
+    <div class="app-top"><span class="context">JEUDI · TRÉSORIÈRE</span><span class="avatar">MN</span></div>
+    <h2 class="screen-title">Démarrer le cycle</h2>
+    <p class="screen-subtitle">Femmes du Marché · En préparation</p>
+
+    <div class="banner warn">Une fois le cycle démarré, l'ordre de rotation est public et ne peut plus être réorganisé.</div>
+
+    <div class="section-label">Ordre de rotation · 6 membres · 12 mains</div>
+    <section class="card">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:var(--surface-muted)">
+          <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-faint);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8em;color:var(--accent)">1</span>
+          <span style="flex:1;font-weight:600">Marie N.</span>
+          <span class="pill">main 1/2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px">
+          <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-faint);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8em;color:var(--accent)">2</span>
+          <span style="flex:1;font-weight:600">Élise T.</span>
+          <span class="pill neutral">main 1/2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px">
+          <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-faint);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8em;color:var(--accent)">3</span>
+          <span style="flex:1;font-weight:600">Aïcha K.</span>
+          <span class="pill neutral">main 1/2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px">
+          <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-faint);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8em;color:var(--accent)">4</span>
+          <span style="flex:1;font-weight:600">Pauline M.</span>
+          <span class="pill neutral">main 1/2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px">
+          <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-faint);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8em;color:var(--accent)">5</span>
+          <span style="flex:1;font-weight:600">Grace B.</span>
+          <span class="pill neutral">main 1/2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px">
+          <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-faint);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8em;color:var(--accent)">6</span>
+          <span style="flex:1;font-weight:600">Fatima D.</span>
+          <span class="pill neutral">main 1/2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px">
+          <span style="width:24px;height:24px;border-radius:50%;background:var(--accent-faint);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8em;color:var(--accent)">7</span>
+          <span style="flex:1;font-weight:600">Marie N.</span>
+          <span class="pill">main 2/2</span>
+        </div>
+        <div class="text-action">+ 5 positions restantes · mains 2/2 <svg class="icon small"><use href="#i-arrow"></use></svg></div>
+      </div>
+    </section>
+
+    <div class="section-label">Règles du cycle</div>
+    <section class="card info">
+      <label class="field"><span class="f-label">Cotisation par main</span><span class="f-value">25 000 F · mensuel</span></label>
+      <label class="field"><span class="f-label">Pot par tour (12 mains)</span><span class="f-value">300 000 F</span></label>
+      <label class="field"><span class="f-label">Délai de grâce</span><span class="f-value">2 jours (réglable 0–7)</span></label>
+      <label class="field"><span class="f-label">Circulation de l'argent</span><span class="f-value">Via la trésorière</span></label>
+      <label class="field"><span class="f-label">Date du tour 1</span><span class="f-value">Dimanche 19 juillet 2026</span></label>
+    </section>
+
+    <div class="banner warn">Seule la présidente du groupe peut fixer l'ordre et démarrer le cycle.</div>
+    <button class="cta" style="opacity:0.45" disabled><svg class="icon"><use href="#i-shield"></use></svg> Démarrer le cycle (présidente uniquement)</button>
+    <div class="card-copy" style="margin-top:8px">Partagez le code du groupe avec la présidente pour qu'elle valide et démarre.</div>`;
+
+    views.shared = views.shared || {};
+    views.shared["creer"] = () => `
+    <div class="app-top"><span class="context">JEUDI</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Votre njangi</h2>
+    <p class="screen-subtitle">Étape 1 sur 3 — nom et rythme</p>
+
+    <div class="step-dots"><span class="on"></span><span></span><span></span></div>
+
+    <div class="section-label">Nom du groupe</div>
+    <section class="card">
+      <label class="field"><span class="f-label">Nom du groupe</span><span class="f-value" style="opacity:0.4">ex. Njangi des femmes de Bonabéri</span></label>
+    </section>
+
+    <div class="section-label">Rythme des cotisations</div>
+    <section class="card">
+      <div class="radio-row selected"><span class="radio"></span><span class="row-main"><b>Chaque semaine</b></span></div>
+      <div class="radio-row"><span class="radio"></span><span class="row-main"><b>Tous les 15 jours</b></span></div>
+      <div class="radio-row"><span class="radio"></span><span class="row-main"><b>Chaque mois</b></span></div>
+    </section>
+
+    <div class="section-label">Jour de réunion</div>
+    <section class="card">
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span class="pill neutral">lun</span>
+        <span class="pill neutral">mar</span>
+        <span class="pill neutral">mer</span>
+        <span class="pill neutral">jeu</span>
+        <span class="pill">ven</span>
+        <span class="pill neutral">sam</span>
+        <span class="pill neutral">dim</span>
+      </div>
+    </section>
+
+    <div class="section-label">Cotisation par membre</div>
+    <section class="card">
+      <label class="field"><span class="f-label">Montant (F)</span><span class="f-value" style="opacity:0.4">ex. 10 000</span></label>
+      <div class="card-copy">Devise : franc CFA · fixe</div>
+    </section>
+
+    <button class="cta gold">Continuer <svg class="icon"><use href="#i-arrow"></use></svg></button>
+
+    <div class="section-label">Ce qui se passe ensuite</div>
+    <section class="card info">
+      <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-people"></use></svg></span><span class="row-main"><b>Invitez vos membres</b><span>Partagez le code WhatsApp — ils rejoignent et la présidente approuve.</span></span></div>
+      <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-calendar"></use></svg></span><span class="row-main"><b>La présidente fixe l'ordre</b><span>L'ordre de rotation est public et immuable une fois démarré.</span></span></div>
+      <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-money"></use></svg></span><span class="row-main"><b>Chaque tour, deux parties confirment</b><span>L'argent ne passe jamais par l'appli — le registre en garde la trace.</span></span></div>
+    </section>`;
+
+    views.shared = views.shared || {};
+    views.shared["rejoindre"] = () => `
+    <div class="app-top"><span class="context">JEUDI</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Rejoindre avec un code</h2>
+    <p class="screen-subtitle">Entrez le code à 6 caractères reçu sur WhatsApp.</p>
+
+    <div class="section-label">Code d'invitation</div>
+    <section class="card">
+      <div class="code-row">
+        <span class="code-box">K</span>
+        <span class="code-box">7</span>
+        <span class="code-box">M</span>
+        <span class="code-box">2</span>
+        <span class="code-box">P</span>
+        <span class="code-box">Q</span>
+      </div>
+      <div class="card-copy" style="margin-top:12px">Vous pouvez aussi coller le message d'invitation complet — le code sera extrait automatiquement.</div>
+    </section>
+
+    <button class="cta gold"><svg class="icon"><use href="#i-people"></use></svg> Rejoindre</button>
+
+    <div class="section-label">Ce qui se passe après</div>
+    <section class="card info">
+      <div class="card-kicker">CERCLE FERMÉ DE CONFIANCE</div>
+      <div class="card-title">Votre demande est envoyée</div>
+      <div class="card-copy">La présidence ou la trésorerie du groupe doit approuver votre adhésion avant que vous puissiez voir le groupe et ses cotisations. Vous serez notifié(e) dès qu'une décision est prise.</div>
+      <div style="margin-top:12px">
+        <div class="list-row"><span class="row-icon green"><svg class="icon small"><use href="#i-check"></use></svg></span><span class="row-main"><b>Approuvé(e)</b><span>Vous rejoignez le groupe et votre place dans le tour vous est attribuée.</span></span></div>
+        <div class="list-row"><span class="row-icon red"><svg class="icon small"><use href="#i-alert"></use></svg></span><span class="row-main"><b>Refusé(e)</b><span>Vous en serez informé(e) — contactez les responsables du groupe pour en savoir plus.</span></span></div>
+      </div>
+    </section>
+
+    <div class="member-line"><span>L'appli ne détient jamais votre argent. Le registre fait foi.</span></div>`;
+
+    views.shared = views.shared || {};
+    views.shared["onboarding"] = () => `
+    <div class="app-top"><span class="context">BIENVENUE</span><span class="avatar" style="opacity:0">--</span></div>
+    <h2 class="screen-title">Le carnet de votre njangi, noir sur blanc.</h2>
+
+    <div class="step-dots"><span class="on"></span><span></span><span></span></div>
+
+    <div class="section-label">Pourquoi Njangi ?</div>
+
+    <section class="card success">
+      <div class="card-kicker">REGISTRE PARTAGÉ</div>
+      <div class="card-title">Les deux parties confirment</div>
+      <div class="card-copy">Chaque cotisation est déclarée par l'un et confirmée par l'autre. Aucune entrée ne repose sur la parole d'une seule personne — le registre en garde la trace.</div>
+    </section>
+
+    <section class="card info">
+      <div class="card-kicker">VOTRE ARGENT RESTE LE VÔTRE</div>
+      <div class="card-title">Njangi ne détient jamais vos fonds.</div>
+      <div class="card-copy">Les cotisations circulent de main en main, via MoMo ou Orange Money — exactement comme aujourd'hui. L'appli enregistre ce qui s'est passé, c'est tout.</div>
+      <div class="member-line"><span>Pas de frais. Pas de compte à alimenter. Pas de risque de blocage.</span></div>
+    </section>
+
+    <section class="card">
+      <div class="card-kicker">CHAQUE RÔLE À SA PLACE</div>
+      <div class="card-title">Trésorière, présidente, membre</div>
+      <div class="card-copy">La trésorière enregistre les espèces. La présidente tranche les litiges. Les membres déclarent leurs paiements. Chacun voit ce qui le concerne.</div>
+    </section>
+
+    <button class="cta gold">C'est parti <svg class="icon"><use href="#i-arrow"></use></svg></button>
+    <div class="text-action" style="text-align:center;margin-top:8px">Plus tard</div>`;
+
+    views.shared = views.shared || {};
+    views.shared["profil"] = () => `
+    <div class="app-top"><span class="context">JEUDI</span><span class="avatar">PN</span></div>
+    <h2 class="screen-title">Profil</h2>
+
+    <div class="section-label">Mon identité</div>
+    <section class="card">
+      <label class="field"><span class="f-label">Nom</span><span class="f-value">Paul Nkengne</span></label>
+      <label class="field"><span class="f-label">Identifiant</span><span class="f-value">@paul-n · votre identifiant de connexion</span></label>
+      <label class="field"><span class="f-label">Email</span><span class="f-value">paul@example.com</span></label>
+    </section>
+
+    <div class="section-label">Langue</div>
+    <section class="card">
+      <div class="list-row">
+        <span class="row-icon info"><svg class="icon small"><use href="#i-groups"></use></svg></span>
+        <span class="row-main"><b>Langue de l'appli</b><span>Français</span></span>
+        <span style="display:flex;gap:6px;align-items:center">
+          <span class="pill">FR</span>
+          <span class="pill neutral">EN</span>
+        </span>
+      </div>
+    </section>
+
+    <div class="section-label">Téléphone WhatsApp (optionnel)</div>
+    <section class="card">
+      <div class="list-row">
+        <span class="row-icon"><svg class="icon small"><use href="#i-phone"></use></svg></span>
+        <span class="row-main"><b>Numéro WhatsApp</b><span>Non lié — permet de recevoir les rappels</span></span>
+        <span class="chevron">›</span>
+      </div>
+      <div class="card-copy">Un code de vérification sera envoyé sur WhatsApp pour confirmer que le numéro vous appartient.</div>
+    </section>
+
+    <div class="section-label">Notifications</div>
+    <section class="card">
+      <div class="list-row">
+        <span class="row-icon info"><svg class="icon small"><use href="#i-actions"></use></svg></span>
+        <span class="row-main"><b>Notifications push</b><span>Cotisations, confirmations, litiges</span></span>
+        <span class="pill">Activées</span>
+      </div>
+    </section>
+
+    <div class="section-label">Compte</div>
+    <button class="cta ghost">Se déconnecter</button>
+
+    <div class="member-line" style="margin-top:16px"><span>Pas de frais. Votre argent ne passe jamais par l'appli.</span></div>`;
+
+
+
+    let activePersona = "paul";
+    let activeScreen = "aujourdhui";
+
+    const resolveView = (persona, screen) =>
+      (views[persona] && views[persona][screen]) || (views.shared && views.shared[screen]) || null;
+
+    function firstPersonaFor(screen) {
+      const av = availability[screen] || [];
+      return av.includes("shared") ? activePersona : av[0];
+    }
+
+    function renderControls() {
+      document.getElementById("persona-controls").innerHTML = personas.map(p => `
+        <button class="persona-button ${p.id === activePersona ? "active" : ""}" data-persona="${p.id}" aria-pressed="${p.id === activePersona}">
+          <span class="persona-name"><span class="mark" style="background:hsl(${p.hue} 45% 42%)">${p.mark}</span><span>${p.label}</span></span><small>${p.hint}</small>
+        </button>`).join("");
+      document.getElementById("screen-controls").innerHTML = screenGroups.map(g => `
+        <div class="screen-group-label">${g.label}</div>` + g.screens.map(s => {
+          const av = availability[s.id] || [];
+          const ok = av.includes("shared") || av.includes(activePersona);
+          return `
+        <button class="screen-button ${s.id === activeScreen ? "active" : ""} ${ok ? "" : "unavailable"}" data-screen="${s.id}" aria-pressed="${s.id === activeScreen}" ${ok ? "" : "tabindex=\"-1\""}>
+          <span>${s.label}</span><small>${s.hint}</small>
+        </button>`;
+        }).join("")).join("");
+    }
+
+    function renderNav() {
+      const tabs = [
+        { id: "aujourdhui", label: "Aujourd'hui", icon: "today" },
+        { id: "njangis", label: "Njangis", icon: "groups" },
+        { id: "actions", label: "Actions", icon: "actions" }
+      ];
+      document.getElementById("bottom-nav").innerHTML = tabs.map(t => `
+        <button class="nav-item ${t.id === activeScreen ? "active" : ""}" type="button" aria-label="Ouvrir ${t.label}">
+          <span class="nav-icon">${icons(t.icon)}${t.id === "actions" ? `<span class="nav-badge">${actionBadge[activePersona] ?? ""}</span>` : ""}</span>
+          <span>${t.label}</span>
+        </button>`).join("");
+    }
+
+    function render() {
+      const av = availability[activeScreen] || [];
+      if (!av.includes("shared") && !av.includes(activePersona)) {
+        activePersona = av[0] || activePersona;
+      }
+      renderControls();
+      renderNav();
+      const view = resolveView(activePersona, activeScreen) || resolveView("shared", activeScreen);
+      const appView = document.getElementById("app-view");
+      appView.innerHTML = view ? view() : `<p class="screen-subtitle" style="margin-top:40px;text-align:center">Vue en cours de rédaction…</p>`;
+      appView.scrollTop = 0;
+      const note = notes[activeScreen] || ["—", "—"];
+      document.getElementById("note-title").textContent = note[0];
+      document.getElementById("note-copy").textContent = note[1];
+      const p = personas.find(x => x.id === activePersona);
+      const s = allScreens.find(x => x.id === activeScreen);
+      const shared = (availability[activeScreen] || []).includes("shared");
+      document.getElementById("phone-caption").textContent = shared ? `${s.label} · identique pour tous` : `${s.label} · vue de ${p.label}`;
+
+      document.querySelectorAll("[data-persona]").forEach(b => b.addEventListener("click", () => {
+        activePersona = b.dataset.persona;
+        const nextAv = availability[activeScreen] || [];
+        if (!nextAv.includes("shared") && !nextAv.includes(activePersona)) activeScreen = "aujourdhui";
+        render();
+      }));
+      document.querySelectorAll("[data-screen]").forEach(b => b.addEventListener("click", () => { activeScreen = b.dataset.screen; render(); }));
+      document.querySelectorAll(".bottom-nav .nav-item").forEach((item, i) => item.addEventListener("click", () => {
+        activeScreen = ["aujourdhui", "njangis", "actions"][i];
+        render();
+      }));
+    }
+    render();
+  </script>
+</body>
+</html>

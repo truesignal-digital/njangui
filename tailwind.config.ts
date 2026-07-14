@@ -14,12 +14,16 @@ const colorVars = {
   borderFaint: '--color-border-faint',
   borderSubtle: '--color-border-subtle',
   accent: '--color-accent',
+  accentHero: '--color-accent-hero',
   accentHover: '--color-accent-hover',
   accentFaint: '--color-accent-faint',
   accentLight: '--color-accent-light',
   accentMuted: '--color-accent-muted',
   accentSoft: '--color-accent-soft',
   primaryForeground: '--color-primary-fg',
+  highlight: '--color-highlight',
+  highlightHover: '--color-highlight-hover',
+  highlightForeground: '--color-highlight-fg',
   success: '--color-success',
   successDark: '--color-success-dark',
   successBg: '--color-success-bg',
@@ -116,12 +120,16 @@ module.exports = {
 
       /* Brand Accent */
       accent: cssVar('accent'),
+      'accent-hero': cssVar('accentHero'),
       'accent-hover': cssVar('accentHover'),
       'accent-faint': cssVar('accentFaint'),
       'accent-light': cssVar('accentLight'),
       'accent-muted': cssVar('accentMuted'),
       'accent-soft': cssVar('accentSoft'),
       'primary-fg': cssVar('primaryForeground'),
+      highlight: cssVar('highlight'),
+      'highlight-hover': cssVar('highlightHover'),
+      'highlight-fg': cssVar('highlightForeground'),
 
       /* Status */
       success: cssVar('success'),

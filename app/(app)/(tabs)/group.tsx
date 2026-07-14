@@ -1,18 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  InteractionManager,
-  Modal,
-  Pressable,
-  RefreshControl,
-  Text,
-  View,
-} from 'react-native';
+import { RefreshControl, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { KeyIcon, PlusIcon, UsersIcon } from 'react-native-heroicons/outline';
+import { PlusIcon, UsersIcon } from 'react-native-heroicons/outline';
 
 import { api } from '../../../src/lib/convex-api';
 import { useAuth } from '../../../src/lib/clerk-client';
@@ -20,11 +12,15 @@ import { haptics } from '../../../src/lib/haptics';
 import { useAppTheme } from '../../../src/lib/theme';
 import { Skeleton } from '../../../src/components/skeleton';
 import { AppButton } from '../../../src/components/ui/button';
+import { SoftPressable } from '../../../src/components/ui/soft-pressable';
+import { StatusBarCover } from '../../../src/components/ui/status-bar-cover';
 import {
   GroupCard,
   type GroupListItem,
 } from '../../../src/components/groups/group-card';
 import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
+import { ICON_SIZE } from '../../../src/lib/icons';
+import { NjangiMark } from '../../../src/components/brand/njangi-mark';
 
 /**
  * Groupe tab — calm row list (round-2 §2 option B): one gradient disc,
@@ -50,25 +46,6 @@ export default function GroupTabScreen() {
   const myGroups = useQuery(api.groups.listMyGroups, isAuthenticated ? {} : 'skip');
   const { refreshing, onRefresh } = usePullRefresh();
 
-  const [sheetOpen, setSheetOpen] = useState(false);
-  // Never hide an in-screen Modal and navigate in the same tick (racing
-  // dismissal animations). Modal.onDismiss is iOS-only, so the route fires
-  // from an effect after the sheet has left the tree on both platforms.
-  const pendingRoute = useRef<'/groups/new' | '/join-by-code' | null>(null);
-  const chooseRoute = (route: '/groups/new' | '/join-by-code') => {
-    pendingRoute.current = route;
-    setSheetOpen(false);
-  };
-  useEffect(() => {
-    if (sheetOpen || pendingRoute.current === null) return;
-    const task = InteractionManager.runAfterInteractions(() => {
-      const route = pendingRoute.current;
-      pendingRoute.current = null;
-      if (route) router.push(route);
-    });
-    return () => task.cancel();
-  }, [sheetOpen]);
-
   if (isLoaded && !isSignedIn) {
     return <Redirect href="/sign-in" />;
   }
@@ -85,16 +62,23 @@ export default function GroupTabScreen() {
         <Skeleton className="h-[32px] w-[160px]" />
         <Skeleton className="mt-xs h-[16px] w-[190px]" />
         <View className="mt-lg gap-sm">
-          <Skeleton className="h-[76px] rounded-xl" />
-          <Skeleton className="h-[76px] rounded-xl" />
-          <Skeleton className="h-[76px] rounded-xl" />
+          <Skeleton className="h-[132px] rounded-2xl" />
+          <Skeleton className="h-[132px] rounded-2xl" />
+          <Skeleton className="h-[132px] rounded-2xl" />
         </View>
       </View>
     );
   }
 
   const groups = myGroups as GroupListItem[];
+  // Groups that need the viewer outrank everything, then urgency, then the
+  // usual living-first status order — the header count must match the rows
+  // the user meets first.
+  const needsViewer = (g: GroupListItem) =>
+    g.myDue !== null || g.receiving !== null ? 0 : 1;
   const sorted = [...groups].sort((a, b) => {
+    const need = needsViewer(a) - needsViewer(b);
+    if (need !== 0) return need;
     const order = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
     if (order !== 0) return order;
     const dueA = a.nextDueAt ?? Number.MAX_SAFE_INTEGER;
@@ -103,15 +87,8 @@ export default function GroupTabScreen() {
     return a.name.localeCompare(b.name);
   });
 
-  const actionCount = groups.filter(
-    (g) => g.myDue !== null || g.receiving !== null
-  ).length;
-  const summary = [
-    t('groups.tab.circleCount', { count: groups.length }),
-    actionCount > 0 ? t('groups.tab.actionsCount', { count: actionCount }) : null,
-  ]
-    .filter((part): part is string => part !== null)
-    .join(' · ');
+  const actionCount = groups.filter((g) => needsViewer(g) === 0).length;
+  const activeCount = groups.filter((g) => g.status === 'active').length;
 
   return (
     <View className="flex-1 bg-background">
@@ -127,32 +104,54 @@ export default function GroupTabScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         ListHeaderComponent={
-          <View className="pb-sm">
+          <View className="pb-md">
+            <View className="mb-xs flex-row items-center gap-xs">
+              <NjangiMark size={20} />
+              <Text className="font-heading text-title text-foreground">
+                {t('common.appName')}
+              </Text>
+            </View>
+            <Text className="pb-xs font-body-semi text-overline uppercase text-success-dark">
+              {t('groups.tab.eyebrow')}
+            </Text>
             <View className="flex-row items-center justify-between">
               <Text className="font-heading text-display-lg text-foreground">
-                {t('tabs.group')}
+                {t('groups.tab.collectiveTitle')}
               </Text>
-              <Pressable
+              <SoftPressable
                 accessibilityRole="button"
                 accessibilityLabel={t('groups.tab.addAction')}
                 onPress={() => {
                   haptics.select();
-                  setSheetOpen(true);
+                  router.push('/create-or-join');
                 }}
-                className="h-[40px] w-[40px] items-center justify-center rounded-full border border-border-subtle bg-surface active:bg-surface-muted"
+                className="h-[44px] w-[44px] items-center justify-center rounded-full bg-success-bg active:opacity-80"
               >
-                <PlusIcon size={20} color={theme.text} />
-              </Pressable>
+                <PlusIcon size={ICON_SIZE.control} color={theme.successDark} />
+              </SoftPressable>
             </View>
             {groups.length > 0 ? (
-              <Text className="font-body text-body-sm text-muted">{summary}</Text>
+              <View className="flex-row flex-wrap gap-xs pt-sm">
+                <View className="rounded-pill bg-success-bg px-sm py-xs">
+                  <Text className="font-body-semi text-caption text-success-dark">
+                    {t('groups.tab.activeCount', { count: activeCount })}
+                  </Text>
+                </View>
+                {actionCount > 0 ? (
+                  <View className="rounded-pill bg-warning-bg px-sm py-xs">
+                    <Text className="font-body-semi text-caption text-warning-dark">
+                      {t('groups.tab.needYou', { count: actionCount })}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             ) : null}
           </View>
         }
         ListEmptyComponent={
           <View className="items-center gap-sm pt-xl">
             <View className="h-[56px] w-[56px] items-center justify-center rounded-full border border-border bg-surface">
-              <UsersIcon size={26} color={theme.textMuted} />
+              <UsersIcon size={ICON_SIZE.emphasis} color={theme.textMuted} />
             </View>
             <Text className="font-body-semi text-title text-foreground">
               {t('groups.tab.emptyTitle')}
@@ -175,41 +174,7 @@ export default function GroupTabScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
-
-      {/* Create/join chooser — colocated sheet; routes after dismissal */}
-      <Modal
-        visible={sheetOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSheetOpen(false)}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          className="flex-1 justify-end bg-scrim"
-          onPress={() => setSheetOpen(false)}
-        >
-          <Pressable
-            className="gap-sm rounded-t-2xl bg-surface p-lg pb-xl"
-            onPress={() => {}}
-          >
-            <Text className="font-body-semi text-title text-foreground">
-              {t('groups.tab.addAction')}
-            </Text>
-            <AppButton
-              label={t('groups.tab.create')}
-              icon={<PlusIcon size={18} color={theme.primaryForeground} />}
-              onPress={() => chooseRoute('/groups/new')}
-            />
-            <AppButton
-              variant="outline"
-              label={t('groups.tab.join')}
-              icon={<KeyIcon size={18} color={theme.text} />}
-              onPress={() => chooseRoute('/join-by-code')}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <StatusBarCover />
     </View>
   );
 }

@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { router, useGlobalSearchParams } from 'expo-router';
-import { useAction, useConvexAuth, useMutation } from 'convex/react';
+import { useAction, useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner-native';
 
 import { api, type Id } from '@/lib/convex-api';
@@ -108,6 +108,12 @@ export function DevSeedButton() {
   const devSeedPilot = useAction(api.dev.devSeedPilot);
   const devStartAndOpenRound = useMutation(api.dev.devStartAndOpenRound);
   const devAdvancePilotRound = useAction(api.dev.devAdvancePilotRound);
+  const activeGroup = useQuery(
+    api.groups.getGroup,
+    isAuthenticated && params.groupId
+      ? { groupId: params.groupId as Id<'groups'> }
+      : 'skip'
+  );
   const [busy, setBusy] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [scenario, setScenario] = useState(0);
@@ -205,10 +211,14 @@ export function DevSeedButton() {
 
   return (
     <>
+      {/* Bottom-right above the tab bar: the top-right corner belongs to
+          real controls (profile avatar, Groups +) and the Expo dev gear —
+          the pilot pill must never intercept their taps. */}
       <Pressable
         testID="dev-open-console"
         onPress={() => setOpen(true)}
-        className="absolute right-[12px] top-[60px] rounded-pill border border-dashed border-accent bg-inverted-bg px-md py-xs"
+        className="rounded-pill border border-dashed border-accent bg-inverted-bg px-md py-xs"
+        style={{ position: 'absolute', bottom: 110, right: 12 }}
       >
         <Text className="font-mono text-caption text-accent">DEV · PILOT</Text>
       </Pressable>
@@ -314,10 +324,16 @@ export function DevSeedButton() {
           {params.groupId ? (
             <View className="gap-xs">
               <DevConsoleButton
-                label="Start cycle and open round"
+                label={
+                  activeGroup?.viewerRole === 'president'
+                    ? 'Start cycle and open round'
+                    : 'Switch to president to start the round'
+                }
                 testID="dev-open-round"
                 busy={busy === 'round'}
-                disabled={busy !== null}
+                disabled={
+                  busy !== null || activeGroup?.viewerRole !== 'president'
+                }
                 onPress={() => void openRound()}
               />
               <DevConsoleButton

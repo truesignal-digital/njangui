@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 
 import { cn } from '../../lib/cn';
 import { useAppTheme } from '../../lib/theme';
@@ -69,7 +70,7 @@ export const TextField = forwardRef<TextInput, TextInputProps & {
       {label ? <Text className="font-body-medium text-label text-foreground">{label}</Text> : null}
       <View className="flex-row items-center gap-xs">
         {prefix ? (
-          <View className="min-h-cta items-center justify-center rounded-lg border border-border bg-surface-muted px-md">
+          <View className="min-h-cta items-center justify-center rounded-xl border border-border bg-surface-muted px-md">
             <Text className="font-body-medium text-body text-muted">{prefix}</Text>
           </View>
         ) : null}
@@ -84,14 +85,21 @@ export const TextField = forwardRef<TextInput, TextInputProps & {
               : undefined
           }
           className={cn(
-            'min-h-cta flex-1 rounded-lg border bg-surface px-md font-body text-body text-foreground',
+            'min-h-cta flex-1 rounded-xl border bg-surface px-md font-body text-body text-foreground',
             error ? 'border-destructive' : 'border-border',
             className
           )}
           {...inputProps}
         />
       </View>
-      {error ? <Text className="font-body text-body-sm text-destructive">{error}</Text> : null}
+      {error ? (
+        <Animated.Text
+          entering={FadeIn.duration(100).reduceMotion(ReduceMotion.System)}
+          className="font-body text-body-sm text-destructive"
+        >
+          {error}
+        </Animated.Text>
+      ) : null}
     </View>
   );
 });

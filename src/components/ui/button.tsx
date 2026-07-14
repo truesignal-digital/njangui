@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
 
 import { cn } from '../../lib/cn';
 import { haptics } from '../../lib/haptics';
 import { useAppTheme } from '../../lib/theme';
+import { SoftPressable } from './soft-pressable';
 
-type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'destructive';
+type ButtonVariant = 'primary' | 'highlight' | 'outline' | 'ghost' | 'destructive';
 type ButtonSize = 'lg' | 'sm';
 
 const CONTAINER_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-accent active:bg-accent-hover',
+  highlight: 'bg-highlight active:bg-highlight-hover',
   outline: 'border border-border bg-surface active:bg-surface-muted',
   ghost: 'bg-transparent active:bg-surface-muted',
   destructive: 'bg-destructive active:bg-destructive-dark',
@@ -17,6 +19,7 @@ const CONTAINER_VARIANTS: Record<ButtonVariant, string> = {
 
 const LABEL_VARIANTS: Record<ButtonVariant, string> = {
   primary: 'font-body-semi text-body text-primary-fg',
+  highlight: 'font-body-semi text-body text-highlight-fg',
   outline: 'font-body-semi text-body text-foreground',
   ghost: 'font-body-medium text-body text-muted',
   destructive: 'font-body-semi text-body text-inverted',
@@ -39,6 +42,7 @@ export function AppButton({
   disabled = false,
   loading = false,
   icon,
+  iconPosition = 'start',
   className,
   testID,
 }: {
@@ -49,6 +53,7 @@ export function AppButton({
   disabled?: boolean;
   loading?: boolean;
   icon?: ReactNode;
+  iconPosition?: 'start' | 'end';
   className?: string;
   testID?: string;
 }) {
@@ -56,7 +61,7 @@ export function AppButton({
   const blocked = disabled || loading;
 
   return (
-    <Pressable
+    <SoftPressable
       accessibilityRole="button"
       accessibilityState={{ disabled: blocked, busy: loading }}
       disabled={blocked}
@@ -79,15 +84,18 @@ export function AppButton({
           color={
             variant === 'primary'
               ? theme.primaryForeground
+              : variant === 'highlight'
+                ? theme.highlightForeground
               : variant === 'destructive'
                 ? theme.textInverted
                 : theme.accent
           }
         />
-      ) : (
+      ) : iconPosition === 'start' ? (
         icon
-      )}
+      ) : null}
       <Text className={LABEL_VARIANTS[variant]}>{label}</Text>
-    </Pressable>
+      {!loading && iconPosition === 'end' ? icon : null}
+    </SoftPressable>
   );
 }

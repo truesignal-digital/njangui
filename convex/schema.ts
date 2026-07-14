@@ -251,7 +251,9 @@ export default defineSchema({
   })
     .index('by_group', ['groupId'])
     .index('by_user', ['userId'])
+    .index('by_user_and_status', ['userId', 'status'])
     .index('by_group_and_user', ['groupId', 'userId'])
+    .index('by_group_and_status', ['groupId', 'status'])
     .index('by_phone', ['phone']),
 
   cycles: defineTable({

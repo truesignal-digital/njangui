@@ -12,8 +12,9 @@
  *    icon+word+color, never color alone — 03 §G).
  * 4. fr.json and en.json expose the same key set (FR-first i18n contract —
  *    a key present in one language only ships a raw key to users).
+ * 5. App-owned UI uses Heroicons, not emoji or a competing icon package.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -85,6 +86,14 @@ for (const lang of ['fr', 'en'] as const) {
         );
       }
     }
+
+    // 5a — pictographic emoji are not UI icons. State must use a Heroicon
+    // component plus readable copy so VoiceOver does not announce decoration.
+    if (/\p{Extended_Pictographic}/u.test(value)) {
+      errors.push(
+        `${lang}.json ${keyPath}: emoji is not an app-owned icon — use a Heroicon in the component`
+      );
+    }
   }
 }
 
@@ -108,6 +117,25 @@ if (!badgeSrc.includes('PAYMENT_STATE_TONE')) {
     if (!new RegExp(`${state}\\s*:\\s*\\{`).test(badgeSrc)) {
       errors.push(`badge.tsx: PAYMENT_STATE_TONE missing '${state}' entry`);
     }
+  }
+}
+
+// 5b — Heroicons is the sole app-owned icon library. Native Tabs and native
+// date controls may still name SF Symbols / Material Symbols through the OS.
+function sourceFiles(directory: string): string[] {
+  return readdirSync(directory).flatMap((entry) => {
+    const path = join(directory, entry);
+    if (statSync(path).isDirectory()) return sourceFiles(path);
+    return /\.(ts|tsx)$/.test(entry) ? [path] : [];
+  });
+}
+
+for (const file of [...sourceFiles(join(ROOT, 'app')), ...sourceFiles(join(ROOT, 'src'))]) {
+  const source = readFileSync(file, 'utf8');
+  if (/from ['"](?:@expo\/vector-icons|expo-symbols)['"]/.test(source)) {
+    errors.push(
+      `${file.slice(ROOT.length + 1)}: app-owned icons must come from react-native-heroicons`
+    );
   }
 }
 

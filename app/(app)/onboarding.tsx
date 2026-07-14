@@ -96,8 +96,8 @@ export default function OnboardingScreen() {
         </View>
       ) : (
         <View
-          className="gap-md rounded-xl border border-border-subtle bg-surface p-lg"
-          style={shadow('card')}
+          className="gap-md rounded-2xl border border-border-subtle bg-surface p-lg"
+          style={{ ...shadow('card'), borderCurve: 'continuous' }}
         >
           <TextField
             label={t('onboarding.nameLabel')}

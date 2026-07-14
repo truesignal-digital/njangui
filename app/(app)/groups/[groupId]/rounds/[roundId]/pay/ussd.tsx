@@ -5,27 +5,29 @@ import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  ChevronDownIcon,
   ChevronLeftIcon,
+  ChevronUpIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   PhoneIcon,
 } from 'react-native-heroicons/outline';
 
-import { formatCurrencyXAF } from '../../../../../../../src/lib/format-currency';
-import { haptics } from '../../../../../../../src/lib/haptics';
-import { useAppTheme } from '../../../../../../../src/lib/theme';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme } from '@/lib/theme';
 import {
   interpolateUssdStep,
   useUssdContent,
   type UssdMethod,
-} from '../../../../../../../src/lib/ussd-content';
-import { usePayFlow } from '../../../../../../../src/hooks/use-pay-flow';
-import { AppButton } from '../../../../../../../src/components/ui/button';
-import { Skeleton } from '../../../../../../../src/components/skeleton';
+} from '@/lib/ussd-content';
+import { usePayFlow } from '@/hooks/use-pay-flow';
+import { AppButton } from '@/components/ui/button';
+import { Skeleton } from '@/components/skeleton';
 
 /** Local display form for the USSD copy-tap field: +2376… → 6… */
 function localPhone(phone: string | undefined): string {
-  if (!phone) return '—';
+  if (!phone) return '';
   return phone.startsWith('+237') ? phone.slice(4) : phone.replace('+', '');
 }
 
@@ -49,9 +51,16 @@ export default function UssdScreen() {
   const language = i18n.language === 'en' ? 'en' : 'fr';
   const content = useUssdContent(ussdMethod, language);
   const flow = usePayFlow(roundId, record);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const payeeNumber = localPhone(flow.payee?.phone);
   const amountRaw = flow.record ? String(flow.record.amount) : '';
+  // Deep-link guard: the picker gates entry, but this route is reachable
+  // directly — never render dial/copy actions against a missing number.
+  const usable =
+    flow.record !== null &&
+    flow.methodAvailability[ussdMethod].available &&
+    payeeNumber.length > 0;
 
   const dial = () => {
     haptics.light();
@@ -72,7 +81,9 @@ export default function UssdScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
-          onPress={() => router.back()}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace('/')
+          }
           className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
         >
           <ChevronLeftIcon size={22} color={theme.textMuted} />
@@ -82,26 +93,70 @@ export default function UssdScreen() {
         </Text>
       </View>
 
-      {/* Non-dismissable menu-drift banner (03 §C) */}
-      <View className="mt-md flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
-        <ExclamationTriangleIcon size={16} color={theme.warningDark} />
-        <Text className="flex-1 font-body-medium text-body-sm text-warning-dark">
-          {t('pay.banner')}
-        </Text>
-      </View>
-
       {flow.loading ? (
         <View className="mt-lg gap-sm">
           <Skeleton className="h-[64px] rounded-lg" />
           <Skeleton className="h-[200px] rounded-lg" />
         </View>
+      ) : !usable ? (
+        // Deep-link dead end: no recipient number for this method. The
+        // picker never offers this path; a stale link can still land here.
+        <View className="mt-lg gap-sm">
+          <View className="flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
+            <ExclamationTriangleIcon size={16} color={theme.warningDark} />
+            <Text className="flex-1 font-body-medium text-body-sm text-warning-dark">
+              {!flow.record
+                ? t('round.noObligation')
+                : t('pay.unavailable.missingPhone', {
+                    name:
+                      flow.payee?.displayName ?? t('pay.recipientFallback'),
+                  })}
+            </Text>
+          </View>
+          <AppButton
+            variant="outline"
+            label={t('common.back')}
+            onPress={() =>
+              router.canGoBack() ? router.back() : router.replace('/')
+            }
+            testID="ussd-unusable-back"
+          />
+        </View>
       ) : (
         <>
+          {flow.round && flow.record ? (
+            <View
+              className="mt-md bg-success-bg p-md"
+              style={{
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 10,
+                borderBottomRightRadius: 28,
+                borderBottomLeftRadius: 10,
+                borderCurve: 'continuous',
+              }}
+            >
+              <Text className="font-body-semi text-overline uppercase text-success-dark">
+                {t('pay.roundEyebrow', { n: flow.round.index })}
+              </Text>
+              <Text className="pt-xs font-heading text-display-lg text-foreground">
+                {formatCurrencyXAF(flow.record.amount)}
+              </Text>
+              <Text className="font-heading text-title-lg text-foreground">
+                {t('pay.yourContribution')}
+              </Text>
+              {flow.payee ? (
+                <Text className="pt-[2px] font-body text-caption text-muted">
+                  {t('pay.directTo', { name: flow.payee.displayName })}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
           {/* Copy-tap fields */}
-          <View className="mt-lg gap-sm">
+          <View className="mt-md gap-sm">
             <CopyField
               label={t('pay.payeeNumber', {
-                name: flow.payee?.displayName ?? '—',
+                name: flow.payee?.displayName ?? t('pay.recipientFallback'),
               })}
               display={payeeNumber}
               copyValue={payeeNumber.replace(/\s/g, '')}
@@ -109,7 +164,7 @@ export default function UssdScreen() {
             <CopyField
               label={t('pay.amountLabel')}
               display={
-                flow.record ? formatCurrencyXAF(flow.record.amount) : '—'
+                flow.record ? formatCurrencyXAF(flow.record.amount) : ''
               }
               copyValue={amountRaw}
             />
@@ -118,25 +173,6 @@ export default function UssdScreen() {
               display={flow.reference}
               copyValue={flow.reference}
             />
-          </View>
-
-          {/* Numbered steps — bundled/cached/fetched, best version wins */}
-          <View className="mt-lg gap-sm">
-            {content.steps.map((step, index) => (
-              <View key={index} className="flex-row gap-sm">
-                <Text className="w-[22px] font-body-semi text-body-sm text-accent">
-                  {index + 1}.
-                </Text>
-                <Text className="flex-1 font-body text-body-sm text-foreground">
-                  {interpolateUssdStep(step, {
-                    name: flow.payee?.displayName ?? '—',
-                    number: payeeNumber,
-                    amount: amountRaw,
-                    reference: flow.reference,
-                  })}
-                </Text>
-              </View>
-            ))}
           </View>
 
           {/* Dial + ALWAYS-visible copy fallback */}
@@ -161,10 +197,65 @@ export default function UssdScreen() {
             />
           </View>
 
+          {/* Menu-by-menu steps live behind “Need help?” — the default
+              screen stays recipient/amount/reference + dial + declare. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: helpOpen }}
+            testID="ussd-help-toggle"
+            onPress={() => {
+              haptics.light();
+              setHelpOpen((open) => !open);
+            }}
+            className="mt-lg min-h-cta flex-row items-center justify-between rounded-lg border border-border-subtle bg-surface px-md active:bg-surface-muted"
+          >
+            <Text className="font-body-semi text-body text-foreground">
+              {helpOpen ? t('pay.hideHelp') : t('pay.needHelp')}
+            </Text>
+            {helpOpen ? (
+              <ChevronUpIcon size={18} color={theme.textMuted} />
+            ) : (
+              <ChevronDownIcon size={18} color={theme.textMuted} />
+            )}
+          </Pressable>
+
+          {helpOpen ? (
+            <View className="mt-sm gap-sm">
+              {/* Non-dismissable menu-drift banner (03 §C) */}
+              <View className="flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
+                <ExclamationTriangleIcon size={16} color={theme.warningDark} />
+                <Text className="flex-1 font-body-medium text-body-sm text-warning-dark">
+                  {t('pay.banner')}
+                </Text>
+              </View>
+
+              {/* Numbered steps — bundled/cached/fetched, best version wins */}
+              {content.steps.map((step, index) => (
+                <View key={index} className="flex-row gap-sm">
+                  <Text className="w-[22px] font-body-semi text-body-sm text-accent">
+                    {index + 1}.
+                  </Text>
+                  <Text className="flex-1 font-body text-body-sm text-foreground">
+                    {interpolateUssdStep(step, {
+                      name:
+                        flow.payee?.displayName ??
+                        t('pay.recipientFallback'),
+                      number: payeeNumber,
+                      amount: amountRaw,
+                      reference: flow.reference,
+                    })}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           <View className="mt-lg flex-row items-start gap-xs">
             <InformationCircleIcon size={16} color={theme.textMuted} />
             <Text className="flex-1 font-body text-body-sm text-muted">
-              {t('pay.custodyNote', { name: flow.payee?.displayName ?? '—' })}
+              {t('pay.custodyNote', {
+                name: flow.payee?.displayName ?? t('pay.recipientFallback'),
+              })}
             </Text>
           </View>
         </>

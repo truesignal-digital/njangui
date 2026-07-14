@@ -33,10 +33,10 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "monochromeImage": "./assets/adaptive-icon-monochrome.png",
-        "backgroundColor": "#0C1222"
+        "backgroundColor": "#6C3F5E"
       },
       "package": "com.truesignal.njangi",
-      "permissions": [
+      "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -47,11 +47,11 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0C1222",
+          "backgroundColor": "#263C31",
           "image": "./assets/splash-icon.png",
           "imageWidth": 180,
           "dark": {
-            "backgroundColor": "#0C1222",
+            "backgroundColor": "#111914",
             "image": "./assets/splash-icon.png"
           }
         }
@@ -62,7 +62,7 @@
         "expo-secure-store",
         {
           "configureAndroidBackup": false,
-          "faceIDPermission": "Njangi utilise Face ID pour ouvrir votre carnet en s\u00e9curit\u00e9. / Njangi uses Face ID to open your ledger securely."
+          "faceIDPermission": "Njangi utilise Face ID pour ouvrir votre carnet en sécurité. / Njangi uses Face ID to open your ledger securely."
         }
       ],
       "expo-image",
@@ -89,7 +89,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Njangi acc\u00e8de \u00e0 vos photos pour joindre une preuve de paiement. / Njangi accesses your photos to attach payment proof.",
+          "photosPermission": "Njangi accède à vos photos pour joindre une preuve de paiement. / Njangi accesses your photos to attach payment proof.",
           "cameraPermission": "Njangi utilise l'appareil photo pour photographier une preuve de paiement. / Njangi uses the camera to photograph payment proof."
         }
       ],
@@ -100,7 +100,8 @@
           "project": "njangi",
           "organization": "true-signal-digital"
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

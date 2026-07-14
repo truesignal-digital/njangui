@@ -9,6 +9,7 @@
  */
 
 import type * as activity from "../activity.js";
+import type * as attention from "../attention.js";
 import type * as calendar from "../calendar.js";
 import type * as crons from "../crons.js";
 import type * as cycles from "../cycles.js";
@@ -17,7 +18,10 @@ import type * as email from "../email.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as lib_appLinks from "../lib/appLinks.js";
+import type * as lib_attention from "../lib/attention.js";
 import type * as lib_cycleMath from "../lib/cycleMath.js";
+import type * as lib_paymentCapabilities from "../lib/paymentCapabilities.js";
+import type * as lib_paymentMethods from "../lib/paymentMethods.js";
 import type * as lib_paymentStateMachine from "../lib/paymentStateMachine.js";
 import type * as lib_roundMath from "../lib/roundMath.js";
 import type * as lib_scheduleMath from "../lib/scheduleMath.js";
@@ -39,6 +43,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activity: typeof activity;
+  attention: typeof attention;
   calendar: typeof calendar;
   crons: typeof crons;
   cycles: typeof cycles;
@@ -47,7 +52,10 @@ declare const fullApi: ApiFromModules<{
   groups: typeof groups;
   http: typeof http;
   "lib/appLinks": typeof lib_appLinks;
+  "lib/attention": typeof lib_attention;
   "lib/cycleMath": typeof lib_cycleMath;
+  "lib/paymentCapabilities": typeof lib_paymentCapabilities;
+  "lib/paymentMethods": typeof lib_paymentMethods;
   "lib/paymentStateMachine": typeof lib_paymentStateMachine;
   "lib/roundMath": typeof lib_roundMath;
   "lib/scheduleMath": typeof lib_scheduleMath;

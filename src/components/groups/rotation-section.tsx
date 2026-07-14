@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import {
   CheckCircleIcon,
-  ChevronRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   ClockIcon,
   LockClosedIcon,
   PlayIcon,
@@ -15,6 +17,9 @@ import { formatCurrencyXAF } from '../../lib/format-currency';
 import { useAppTheme } from '../../lib/theme';
 import { AppButton } from '../ui/button';
 import { Skeleton } from '../skeleton';
+import { SoftPressable } from '../ui/soft-pressable';
+import { ICON_SIZE } from '../../lib/icons';
+import { toIntlLocale } from '../../lib/app-locale';
 
 /**
  * Group-home rotation block (docs/03 §B2). State-driven:
@@ -38,6 +43,7 @@ export function RotationSection({
   const { t } = useTranslation();
   const theme = useAppTheme();
   const { isAuthenticated } = useConvexAuth();
+  const [showAllRounds, setShowAllRounds] = useState(false);
 
   const isActive = groupStatus === 'active';
   const cycle = useQuery(
@@ -97,6 +103,17 @@ export function RotationSection({
   const currentRound = cycle.rounds.find(
     (r) => r.roundId === cycle.currentRoundId
   );
+  const currentIndex = cycle.rounds.findIndex(
+    (r) => r.roundId === cycle.currentRoundId
+  );
+  const visibleRounds =
+    showAllRounds || cycle.rounds.length <= 3
+      ? cycle.rounds
+      : cycle.rounds.slice(
+          Math.max(currentIndex, 0),
+          Math.max(currentIndex, 0) + 2
+        );
+  const hiddenCount = cycle.rounds.length - visibleRounds.length;
 
   return (
     <View className="gap-md">
@@ -118,9 +135,10 @@ export function RotationSection({
         <CurrentRoundCard groupId={groupId} roundId={currentRound.roundId} />
       ) : null}
 
-      {/* Rotation list */}
+      {/* Rotation list — current + next by default; the full order stays a
+          tap away so it can't dominate the first viewport. */}
       <View className="gap-xs">
-        {cycle.rounds.map((round) => {
+        {visibleRounds.map((round) => {
           const isCurrent = round.roundId === cycle.currentRoundId;
           const done = round.status === 'completed';
           return (
@@ -165,6 +183,26 @@ export function RotationSection({
             </View>
           );
         })}
+        {cycle.rounds.length > 3 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showAllRounds }}
+            testID="toggle-rotation-order"
+            onPress={() => setShowAllRounds((open) => !open)}
+            className="min-h-[40px] flex-row items-center justify-center gap-xs rounded-lg active:bg-surface-muted"
+          >
+            <Text className="font-body-medium text-body-sm text-accent">
+              {showAllRounds
+                ? t('groups.cycle.hideOrder')
+                : t('groups.cycle.showOrder', { count: hiddenCount })}
+            </Text>
+            {showAllRounds ? (
+              <ChevronUpIcon size={16} color={theme.accent} />
+            ) : (
+              <ChevronDownIcon size={16} color={theme.accent} />
+            )}
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -182,7 +220,7 @@ function CurrentRoundCard({
   groupId: Id<'groups'>;
   roundId: Id<'rounds'>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useAppTheme();
   const round = useQuery(api.rounds.getRound, { roundId });
 
@@ -198,39 +236,56 @@ function CurrentRoundCard({
           Math.round((round.confirmedTotal / round.expectedTotal) * 100)
         )
       : 0;
+  const gatheringDate = new Date(round.dueAt).toLocaleDateString(
+    toIntlLocale(i18n.language),
+    { weekday: 'long', day: 'numeric', month: 'long' }
+  );
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      testID="open-round-detail"
-      onPress={() =>
-        router.push({
-          pathname: '/groups/[groupId]/rounds/[roundId]',
-          params: { groupId, roundId },
-        })
-      }
-      className="gap-xs rounded-lg border border-border-subtle bg-surface p-md active:bg-surface-muted"
+    <View
+      className="gap-sm p-md"
+      style={{
+        backgroundColor: theme.collectiveHero,
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 28,
+        borderBottomRightRadius: 10,
+        borderBottomLeftRadius: 28,
+        borderCurve: 'continuous',
+      }}
     >
-      <View className="flex-row items-center justify-between">
-        <Text className="font-body-medium text-body-sm text-muted">
-          {t('groups.cycle.roundN', { n: round.index })} ·{' '}
-          {round.beneficiaryName}
-        </Text>
-        <ChevronRightIcon size={16} color={theme.textMuted} />
-      </View>
-      <Text className="font-body-semi text-body-sm text-foreground">
+      <Text className="font-body-semi text-overline uppercase text-inverted-muted">
+        {t('groups.cycle.nextGathering', { date: gatheringDate })}
+      </Text>
+      <Text className="font-heading text-headline text-inverted">
+        {t('groups.cycle.receivesThisRound', {
+          name: round.beneficiaryName,
+        })}
+      </Text>
+      <Text className="font-body text-caption text-inverted-muted">
         {t('round.pot.custody', {
           confirmed: formatCurrencyXAF(round.confirmedTotal),
           expected: formatCurrencyXAF(round.expectedTotal),
           name: round.custodianName,
         })}
       </Text>
-      <View className="h-[8px] overflow-hidden rounded-pill bg-surface-muted">
+      <View className="h-[6px] overflow-hidden rounded-pill bg-scrim">
         <View
-          className="h-full rounded-pill bg-accent"
-          style={{ width: `${pct}%`, backgroundColor: theme.accent }}
+          className="h-full rounded-pill bg-highlight"
+          style={{ width: `${pct}%` }}
         />
       </View>
-    </Pressable>
+      <AppButton
+        label={t('groups.cycle.openGathering')}
+        variant="highlight"
+        size="sm"
+        testID="open-round-detail"
+        onPress={() =>
+          router.push({
+            pathname: '/groups/[groupId]/rounds/[roundId]',
+            params: { groupId, roundId },
+          })
+        }
+      />
+    </View>
   );
 }

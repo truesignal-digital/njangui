@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import { Text, View } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import {
   ClockIcon,
   ExclamationTriangleIcon,
@@ -10,6 +10,8 @@ import {
 import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
 import { cn } from '../../lib/cn';
+import { ICON_SIZE } from '../../lib/icons';
+import { mobileUiConfig } from '../../lib/mobile-ui-config';
 import { useAppTheme } from '../../lib/theme';
 
 export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'outline';
@@ -123,8 +125,13 @@ export function PaymentStateBadge({
       icon={
         // key={state} remounts on every transition → the icon pops in, so
         // pending→declared→confirmed is felt, not just repainted.
-        <Animated.View key={state} entering={ZoomIn.springify().damping(14)}>
-          <Icon size={12} color={iconColor[tone]} />
+        <Animated.View
+          key={state}
+          entering={FadeIn.duration(
+            mobileUiConfig.motion.successDuration
+          ).reduceMotion(ReduceMotion.System)}
+        >
+          <Icon size={ICON_SIZE.metadata - 4} color={iconColor[tone]} />
         </Animated.View>
       }
     />

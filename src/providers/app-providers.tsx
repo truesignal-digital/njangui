@@ -9,6 +9,7 @@ import { mobileEnv } from '../lib/env';
 import { i18n } from '../lib/i18n';
 import { ClerkProvider, tokenCache, useAuth } from '../lib/clerk-client';
 import { useEnsureCurrentUser } from '../hooks/use-ensure-current-user';
+import { ThemePreferenceProvider } from './theme-preference-provider';
 
 const convex = new ConvexReactClient(mobileEnv.convexUrl);
 let lastKnownConvexToken: string | null = null;
@@ -183,8 +184,10 @@ export function AppProviders({ children }: PropsWithChildren) {
       <MobileConvexProviderWithClerk client={convex} useAuth={useNativeClerkAuth}>
         <I18nextProvider i18n={i18n}>
           <SafeAreaProvider>
-            <BootstrapUserRecord />
-            {children}
+            <ThemePreferenceProvider>
+              <BootstrapUserRecord />
+              {children}
+            </ThemePreferenceProvider>
           </SafeAreaProvider>
         </I18nextProvider>
       </MobileConvexProviderWithClerk>

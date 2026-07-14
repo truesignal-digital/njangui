@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { Text, View, useColorScheme } from 'react-native';
+import { Text, View } from 'react-native';
 import Svg, {
   Circle,
   Defs,
@@ -15,6 +15,7 @@ import {
   groupInitials,
   resolveSeed,
 } from '../../lib/group-colors';
+import { useAppTheme } from '../../lib/theme';
 
 /**
  * Per-njangi identity primitives (03 §G spirit: recognizable, never loud).
@@ -32,7 +33,7 @@ export function GroupGradientWash({
   groupId: string;
   opacity?: number;
 }) {
-  const dark = useColorScheme() === 'dark';
+  const dark = useAppTheme().isDark;
   const seed = resolveSeed(colorSeed, groupId);
   const { start, end } = groupGradient(seed, dark);
   // Stable per-instance SVG def id: a changing id rebuilds the native
@@ -74,7 +75,7 @@ export function GroupAvatar({
   size?: number;
   progress?: { done: number; total: number } | null;
 }) {
-  const dark = useColorScheme() === 'dark';
+  const dark = useAppTheme().isDark;
   const seed = resolveSeed(colorSeed, groupId);
   const { start, end } = groupAvatarGradient(seed, dark);
   const gid = `disc-${useId().replace(/:/g, '')}`;

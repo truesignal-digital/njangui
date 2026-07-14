@@ -26,6 +26,8 @@ import { AppButton } from '../../../../../../../src/components/ui/button';
 import { TextField } from '../../../../../../../src/components/ui/text-field';
 import { Skeleton } from '../../../../../../../src/components/skeleton';
 import { ImagePreviewModal } from '../../../../../../../src/components/image-preview-modal';
+import { SoftPressable } from '../../../../../../../src/components/ui/soft-pressable';
+import { ICON_SIZE } from '../../../../../../../src/lib/icons';
 
 /**
  * Pay flow step 3 — claim (docs/03 B4): amount prefilled with the remaining
@@ -164,14 +166,14 @@ export default function PayClaimScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View className="flex-row items-center gap-xs">
-        <Pressable
+        <SoftPressable
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
           onPress={() => router.back()}
-          className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
+          className="h-[44px] w-[44px] items-center justify-center rounded-full active:bg-surface-muted"
         >
-          <ChevronLeftIcon size={22} color={theme.textMuted} />
-        </Pressable>
+          <ChevronLeftIcon size={ICON_SIZE.control} color={theme.textMuted} />
+        </SoftPressable>
         <View className="min-w-0 flex-1">
           <Text className="font-heading text-title text-foreground">
             {t('pay.claimTitle')}
@@ -187,6 +189,34 @@ export default function PayClaimScreen() {
           ) : null}
         </View>
       </View>
+
+      {flow.round && flow.record ? (
+        <View
+          className="mt-md bg-success-bg p-md"
+          style={{
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 10,
+            borderBottomRightRadius: 28,
+            borderBottomLeftRadius: 10,
+            borderCurve: 'continuous',
+          }}
+        >
+          <Text className="font-body-semi text-overline uppercase text-success-dark">
+            {t('pay.roundEyebrow', { n: flow.round.index })}
+          </Text>
+          <Text selectable className="pt-xs font-heading text-display-lg text-foreground">
+            {formatCurrencyXAF(flow.record.amount)}
+          </Text>
+          <Text className="font-heading text-title-lg text-foreground">
+            {t('pay.yourContribution')}
+          </Text>
+          {flow.payee ? (
+            <Text className="pt-[2px] font-body text-caption text-muted">
+              {t('pay.directTo', { name: flow.payee.displayName })}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
       {flow.loading || !flow.record ? (
         <View className="mt-lg gap-sm">

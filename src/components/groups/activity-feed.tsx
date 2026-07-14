@@ -3,6 +3,7 @@ import { usePaginatedQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 
 import { api, type Id } from '../../lib/convex-api';
+import { toIntlLocale } from '../../lib/app-locale';
 import { AppButton } from '../ui/button';
 import { Skeleton } from '../skeleton';
 
@@ -45,21 +46,38 @@ export function ActivityFeed({
     );
   }
 
+  const labelFor = (event: (typeof results)[number]) => {
+    const key = `feed.kind.${event.kind}`;
+    return i18n.exists(key)
+      ? t(key, {
+          actor: event.actorName ?? t('feed.system'),
+          note: event.note ?? '',
+        })
+      : t('feed.kind.generic', {
+          actor: event.actorName ?? t('feed.system'),
+          kind: event.kind.replaceAll('_', ' '),
+        });
+  };
+
+  // Collapse adjacent identical system lines (« Confirmed automatically ✓ »
+  // repeated per record) into one row with a count — same information,
+  // no wall of duplicates.
+  const rows: { event: (typeof results)[number]; label: string; repeat: number }[] = [];
+  for (const event of results) {
+    const label = labelFor(event);
+    const last = rows[rows.length - 1];
+    if (last && last.label === label && !event.note) {
+      last.repeat += 1;
+    } else {
+      rows.push({ event, label, repeat: 1 });
+    }
+  }
+
   return (
     <View>
-      {results.map((event, index) => {
-        const key = `feed.kind.${event.kind}`;
-        const label = i18n.exists(key)
-          ? t(key, {
-              actor: event.actorName ?? t('feed.system'),
-              note: event.note ?? '',
-            })
-          : t('feed.kind.generic', {
-              actor: event.actorName ?? t('feed.system'),
-              kind: event.kind.replaceAll('_', ' '),
-            });
+      {rows.map(({ event, label, repeat }, index) => {
         const when = new Date(event.createdAt).toLocaleDateString(
-          i18n.language === 'fr' ? 'fr-FR' : 'en-GB',
+          toIntlLocale(i18n.language),
           { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
         );
         return (
@@ -73,6 +91,7 @@ export function ActivityFeed({
           >
             <Text className="font-body text-body-sm text-foreground">
               {label}
+              {repeat > 1 ? ` ×${repeat}` : ''}
             </Text>
             <Text className="pt-[2px] font-body text-caption text-muted">
               {when}
