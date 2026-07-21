@@ -16,6 +16,16 @@ Convex agent skills for common tasks can be installed by running
 
 Njangi is a mobile app for running njangi groups (rotating savings circles): members contribute per round, one member (or hand) claims the pot, and both sides confirm money movement. Trust and money-ledger correctness dominate every design decision — server truth over optimism, everywhere.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and decision maps are tracked in this repository's GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+This is a single-context repository using root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+
 ## Project Overview
 
 **Tech stack:**
