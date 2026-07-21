@@ -61,6 +61,28 @@ The first iOS run is interactive because Apple signing and 2FA must be set up.
 See [mobile-release-readiness-2026-07-14.md](./mobile-release-readiness-2026-07-14.md)
 for the account, privacy, metadata, screenshot, and device-test checklist.
 
+## Preview or publish contribution links on web
+
+The public `/g/<shareCode>` route is outside the authenticated app group. Expo
+uses `web.output: single` so direct navigation and refresh of an arbitrary,
+high-entropy share code resolve through the SPA fallback.
+
+```bash
+# Verify the production export locally first
+bun run export:web
+
+# Create an EAS Hosting preview URL
+bun run eas:deploy:web:preview
+
+# Publish only after testing a signed-out direct URL and refresh
+bun run eas:deploy:web:production
+```
+
+Before production, verify that the route returns the same generic unavailable
+state for malformed, revoked, closed, cancelled, and unknown links; only the
+explicit public Convex query may disclose organizer-approved fields. Never put
+raw share codes in logs, analytics, crash tags, or support screenshots.
+
 ## When OTA is not enough (native changed)
 
 If `release:status` shows the update's runtime differs from the installed builds'

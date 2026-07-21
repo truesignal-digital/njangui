@@ -40,6 +40,9 @@
         "android.permission.RECORD_AUDIO"
       ]
     },
+    "web": {
+      "output": "single"
+    },
     "plugins": [
       "expo-dev-client",
       "expo-router",

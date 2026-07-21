@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SystemUI from 'expo-system-ui';
-import { Appearance, useColorScheme } from 'react-native';
+import { Appearance, Platform, useColorScheme } from 'react-native';
 import {
   useCallback,
   useEffect,
@@ -52,10 +52,12 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
       : preference;
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     Appearance.setColorScheme(preference === 'system' ? null : preference);
   }, [preference]);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     void SystemUI.setBackgroundColorAsync(
       mobileUiConfig.colors[mode].background
     );

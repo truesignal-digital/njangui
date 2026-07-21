@@ -91,7 +91,9 @@ function fontSize(token: keyof typeof mobileUiConfig.typography) {
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
-  darkMode: 'media',
+  // ThemePreferenceProvider supports an explicit user choice. NativeWind's
+  // web runtime throws if an app-controlled scheme is paired with `media`.
+  darkMode: 'class',
   theme: {
     /* ─── OVERRIDE DEFAULTS ─── enforce design system only ─── */
     colors: {

@@ -24,6 +24,9 @@
     "eas:build:preview:android": "npx eas-cli@latest build -p android --profile preview",
     "eas:build:testflight": "npx eas-cli@latest build -p ios --profile testflight",
     "eas:build:production": "npx eas-cli@latest build -p all --profile production",
+    "export:web": "expo export --platform web",
+    "eas:deploy:web:preview": "npx eas-cli@latest deploy",
+    "eas:deploy:web:production": "npx eas-cli@latest deploy --prod",
     "eas:submit:testflight": "npx eas-cli@latest submit -p ios --profile testflight --latest",
     "eas:submit:play-internal": "npx eas-cli@latest submit -p android --profile production --latest",
     "eas:run:ios": "npx eas-cli@latest build:run -p ios --latest",
@@ -37,7 +40,7 @@
     "doctor": "npx expo-doctor"
   },
   "dependencies": {
-    "@clerk/expo": "^3.0.1",
+    "@clerk/expo": "^3.7.8",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/newsreader": "^0.4.1",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",

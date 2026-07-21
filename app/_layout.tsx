@@ -104,6 +104,7 @@ function AppNavigation() {
       >
         <Stack.Screen name="(app)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="g/[shareCode]" />
       </Stack>
       {/* 3.5s + close button: FR strings run long and low-end devices render
           slow — a toast the user can't finish reading is no feedback at all. */}

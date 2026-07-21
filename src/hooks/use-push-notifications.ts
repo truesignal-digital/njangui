@@ -22,14 +22,16 @@ function routePushUrl(url: unknown) {
   router.push(url as any);
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 /**
  * Push registration + deep-link handling (05 M12). Best-effort by design:
@@ -42,6 +44,7 @@ export function usePushNotifications() {
   const savePushToken = useMutation(api.users.savePushToken);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     if (!isAuthenticated) return;
 
     let cancelled = false;
@@ -86,6 +89,7 @@ export function usePushNotifications() {
   }, [isAuthenticated, savePushToken]);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     /*
      * Cold start: the tap that LAUNCHED the app never reaches the response
      * listener below, so replay the last response once on mount.
