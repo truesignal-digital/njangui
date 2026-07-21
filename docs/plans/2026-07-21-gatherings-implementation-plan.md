@@ -114,13 +114,27 @@ Read `convex/_generated/ai/guidelines.md` before implementation.
 Add validators in `convex/schema.ts`:
 
 - `gatheringStatusValidator`: `draft | open | closed | cancelled`
-- `gatheringPurposeValidator`: `funeral | wedding | birthday | school | trip |
-  gift | church | family_support | other`
+- shared `groupPurposeValidator`: `funeral | wedding | birthday | family |
+  school | church | business | savings | travel | gift | association | other`
 - `gatheringAmountModeValidator`: `fixed | suggested | open`
 - `gatheringContributionStateValidator`: `claimed | confirmed | disputed |
   cancelled`
 - reuse `paymentMethodValidator`, `proofTypeValidator`, and
   `disputeReasonValidator` where semantics match exactly
+
+Migrate existing Njangi groups with widen–migrate–narrow:
+
+1. add `purpose: v.optional(groupPurposeValidator)` to the existing `groups`
+   table and make all reads return `savings` when the field is absent;
+2. deploy, then backfill every missing value to `savings` in bounded batches;
+3. verify there are no rows with a missing or invalid value;
+4. narrow the field to required in a later deployment;
+5. add purpose selection to Njangi creation with `savings` visibly selected by
+   default and record any later officer correction as an activity event.
+
+Contribution groups store a required purpose from their first schema version.
+Translations live under the shared `groups.purpose.*` keys in both locale files;
+database rows never store localized labels.
 
 Add tables:
 
@@ -664,4 +678,3 @@ Keep changes reviewable:
 
 Each commit must pass the tests relevant to its layer. Do not combine payment
 provider integration with the direct-to-recipient pilot.
-

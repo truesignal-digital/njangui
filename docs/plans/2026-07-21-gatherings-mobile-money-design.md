@@ -172,9 +172,48 @@ A Contribution group has:
 - a lifecycle state;
 - contribution records and activity events.
 
-The first purpose categories are `funeral`, `wedding`, `birthday`, `school`,
-`trip`, `gift`, `church`, `family_support`, and `other`. Categories support
-copy and analytics but do not change money handling.
+### Purpose tag contract
+
+Every Group has exactly one stored `purpose` value from this closed enum:
+
+| Stored value | Français | English |
+| --- | --- | --- |
+| `funeral` | Deuil | Funeral |
+| `wedding` | Mariage | Wedding |
+| `birthday` | Anniversaire | Birthday |
+| `family` | Famille | Family |
+| `school` | École | School |
+| `church` | Église | Church |
+| `business` | Commerce | Business |
+| `savings` | Épargne | Savings |
+| `travel` | Voyage | Travel |
+| `gift` | Cadeau | Gift |
+| `association` | Association | Association |
+| `other` | Autre | Other |
+
+Store only the stable enum value. Resolve labels, icons, and presentation from
+versioned app translations; never store a translated label in a Group row.
+The tag is rendered as text beside or immediately above the Group name and may
+have an icon or color, but meaning must never depend on color alone. There is
+no multi-tag state and no user-created tag in the pilot. A Group named for an
+unlisted purpose uses `other`; its title and description provide the detail.
+
+New Contribution groups must choose a purpose before creation can continue.
+The purpose remains editable in `draft` and becomes immutable when the group
+opens so a shared request cannot silently change meaning.
+
+New Njangi groups default to `savings`, visibly selected in the creation flow;
+the creator may select another purpose. Existing Njangi groups are exposed as
+`savings` during the compatibility deployment, then backfilled to `savings`.
+Until the schema is narrowed, all reads must interpret a missing purpose as
+`savings`. A president or treasurer may correct the purpose of a non-archived
+Njangi group because it is descriptive metadata and does not affect ledger
+state. The correction creates an attributed activity event. Archived groups
+retain the migrated value.
+
+Purpose supports recognition, filtering, localized copy, and analytics. It
+never changes custody, contribution state transitions, authorization, fees, or
+Mobile Money handling.
 
 ### Lifecycle
 
