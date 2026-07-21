@@ -2,6 +2,24 @@
 
 Custody-free ledger for rotating savings groups (njangis) in Cameroon. The app schedules rounds, records two-sided payment acknowledgments, and never moves money.
 
+## Product language
+
+**Group**:
+The user-facing home for people coordinating money around one purpose. A Group has exactly one mode: a one-time Contribution group or a recurring Njangi group. Both modes appear together in the Groups tab, but they keep separate lifecycle rules.
+_Avoid_: using group as if it implied a recurring njangi
+
+**Contribution group**:
+A one-time Group for a funeral, wedding, birthday, family need, school, church, business, trip, gift, association, or another named purpose. Contributors pay the disclosed recipient directly and record the contribution in OnCotise.
+_Avoid_: Gathering (already means a njangi meeting), campaign, fundraiser, pool
+
+**Njangi group**:
+A recurring Group with membership, roles, cycles, rounds, contributions, and pot handovers.
+_Avoid_: treating a Njangi group as a generic one-time collection
+
+**Purpose tag**:
+The single localized label shown beside a Group name to explain why the group exists. Purpose tags support recognition and analytics; they never change custody or ledger rules.
+_Avoid_: category list, hashtags, multiple tags
+
 ## Language
 
 **PaymentRecord**:

@@ -1,18 +1,23 @@
-# Gatherings + Njangis: Cameroon Mobile Money Design
+# Unified Groups: Cameroon Mobile Money Design
 
 **Date:** 2026-07-21  
 **Status:** Approved product direction  
-**Working brand:** Njangi (final naming remains open)
+**Working brand:** OnCotise
 
 ## Decision
 
 Expand the product from a recurring njangi ledger into the simplest way for a
-group in Cameroon to organize contributions for either:
+Group in Cameroon to organize contributions in either mode:
 
-1. a one-time **Gathering**, such as a funeral, wedding, birthday, school
+1. a one-time **Contribution group**, such as a funeral, wedding, birthday, school
    event, trip, gift, church activity, or family need; or
-2. a recurring **Njangi**, with members, officer roles, a locked rotation,
+2. a recurring **Njangi group**, with members, officer roles, a locked rotation,
    meetings, contributions, and pot handovers.
+
+**Groups** is the only user-visible product container. Contribution and Njangi
+are modes selected during creation, not separate apps, tabs, or brands.
+“Gathering” remains reserved for a scheduled njangi meeting and must not name
+the one-time mode in product copy or code.
 
 Mobile Money remains the money layer. The product coordinates the purpose,
 participants, payment instructions, acknowledgements, progress, reminders,
@@ -24,24 +29,24 @@ The initial positioning is:
 
 The product promise is broader than payment tracking:
 
-> Organize contributions for any gathering, or run the full rhythm of a
+> Organize contributions for any purpose, or run the full rhythm of a
 > recurring njangi.
 
 ## Why this direction
 
 The current product has deep recurring-group machinery, but many Cameroonian
-group-money moments are one-off and begin in WhatsApp. A lightweight Gathering
+group-money moments are one-off and begin in WhatsApp. A lightweight Contribution group
 creates a much faster first-use path than asking an organizer to configure a
 full njangi cycle.
 
 One-time collections also form a natural acquisition loop:
 
-1. an organizer creates a Gathering;
+1. an organizer creates a Contribution group;
 2. a WhatsApp link reaches many contributors;
 3. contributors pay through the Mobile Money tools they already trust;
 4. contributors see a clear shared record;
-5. organizers can later create another Gathering or graduate a stable group to
-   a recurring Njangi.
+5. organizers can later create another Contribution group or graduate a stable
+   group to a recurring Njangi group.
 
 This direction preserves the strongest current product assets: two-sided
 acknowledgement, durable history, role-aware actions, offline-tolerant capture,
@@ -51,7 +56,7 @@ and Mobile Money instructions.
 
 ### In scope
 
-- Private, invite-link-based one-time Gatherings.
+- Private, invite-link-based one-time Contribution groups.
 - A named purpose, organizer, recipient, deadline, optional goal, and suggested
   or fixed contribution.
 - MTN MoMo, Orange Money, and cash as contribution methods.
@@ -77,19 +82,83 @@ and Mobile Money instructions.
 
 ## Product model
 
-### Two entry points
+### Unified Groups product contract
 
-The signed-in home experience offers two primary actions:
+The Groups tab is the single place where a person finds both modes. The app
+must not split Contribution groups and Njangi groups into separate tabs or
+parallel home experiences.
 
-- **Collect for something** — create a one-time Gathering.
-- **Run a njangi** — create or join a recurring Njangi.
+Every item returned to the Groups tab is a discriminated summary:
 
-The labels must be understandable without financial jargon. “Collection” is an
-internal product category; user copy should describe the purpose and action.
+```ts
+type GroupSummary =
+  | {
+      mode: "contribution";
+      id: ContributionGroupId;
+      title: string;
+      purpose: GroupPurpose;
+      status: ContributionGroupStatus;
+      confirmedAmount: number;
+      goalAmount?: number;
+      awaitingConfirmationCount: number;
+      deadlineAt: number;
+      viewerActionCount: number;
+      href: string;
+    }
+  | {
+      mode: "njangi";
+      id: NjangiGroupId;
+      title: string;
+      purpose: GroupPurpose;
+      status: NjangiGroupStatus;
+      nextDueAt?: number;
+      viewerDueAmount?: number;
+      viewerReceivingAmount?: number;
+      viewerActionCount: number;
+      href: string;
+    };
+```
 
-### Gathering
+The union normalizes identity, purpose, urgency, and navigation only. It must
+not invent a shared lifecycle state or force one mode's contribution records
+into the other mode's tables.
 
-A Gathering has:
+Each card uses the same visual hierarchy:
+
+1. one localized purpose tag beside or immediately above the Group name;
+2. the Group name;
+3. one mode-aware primary fact — confirmed progress for a Contribution group,
+   or the current/next round fact for a Njangi group;
+4. at most one viewer-owned attention action;
+5. a quiet mode label only where the content does not already make the mode
+   clear.
+
+Groups needing an action from the viewer sort first. Open/current Groups sort
+before draft, paused, closed, cancelled, or archived Groups. The final
+tie-breaker is the next relevant date and then the Group name.
+
+The existing Njangi detail route and lifecycle remain intact. Contribution
+groups use their own detail route and lifecycle. Both detail screens begin with
+the same Group identity header (purpose tag, name, mode-aware state, and share
+action), then render mode-specific content. Route names and Convex table IDs
+are implementation details and must not appear in user copy.
+
+### One creation entry
+
+The Groups tab has one create/join action. Its first screen offers three plain
+language choices:
+
+- **Collect for a purpose** — create a one-time Contribution group;
+- **Start a njangi** — enter the existing recurring Njangi wizard;
+- **Join with an invitation** — accept either supported private invitation.
+
+Choosing a mode is not a persistent filter and does not create a separate
+navigation branch. After creation or joining, the person returns to the same
+Groups list.
+
+### Contribution group
+
+A Contribution group has:
 
 - a title and optional cover image;
 - a purpose category and plain-language description;
@@ -122,7 +191,7 @@ draft -> open -> closed
 - `cancelled`: no new claims; the page explains that money already sent must be
   handled directly between the contributor and recipient.
 
-Reaching a goal does not automatically close a Gathering. The organizer closes
+Reaching a goal does not automatically close a Contribution group. The organizer closes
 it explicitly because legitimate overfunding is common and funds do not sit in
 the app.
 
@@ -176,7 +245,7 @@ Keep creation to one short flow:
    fixed/suggested/open amount.
 3. **When does it end?** Optional goal and required deadline.
 4. **Review and share.** Show the exact recipient and custody statement before
-   opening the Gathering.
+   opening the Contribution group.
 
 Advanced settings do not belong in the initial flow.
 
@@ -216,7 +285,7 @@ or payment instructions.
 
 ### Identity
 
-An account is not required to view a Gathering. Claiming a contribution
+An account is not required to view a Contribution group. Claiming a contribution
 requires a minimal verified identity so the recipient can reconcile the money.
 The first version should prefer phone verification or a signed, short-lived
 claim link over full account onboarding. Exact identity-provider support will
@@ -232,8 +301,8 @@ After a claim, offer—not require—the native app for:
 - confirmation updates;
 - future reminders;
 - full activity history;
-- creating another Gathering;
-- joining or running a Njangi.
+- creating another Contribution group;
+- joining or running a Njangi group.
 
 ## Mobile Money strategy
 
@@ -279,8 +348,8 @@ the platform eventually becoming a custodian.
 ### Preserve Njangi domain depth
 
 Do not flatten cycles, rounds, rotation order, payouts, governance, fines, or
-assistance into generic Gathering concepts. A recurring Njangi remains its own
-domain model.
+assistance into generic Contribution group concepts. A recurring Njangi group
+remains its own domain model.
 
 Share only the primitives that are truly common:
 
@@ -295,16 +364,18 @@ Share only the primitives that are truly common:
 
 ### New domain boundary
 
-Add a dedicated Gathering module rather than overloading `groups` or making
-round IDs optional everywhere. The expected server-side boundary is:
+Add a dedicated Contribution group module rather than overloading the existing
+`groups` table or making round IDs optional everywhere. The expected
+server-side boundary is:
 
-- `gatherings`
-- `gatheringParticipants`
-- `gatheringContributions`
-- `gatheringActivityEvents`
+- `contributionGroups`
+- `contributionGroupParticipants`
+- `contributionGroupContributions`
+- `contributionGroupActivityEvents`
+- `groupHub` as a read-only composition boundary for the combined Groups tab
 
 Shared pure logic may be extracted for acknowledgement transitions, but
-Gathering authorization and lifecycle rules remain independent.
+Contribution group authorization and lifecycle rules remain independent.
 
 This avoids destabilizing the implemented Njangi state machines while still
 allowing a consistent user mental model.
@@ -321,7 +392,7 @@ authenticated native routes.
 
 ## Authorization and privacy
 
-- Only the organizer can edit, open, close, or cancel a Gathering.
+- Only the organizer can edit, open, close, or cancel a Contribution group.
 - Only the named recipient can confirm receipt, except for an explicit,
   attributed correction path.
 - A contributor can view and withdraw their own unconfirmed claim.
@@ -339,7 +410,7 @@ The first release limits the risk surface:
 
 - private-link distribution only;
 - verified organizer before opening;
-- one recipient per Gathering;
+- one recipient per Contribution group;
 - bounded duration and configurable amount limits;
 - report and revoke-link actions;
 - duplicate-reference and duplicate-claim detection;
@@ -369,15 +440,15 @@ money.
 
 The first pilot should measure:
 
-- time from opening the app to sharing a Gathering link;
+- time from opening the app to sharing a Contribution group link;
 - share-link open rate;
 - percentage of viewers who start payment instructions;
 - percentage who successfully submit a claim;
 - recipient confirmation rate and median confirmation time;
-- number of manual reconciliation problems per Gathering;
+- number of manual reconciliation problems per Contribution group;
 - organizer repeat rate within 60 days;
 - conversion from contributor to app install;
-- conversion from one-time Gathering to recurring Njangi.
+- conversion from one-time Contribution group to recurring Njangi group.
 
 Initial qualitative success means an organizer can create and share a real
 collection in under two minutes, a first-time contributor understands where the
@@ -397,7 +468,7 @@ working brand can change without rewriting domain copy.
 
 ## Rollout sequence
 
-1. Validate the Gathering flow with clickable copy and a small number of real
+1. Validate the Contribution group flow with clickable copy and a small number of real
    Cameroon organizers before payment API work.
 2. Ship direct-to-recipient MTN/Orange/cash instructions with claims and
    confirmations.
@@ -411,4 +482,3 @@ working brand can change without rewriting domain copy.
 
 The app should make contributing together feel effortless without pretending
 that organizing money and possessing money are the same service.
-
