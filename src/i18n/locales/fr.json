@@ -236,6 +236,56 @@
     }
   },
   "groups": {
+    "purpose": {
+      "funeral": "Deuil",
+      "wedding": "Mariage",
+      "birthday": "Anniversaire",
+      "family": "Famille",
+      "school": "École",
+      "church": "Église",
+      "business": "Commerce",
+      "savings": "Épargne",
+      "travel": "Voyage",
+      "gift": "Cadeau",
+      "association": "Association",
+      "other": "Autre"
+    },
+    "mode": {
+      "contribution": "Cotisation",
+      "njangi": "Njangi"
+    },
+    "unifiedChooser": {
+      "title": "Que voulez-vous organiser ?",
+      "subtitle": "Un seul endroit pour une cotisation ponctuelle ou tout le rythme d’un njangi.",
+      "contributionTitle": "Collecter pour un besoin",
+      "contributionBody": "Créez un seul lien pour un deuil, un mariage, l’école, un cadeau, un voyage ou tout autre besoin commun.",
+      "njangiTitle": "Démarrer un njangi",
+      "njangiBody": "Organisez les membres, les cotisations régulières, les réunions et la rotation.",
+      "joinTitle": "Rejoindre avec une invitation",
+      "joinBody": "Ouvrez une invitation WhatsApp ou saisissez son code.",
+      "safety": "OnCotise tient le registre commun. Le Mobile Money et les espèces restent entre les personnes."
+    },
+    "summary": {
+      "confirmedToward": "{{confirmed}} confirmés sur {{goal}}",
+      "confirmedAmount": "{{amount}} confirmés",
+      "contributionMeta": "{{count}} en attente · échéance {{date}}",
+      "deadlineOnly": "Échéance · {{date}}",
+      "youOwe": "Vous devez cotiser {{amount}}",
+      "youReceive": "Vous recevez bientôt {{amount}}",
+      "nextDate": "Prochaine date · {{date}}",
+      "noDate": "Aucune prochaine date",
+      "needsYou": "Action requise"
+    },
+    "prototype": {
+      "eyebrow": "Prototype des Groupes unifiés",
+      "title": "Toutes les raisons de se réunir",
+      "subtitle": "Les groupes de cotisation et les njangis restent dans une seule liste, triée par action.",
+      "groupsTab": "Groupes",
+      "chooserTab": "Créer ou rejoindre",
+      "needYou": "{{count}} vous attendent",
+      "mixedModes": "Une seule liste",
+      "selected": "Choix : {{choice}}"
+    },
     "memberCount_one": "{{count}} membre",
     "memberCount_other": "{{count}} membres",
     "status": {

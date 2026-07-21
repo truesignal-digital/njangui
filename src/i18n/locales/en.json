@@ -236,6 +236,56 @@
     }
   },
   "groups": {
+    "purpose": {
+      "funeral": "Funeral",
+      "wedding": "Wedding",
+      "birthday": "Birthday",
+      "family": "Family",
+      "school": "School",
+      "church": "Church",
+      "business": "Business",
+      "savings": "Savings",
+      "travel": "Travel",
+      "gift": "Gift",
+      "association": "Association",
+      "other": "Other"
+    },
+    "mode": {
+      "contribution": "Contribution",
+      "njangi": "Njangi"
+    },
+    "unifiedChooser": {
+      "title": "What do you want to organize?",
+      "subtitle": "One place for a one-time contribution or the full rhythm of a njangi.",
+      "contributionTitle": "Collect for a purpose",
+      "contributionBody": "Create one link for a funeral, wedding, school need, gift, trip, or any shared purpose.",
+      "njangiTitle": "Start a njangi",
+      "njangiBody": "Organize members, recurring contributions, meetings, and the rotation.",
+      "joinTitle": "Join with an invitation",
+      "joinBody": "Open a WhatsApp invitation or enter its code.",
+      "safety": "OnCotise keeps the shared record. Mobile Money and cash stay between people."
+    },
+    "summary": {
+      "confirmedToward": "{{confirmed}} confirmed of {{goal}}",
+      "confirmedAmount": "{{amount}} confirmed",
+      "contributionMeta": "{{count}} awaiting · deadline {{date}}",
+      "deadlineOnly": "Deadline · {{date}}",
+      "youOwe": "{{amount}} is due from you",
+      "youReceive": "You receive {{amount}} next",
+      "nextDate": "Next date · {{date}}",
+      "noDate": "No next date yet",
+      "needsYou": "Action needed"
+    },
+    "prototype": {
+      "eyebrow": "Unified Groups prototype",
+      "title": "Every reason people come together",
+      "subtitle": "Contribution groups and njangis stay in one action-first stream.",
+      "groupsTab": "Groups",
+      "chooserTab": "Create or join",
+      "needYou": "{{count}} need you",
+      "mixedModes": "One mixed list",
+      "selected": "Selected: {{choice}}"
+    },
     "memberCount_one": "{{count}} member",
     "memberCount_other": "{{count}} members",
     "status": {

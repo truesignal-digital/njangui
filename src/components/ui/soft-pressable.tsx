@@ -11,10 +11,12 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { cssInterop } from "nativewind";
 
 import { mobileUiConfig } from "@/lib/mobile-ui-config";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+cssInterop(AnimatedPressable, { className: "style" });
 
 type SoftPressableProps = Omit<PressableProps, "children" | "style"> & {
   children: ReactNode;

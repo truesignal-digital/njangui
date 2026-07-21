@@ -13,6 +13,8 @@ import { useAppTheme, useShadow } from '../../lib/theme';
 import { GroupSeal } from './group-seal';
 import { SoftPressable } from '../ui/soft-pressable';
 import { ICON_SIZE } from '../../lib/icons';
+import type { GroupPurpose } from '../../lib/group-summary';
+import { GroupPurposeTag } from './group-purpose-tag';
 
 /**
  * Narrow data interface for the group lists — matches the `returns:`
@@ -21,6 +23,7 @@ import { ICON_SIZE } from '../../lib/icons';
 export type GroupListItem = {
   groupId: string;
   name: string;
+  purpose?: GroupPurpose;
   status: 'setup' | 'active' | 'paused' | 'between_cycles' | 'archived';
   schedule: 'weekly' | 'biweekly' | 'monthly';
   contributionAmount: number;
@@ -164,6 +167,12 @@ export const GroupCard = memo(function GroupCard({ group }: { group: GroupListIt
           size={56}
         />
         <View className="min-w-0 flex-1">
+          <View className="mb-xs flex-row items-center gap-xs">
+            <GroupPurposeTag purpose={group.purpose ?? 'savings'} compact />
+            <Text className="font-body-semi text-overline uppercase text-muted">
+              {t('groups.mode.njangi')}
+            </Text>
+          </View>
           <Text
             numberOfLines={1}
             className="font-heading text-title-lg text-foreground"
