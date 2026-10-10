@@ -1,0 +1,45 @@
+# Opens the app signed out, on this slot's Metro. Every flow starts with it:
+#   - runFlow: _start.yaml
+appId: com.truesignal.njangi
+---
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - clearKeychain
+      - launchApp:
+          clearState: true
+          stopApp: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - stopApp
+      - clearState
+# The link loads the slot's bundle; disableOnboarding=1 asks the dev client to
+# skip its menu tour.
+- openLink: ${DEV_CLIENT_URL}
+- tapOn:
+    text: "Open"
+    optional: true
+# The first bundle load can take a minute on a cold Metro cache. The app title
+# shows on the sign-in screen, under the tour too.
+- extendedWaitUntil:
+    visible:
+      text: "Njangi"
+    timeout: 120000
+- runFlow:
+    when:
+      visible: "This is the developer menu.*"
+    commands:
+      - tapOn: "Continue"
+      - tapOn:
+          text: "Close"
+          optional: true
+# The DEV pill row is wider than a phone, so P and M are clipped at the edges;
+# T is always whole. tapOn still hits P's and M's visible centres.
+- extendedWaitUntil:
+    visible:
+      id: "dev-signin-T"
+    timeout: 30000
+- waitForAnimationToEnd

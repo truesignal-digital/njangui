@@ -32,3 +32,6 @@ web-build/
 
 expo-env.d.ts
 # @end expo-cli
+
+# bun run verify: runs, reels, slot state
+.verify/

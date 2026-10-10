@@ -21,7 +21,7 @@ Branches and environments: `docs/adr/0001-develop-is-staging.md`. Issue commands
 
 1. Write the guard or behaviour test first and watch it fail, then make it pass.
 2. Run `bun run typecheck`, `bun run lint:design`, `bun run test` (and `bun run test:convex` when `convex/` changed).
-3. Verify in the real app. Tests are not enough for UI or native changes; record a walkthrough.
+3. Verify in the real app. Tests are not enough for UI or native changes: record a reel with `bun run verify drive <flow> --reel` (before/after with `bun run verify reel <after> --before <before>` when behaviour changed), upload it with `bun run verify upload`, and link it under `## Walkthrough video`. How: `.claude/skills/verify-njangi/SKILL.md`. The `pr-evidence` check fails a PR that changes `app/`, `src/`, `convex/` or `app.json` without the link or a "Walkthrough video: not recorded (<reason>)" line.
 
 ## Pull requests
 
