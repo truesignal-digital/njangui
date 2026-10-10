@@ -14,13 +14,14 @@ import { ICON_SIZE } from '../../lib/icons';
 import { mobileUiConfig } from '../../lib/mobile-ui-config';
 import { useAppTheme } from '../../lib/theme';
 
-export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'outline';
+export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'info' | 'outline';
 
 const CONTAINER_TONES: Record<BadgeTone, string> = {
   neutral: 'bg-surface-muted',
   accent: 'bg-accent-light',
   success: 'bg-success-bg',
   warning: 'bg-warning-bg',
+  info: 'bg-info-bg',
   outline: 'border border-border bg-transparent',
 };
 
@@ -29,6 +30,7 @@ const LABEL_TONES: Record<BadgeTone, string> = {
   accent: 'text-foreground',
   success: 'text-success-dark',
   warning: 'text-warning-dark',
+  info: 'text-info-dark',
   outline: 'text-muted',
 };
 
@@ -46,13 +48,13 @@ export function Badge({
   return (
     <View
       className={cn(
-        'flex-row items-center gap-[3px] self-start rounded-pill px-xs py-[3px]',
+        'h-[30px] flex-row items-center gap-[3px] self-start rounded-pill px-xs',
         CONTAINER_TONES[tone],
         className
       )}
     >
       {icon}
-      <Text className={cn('font-body-medium text-caption', LABEL_TONES[tone])}>{label}</Text>
+      <Text className={cn('font-body-medium text-title', LABEL_TONES[tone])}>{label}</Text>
     </View>
   );
 }
@@ -81,7 +83,7 @@ export type PaymentState =
  */
 export const PAYMENT_STATE_TONE: Record<PaymentState, { tone: BadgeTone }> = {
   pending: { tone: 'neutral' },
-  claimed: { tone: 'accent' },
+  claimed: { tone: 'info' },
   confirmed: { tone: 'success' },
   disputed: { tone: 'warning' },
   cancelled: { tone: 'outline' },
@@ -114,6 +116,7 @@ export function PaymentStateBadge({
     accent: theme.text,
     success: theme.successDark,
     warning: theme.warningDark,
+    info: theme.infoDark,
     outline: theme.textMuted,
   };
   const Icon = PAYMENT_STATE_ICON[state];

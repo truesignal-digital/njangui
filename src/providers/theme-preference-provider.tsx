@@ -11,6 +11,7 @@ import {
 
 import { mobileUiConfig } from '@/lib/mobile-ui-config';
 import {
+  DEFAULT_THEME_PREFERENCE,
   ThemePreferenceContext,
   type ThemePreference,
 } from '@/lib/theme-preference';
@@ -23,7 +24,7 @@ function isThemePreference(value: string | null): value is ThemePreference {
 
 export function ThemePreferenceProvider({ children }: PropsWithChildren) {
   const deviceScheme = useColorScheme();
-  const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  const [preference, setPreferenceState] = useState<ThemePreference>(DEFAULT_THEME_PREFERENCE);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
