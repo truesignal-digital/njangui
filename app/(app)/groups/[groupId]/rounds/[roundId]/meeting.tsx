@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
@@ -43,6 +43,8 @@ import { Skeleton } from '../../../../../../src/components/skeleton';
 import { mobileUiConfig } from '../../../../../../src/lib/mobile-ui-config';
 import { toIntlLocale } from '../../../../../../src/lib/app-locale';
 import { NjangiMark } from '../../../../../../src/components/brand/njangi-mark';
+import { useHardwareBack } from '@/hooks/use-hardware-back';
+import { meetingExitAction, unsentTapCount } from '@/lib/meeting-exit';
 
 type PaymentRow = FunctionReturnType<
   typeof api.rounds.listRoundPayments
@@ -99,7 +101,9 @@ export default function MeetingModeScreen() {
     amountText: string;
   } | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [exitConfirm, setExitConfirm] = useState(false);
   const keysRef = useRef(new Map<string, string>());
+  const leavingRef = useRef(false);
 
   const refreshPendingCount = useCallback(async () => {
     if (!roundId) return;
@@ -161,6 +165,31 @@ export default function MeetingModeScreen() {
     const inFlightSum = rows.reduce((sum, r) => sum + r.inFlightAmount, 0);
     return { settled, total: rows.length, confirmedSum, inFlightSum };
   }, [rows]);
+
+  const leaveMeeting = () => {
+    // A second tap would pop the screen underneath too.
+    if (leavingRef.current) return;
+    leavingRef.current = true;
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
+
+  // Android Back and both close buttons share this path.
+  const requestExit = () => {
+    const action = meetingExitAction({
+      pending: pendingSync,
+      syncing: syncingCount,
+      editorOpen: editing !== null,
+    });
+    if (action === 'close-editor') setEditing(null);
+    else if (action === 'confirm') setExitConfirm(true);
+    else leaveMeeting();
+  };
+
+  useHardwareBack(() => {
+    requestExit();
+    return true;
+  });
 
   if (!roundId || !groupId) return null;
 
@@ -386,7 +415,7 @@ export default function MeetingModeScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('common.close')}
-            onPress={() => router.back()}
+            onPress={requestExit}
             className="h-[44px] w-[44px] items-center justify-center rounded-full bg-surface active:bg-surface-muted"
           >
             <XMarkIcon size={22} color={theme.textMuted} />
@@ -475,7 +504,7 @@ export default function MeetingModeScreen() {
           <AppButton
             variant="ghost"
             label={t('common.close')}
-            onPress={() => router.back()}
+            onPress={requestExit}
           />
         </View>
       ) : (
@@ -557,7 +586,71 @@ export default function MeetingModeScreen() {
           )}
         </>
       )}
+
+      <MeetingExitSheet
+        visible={exitConfirm}
+        unsentCount={unsentTapCount({
+          pending: pendingSync,
+          syncing: syncingCount,
+        })}
+        onStay={() => setExitConfirm(false)}
+        // Navigate only: hiding the Modal in the same tick races two
+        // dismissal animations; the route unmount takes the Modal down.
+        onLeave={leaveMeeting}
+      />
     </View>
+  );
+}
+
+function MeetingExitSheet({
+  visible,
+  unsentCount,
+  onStay,
+  onLeave,
+}: {
+  visible: boolean;
+  unsentCount: number;
+  onStay: () => void;
+  onLeave: () => void;
+}) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const theme = useAppTheme();
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onStay}
+    >
+      <View className="flex-1 justify-end bg-black/40">
+        <View
+          className="rounded-t-2xl bg-surface p-lg"
+          style={{ paddingBottom: insets.bottom + theme.spacing.lg }}
+        >
+          <Text className="font-heading text-title text-foreground">
+            {t('meeting.exitConfirm.title', { count: unsentCount })}
+          </Text>
+          <Text className="mt-sm font-body text-body-sm text-muted">
+            {t('meeting.exitConfirm.body', { count: unsentCount })}
+          </Text>
+          <View className="mt-lg gap-sm">
+            <AppButton
+              label={t('meeting.exitConfirm.stay')}
+              onPress={onStay}
+              testID="meeting-exit-stay"
+            />
+            <AppButton
+              variant="ghost"
+              label={t('meeting.exitConfirm.leave')}
+              onPress={onLeave}
+              testID="meeting-exit-leave"
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
