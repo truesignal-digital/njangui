@@ -1,16 +1,19 @@
+import * as Updates from 'expo-updates';
 import { Platform } from 'react-native';
 
-const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
-const siteUrl = process.env.EXPO_PUBLIC_SITE_URL ?? 'https://njangi.app';
+import { resolveBackendEnv } from '@/lib/env-channel';
 
-if (!clerkPublishableKey) {
-  throw new Error('Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY');
-}
+// The web export (public /g/<shareCode> page) has no update channel; expo-updates
+// reports '' there, so web keeps its export-time EXPO_PUBLIC_* values.
+const channel = process.env.EXPO_OS === 'web' ? null : Updates.channel;
 
-if (!convexUrl) {
-  throw new Error('Missing EXPO_PUBLIC_CONVEX_URL');
-}
+// Throws at startup on an unknown update channel rather than guessing a backend.
+const { clerkPublishableKey, convexUrl, siteUrl } = resolveBackendEnv(channel, {
+  // Literal process.env reads so Metro inlines them; only dev builds use them.
+  clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  convexUrl: process.env.EXPO_PUBLIC_CONVEX_URL,
+  siteUrl: process.env.EXPO_PUBLIC_SITE_URL,
+});
 
 /**
  * The 'ios' | 'android' literal backend payloads expect — this app never
