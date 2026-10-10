@@ -12,7 +12,8 @@
  *    icon+word+color, never color alone — 03 §G).
  * 4. fr.json and en.json expose the same key set (FR-first i18n contract —
  *    a key present in one language only ships a raw key to users).
- * 5. App-owned UI uses Heroicons, not emoji or a competing icon package.
+ * 5. App-owned UI uses Heroicons, not emoji or a competing icon package;
+ *    pictogram sources hold no emoji (content art is SVG on both platforms).
  * 6. Tokens (src/lib/mobile-ui-config.json): colors.light and colors.dark are
  *    key-identical; no typography entry but tabLabel is below 14 px; the
  *    light background is a neutral grey (no cream); textMuted on background
@@ -141,6 +142,18 @@ for (const file of [...sourceFiles(join(ROOT, 'app')), ...sourceFiles(join(ROOT,
     errors.push(
       `${file.slice(ROOT.length + 1)}: app-owned icons must come from react-native-heroicons`
     );
+  }
+}
+
+// 5c — pictograms are SVG art. Platform emoji render differently on iOS and
+// Android, so they never stand in for one.
+const pictogramSources = [
+  join(ROOT, 'src', 'components', 'ui', 'pictogram.tsx'),
+  ...sourceFiles(join(ROOT, 'src', 'components', 'pictograms')),
+];
+for (const file of pictogramSources) {
+  if (/\p{Extended_Pictographic}/u.test(readFileSync(file, 'utf8'))) {
+    errors.push(`${file.slice(ROOT.length + 1)}: emoji in pictogram source — draw it as an SVG path`);
   }
 }
 
