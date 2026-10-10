@@ -20,6 +20,8 @@ import {
   setPilotOffline,
 } from '@/lib/dev-pilot';
 
+import { PictogramGallery } from './pictogram-gallery';
+
 // Test phones (555-01XX block). Slots mirror convex/dev.ts DEV_TEST_PHONES:
 // the seed puts .treasurer/.member on real memberships, so signing in as
 // them attaches those memberships — the two-sided handshake is drivable
@@ -119,6 +121,7 @@ export function DevSeedButton() {
   const [scenario, setScenario] = useState(0);
   const [stateLine, setStateLine] = useState('Ready to create the mock group');
   const [offline, setOffline] = useState(false);
+  const [showPictograms, setShowPictograms] = useState(false);
 
   useEffect(() => {
     void isPilotOffline().then(setOffline);
@@ -388,6 +391,14 @@ export function DevSeedButton() {
               />
             </View>
           ) : null}
+          <DevConsoleButton
+            label={showPictograms ? 'Hide pictogram gallery' : 'Show pictogram gallery'}
+            testID="dev-pictogram-gallery"
+            busy={false}
+            disabled={false}
+            onPress={() => setShowPictograms((shown) => !shown)}
+          />
+          {showPictograms ? <PictogramGallery /> : null}
           <Text className="font-body text-caption text-inverted-muted">
             Visible only in development. Lifecycle controls use production cron paths.
           </Text>

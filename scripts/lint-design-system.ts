@@ -12,7 +12,12 @@
  *    icon+word+color, never color alone — 03 §G).
  * 4. fr.json and en.json expose the same key set (FR-first i18n contract —
  *    a key present in one language only ships a raw key to users).
- * 5. App-owned UI uses Heroicons, not emoji or a competing icon package.
+ * 5. App-owned UI uses Heroicons, not emoji or a competing icon package;
+ *    pictogram sources hold no emoji (content art is SVG on both platforms).
+ * 6. Tokens (src/lib/mobile-ui-config.json): colors.light and colors.dark are
+ *    key-identical; no typography entry but tabLabel is below 14 px; the
+ *    light background is a neutral grey (no cream); textMuted on background
+ *    is >= 7:1 in light; every status *Dark on *Bg is >= 4.5:1 in both modes.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -20,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LOCALES_DIR = join(ROOT, 'src', 'i18n', 'locales');
+const UI_CONFIG_PATH = join(ROOT, 'src', 'lib', 'mobile-ui-config.json');
 const ALLOWLIST_PATH = join(ROOT, 'scripts', 'custody-copy-allowlist.json');
 
 interface LanguageRules {
@@ -136,6 +142,75 @@ for (const file of [...sourceFiles(join(ROOT, 'app')), ...sourceFiles(join(ROOT,
     errors.push(
       `${file.slice(ROOT.length + 1)}: app-owned icons must come from react-native-heroicons`
     );
+  }
+}
+
+// 5c — pictograms are SVG art. Platform emoji render differently on iOS and
+// Android, so they never stand in for one.
+const pictogramSources = [
+  join(ROOT, 'src', 'components', 'ui', 'pictogram.tsx'),
+  ...sourceFiles(join(ROOT, 'src', 'components', 'pictograms')),
+];
+for (const file of pictogramSources) {
+  if (/\p{Extended_Pictographic}/u.test(readFileSync(file, 'utf8'))) {
+    errors.push(`${file.slice(ROOT.length + 1)}: emoji in pictogram source — draw it as an SVG path`);
+  }
+}
+
+// 6 — token guards.
+type UiConfig = {
+  colors: Record<'light' | 'dark', Record<string, string>>;
+  typography: Record<string, { fontSize: number }>;
+};
+const uiConfig = JSON.parse(readFileSync(UI_CONFIG_PATH, 'utf8')) as UiConfig;
+const lightKeys = Object.keys(uiConfig.colors.light);
+const darkKeys = Object.keys(uiConfig.colors.dark);
+for (const key of lightKeys) {
+  if (!darkKeys.includes(key)) errors.push(`mobile-ui-config: colors.dark missing ${key}`);
+}
+for (const key of darkKeys) {
+  if (!lightKeys.includes(key)) errors.push(`mobile-ui-config: colors.light missing ${key}`);
+}
+for (const [name, style] of Object.entries(uiConfig.typography)) {
+  if (name !== 'tabLabel' && style.fontSize < 14) {
+    errors.push(`mobile-ui-config: typography.${name} is ${style.fontSize} px (minimum 14)`);
+  }
+}
+
+function channels(hex: string): [number, number, number] {
+  return [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)) as [
+    number,
+    number,
+    number,
+  ];
+}
+function luminance(hex: string): number {
+  const [r, g, b] = channels(hex).map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contrast(fg: string, bg: string): number {
+  const [hi, lo] = [luminance(fg), luminance(bg)].sort((a, b) => b - a);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+const [bgR, bgG, bgB] = channels(uiConfig.colors.light.background);
+if (bgR !== bgG || bgG !== bgB) {
+  errors.push(`mobile-ui-config: light background ${uiConfig.colors.light.background} is tinted, not neutral`);
+}
+const mutedRatio = contrast(uiConfig.colors.light.textMuted, uiConfig.colors.light.background);
+if (mutedRatio < 7) {
+  errors.push(`mobile-ui-config: light textMuted on background is ${mutedRatio.toFixed(2)}:1 (minimum 7)`);
+}
+for (const mode of ['light', 'dark'] as const) {
+  const palette = uiConfig.colors[mode];
+  for (const status of ['success', 'warning', 'destructive', 'info']) {
+    const ratio = contrast(palette[`${status}Dark`], palette[`${status}Bg`]);
+    if (ratio < 4.5) {
+      errors.push(`mobile-ui-config: ${mode} ${status}Dark on ${status}Bg is ${ratio.toFixed(2)}:1 (minimum 4.5)`);
+    }
   }
 }
 

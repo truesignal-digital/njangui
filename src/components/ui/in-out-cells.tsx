@@ -21,7 +21,7 @@ export function InOutCells({
       <View className="flex-1 gap-1 rounded-md bg-surface-muted px-md py-sm">
         <Text
           numberOfLines={1}
-          className="font-body-semi text-caption uppercase text-muted"
+          className="font-body-semi text-title uppercase text-muted"
         >
           {payLabel}
         </Text>
@@ -32,7 +32,7 @@ export function InOutCells({
       <View className="flex-1 gap-1 rounded-md bg-surface-muted px-md py-sm">
         <Text
           numberOfLines={1}
-          className="font-body-semi text-caption uppercase text-muted"
+          className="font-body-semi text-title uppercase text-muted"
         >
           {receiveLabel}
         </Text>

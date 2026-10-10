@@ -913,5 +913,26 @@
     "title": "Page not found",
     "body": "This link no longer points anywhere — it may be old or the item was removed.",
     "cta": "Back to home"
+  },
+  "pictograms": {
+    "ration": "Food",
+    "transport": "Transport",
+    "famille": "Family",
+    "credit": "Airtime",
+    "eglise": "Church",
+    "deuil": "Funeral",
+    "plusieurs": "Several",
+    "salaire": "Salary",
+    "vente": "Sale",
+    "njangi": "Njangi",
+    "cadeau": "Gift",
+    "autre": "Other",
+    "achat": "Purchase",
+    "retrait": "Withdrawal",
+    "envoi": "Transfer",
+    "inconnu": "Unknown",
+    "cash": "Cash",
+    "soir": "Evening check-in",
+    "alerte": "Alert"
   }
 }

@@ -913,5 +913,26 @@
     "title": "Page introuvable",
     "body": "Ce lien ne mène plus nulle part — il est peut-être ancien ou l'élément a été supprimé.",
     "cta": "Retour à l'accueil"
+  },
+  "pictograms": {
+    "ration": "Ration",
+    "transport": "Transport",
+    "famille": "Famille",
+    "credit": "Crédit",
+    "eglise": "Église",
+    "deuil": "Deuil",
+    "plusieurs": "Plusieurs",
+    "salaire": "Salaire",
+    "vente": "Vente",
+    "njangi": "Njangi",
+    "cadeau": "Cadeau",
+    "autre": "Autre",
+    "achat": "Achat",
+    "retrait": "Retrait",
+    "envoi": "Envoi",
+    "inconnu": "Inconnu",
+    "cash": "Espèces",
+    "soir": "Point du soir",
+    "alerte": "Alerte"
   }
 }
