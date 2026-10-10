@@ -1,18 +1,12 @@
-import type { ComponentType, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
-import {
-  ClockIcon,
-  ExclamationTriangleIcon,
-  PaperAirplaneIcon,
-  XCircleIcon,
-} from 'react-native-heroicons/outline';
-import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { cn } from '../../lib/cn';
-import { ICON_SIZE } from '../../lib/icons';
-import { mobileUiConfig } from '../../lib/mobile-ui-config';
-import { useAppTheme } from '../../lib/theme';
+import { cn } from '@/lib/cn';
+import type { IconName } from '@/lib/icons';
+import { mobileUiConfig } from '@/lib/mobile-ui-config';
+import { useAppTheme } from '@/lib/theme';
+import { Icon } from '@/components/ui/icon';
 
 export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'outline';
 
@@ -75,9 +69,8 @@ export type PaymentState =
 
 /**
  * Payment-state chips (03 §G): ALWAYS icon+word+color, never color alone.
- * Heroicons per state: ClockIcon en attente · PaperAirplaneIcon déclaré ·
- * CheckCircleIcon confirmé · ExclamationTriangleIcon contesté · XCircleIcon
- * annulé.
+ * Each state has its own icon name in ICONS: pending en attente · claimed
+ * déclaré · confirmed confirmé · disputed contesté · cancelled annulé.
  */
 export const PAYMENT_STATE_TONE: Record<PaymentState, { tone: BadgeTone }> = {
   pending: { tone: 'neutral' },
@@ -87,15 +80,12 @@ export const PAYMENT_STATE_TONE: Record<PaymentState, { tone: BadgeTone }> = {
   cancelled: { tone: 'outline' },
 };
 
-const PAYMENT_STATE_ICON: Record<
-  PaymentState,
-  ComponentType<{ size?: number; color?: string }>
-> = {
-  pending: ClockIcon,
-  claimed: PaperAirplaneIcon,
-  confirmed: CheckCircleIcon,
-  disputed: ExclamationTriangleIcon,
-  cancelled: XCircleIcon,
+const PAYMENT_STATE_ICON: Record<PaymentState, IconName> = {
+  pending: 'pending',
+  claimed: 'claimed',
+  confirmed: 'confirmed',
+  disputed: 'disputed',
+  cancelled: 'cancelled',
 };
 
 export function PaymentStateBadge({
@@ -116,7 +106,6 @@ export function PaymentStateBadge({
     warning: theme.warningDark,
     outline: theme.textMuted,
   };
-  const Icon = PAYMENT_STATE_ICON[state];
   return (
     <Badge
       tone={tone}
@@ -131,7 +120,7 @@ export function PaymentStateBadge({
             mobileUiConfig.motion.successDuration
           ).reduceMotion(ReduceMotion.System)}
         >
-          <Icon size={ICON_SIZE.metadata - 4} color={iconColor[tone]} />
+          <Icon name={PAYMENT_STATE_ICON[state]} size="badge" color={iconColor[tone]} />
         </Animated.View>
       }
     />

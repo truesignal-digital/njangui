@@ -1,8 +1,8 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { useAppTheme } from '../../lib/theme';
+import { useAppTheme } from '@/lib/theme';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Setup readiness checklist (docs 02 §a lock guards, made visible): who's
@@ -49,7 +49,7 @@ function CheckLine({
   return (
     <View className="flex-row items-center gap-sm">
       {ok ? (
-        <CheckCircleIcon size={18} color={theme.successDark} />
+        <Icon name="confirmed" size="control" color={theme.successDark} />
       ) : (
         <View className="h-[16px] w-[16px] rounded-full border-2 border-placeholder" />
       )}

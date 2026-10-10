@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { RefreshControl, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
-import { CalendarDaysIcon } from 'react-native-heroicons/outline';
 
 import { CalendarAgenda } from '@/components/calendar-agenda';
 import { DateSelector } from '@/components/native/date-selector';
@@ -11,7 +10,7 @@ import { useAuth } from '@/lib/clerk-client';
 import { useAppTheme } from '@/lib/theme';
 import { useTranslation } from 'react-i18next';
 import { toIntlLocale } from '@/lib/app-locale';
-import { ICON_SIZE } from '@/lib/icons';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Calendrier (docs/03): the cross-njangi planning surface — every round
@@ -48,10 +47,7 @@ export default function CalendarScreen() {
           {t('calendar.acrossGroups')}
         </Text>
         <View className="h-[40px] w-[40px] items-center justify-center rounded-full bg-success-bg">
-          <CalendarDaysIcon
-            size={ICON_SIZE.control}
-            color={theme.successDark}
-          />
+          <Icon name="calendar" size="control" color={theme.successDark} />
         </View>
       </View>
       <View

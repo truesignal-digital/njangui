@@ -120,8 +120,9 @@ if (!badgeSrc.includes('PAYMENT_STATE_TONE')) {
   }
 }
 
-// 5b — Native icons render only through src/components/ui/icon.tsx, the one
-// file allowed to import expo-symbols. @expo/vector-icons stays banned
+// 5b — Every app-owned icon is <Icon name=… /> from src/components/ui/icon.tsx,
+// the only file allowed to import expo-symbols. Other icon libraries
+// (react-native-heroicons, @expo/vector-icons, lucide-*) are banned
 // everywhere. Native Tabs and date controls name platform symbols via the OS.
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -132,11 +133,14 @@ function sourceFiles(directory: string): string[] {
 }
 
 const ICON_COMPONENT = 'src/components/ui/icon.tsx';
+const BANNED_ICON_LIBRARY =
+  /from ['"](react-native-heroicons|@expo\/vector-icons|lucide-[\w-]+)(?:\/[^'"]*)?['"]/;
 for (const file of [...sourceFiles(join(ROOT, 'app')), ...sourceFiles(join(ROOT, 'src'))]) {
   const source = readFileSync(file, 'utf8');
   const relative = file.slice(ROOT.length + 1);
-  if (/from ['"]@expo\/vector-icons(?:\/[^'"]*)?['"]/.test(source)) {
-    errors.push(`${relative}: @expo/vector-icons is banned; use Icon from ${ICON_COMPONENT}`);
+  const banned = BANNED_ICON_LIBRARY.exec(source);
+  if (banned) {
+    errors.push(`${relative}: ${banned[1]} is banned; use Icon from ${ICON_COMPONENT}`);
   }
   if (relative !== ICON_COMPONENT && /from ['"]expo-symbols(?:\/[^'"]*)?['"]/.test(source)) {
     errors.push(`${relative}: expo-symbols may only be imported in ${ICON_COMPONENT}; use Icon`);

@@ -2,12 +2,12 @@ import { Pressable, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useTranslation } from 'react-i18next';
-import { DocumentDuplicateIcon, ShareIcon } from 'react-native-heroicons/outline';
 import { toast } from 'sonner-native';
 
-import { haptics } from '../../lib/haptics';
-import { useAppTheme } from '../../lib/theme';
-import { AppButton } from '../ui/button';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme } from '@/lib/theme';
+import { AppButton } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Invite code + WhatsApp share (docs/03 B9 step 4 / B2 settings).
@@ -60,12 +60,12 @@ export function InviteShare({
           <Text className="font-mono-bold text-price-lg tracking-[4px] text-foreground">
             {inviteCode}
           </Text>
-          <DocumentDuplicateIcon size={18} color={theme.textMuted} />
+          <Icon name="copy" size="control" color={theme.textMuted} />
         </Pressable>
       </View>
       <AppButton
         label={t('groups.invite.whatsapp')}
-        icon={<ShareIcon size={18} color={theme.primaryForeground} />}
+        icon={<Icon name="share" size="control" color={theme.primaryForeground} />}
         onPress={() => void shareOnWhatsApp()}
       />
     </View>

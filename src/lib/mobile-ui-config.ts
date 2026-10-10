@@ -138,6 +138,7 @@ export type MobileUiConfig = {
   dimensions: {
     metricCardMinHeight: number;
     metricCompactMinHeight: number;
+    iconXs: number;
     iconSm: number;
     iconMd: number;
     iconLg: number;

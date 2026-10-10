@@ -17,7 +17,6 @@ import { AppButton } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/skeleton';
 import { SoftPressable } from '@/components/ui/soft-pressable';
-import { ICON_SIZE } from '@/lib/icons';
 
 /**
  * Pay flow step 1 — method picker (docs/03 B4). Kind-aware via `?record=`.
@@ -120,7 +119,7 @@ export default function PayMethodScreen() {
           onPress={close}
           className="h-[44px] w-[44px] items-center justify-center rounded-full active:bg-surface-muted"
         >
-          <Icon name="close" size={ICON_SIZE.control} color={theme.textMuted} />
+          <Icon name="close" size="control" color={theme.textMuted} />
         </SoftPressable>
       </View>
 
@@ -172,7 +171,7 @@ export default function PayMethodScreen() {
             icon={
               <Icon
                 name="mobile-money"
-                size={ICON_SIZE.emphasis}
+                size="emphasis"
                 color={
                   flow.methodAvailability.momo_mtn.available
                     ? theme.accent
@@ -191,7 +190,7 @@ export default function PayMethodScreen() {
             icon={
               <Icon
                 name="mobile-money"
-                size={ICON_SIZE.emphasis}
+                size="emphasis"
                 color={
                   flow.methodAvailability.orange_money.available
                     ? theme.accent
@@ -207,7 +206,7 @@ export default function PayMethodScreen() {
             testID="pay-orange"
           />
           <MethodCard
-            icon={<Icon name="cash" size={ICON_SIZE.emphasis} color={theme.accent} />}
+            icon={<Icon name="cash" size="emphasis" color={theme.accent} />}
             label={t('pay.cash')}
             selected={selectedMethod === 'cash'}
             onPress={() => setSelectedMethod('cash')}
@@ -243,7 +242,7 @@ export default function PayMethodScreen() {
           ) : null}
 
           <View className="mt-sm flex-row items-start gap-xs">
-            <Icon name="info" size={ICON_SIZE.metadata} color={theme.textMuted} />
+            <Icon name="info" size="metadata" color={theme.textMuted} />
             <Text className="flex-1 font-body text-body-sm text-muted">
               {t('pay.custodyNoteNeutral')}
             </Text>

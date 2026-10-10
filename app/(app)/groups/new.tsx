@@ -5,13 +5,6 @@ import { useMutation } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import {
-  ArrowRightIcon,
-  ChevronLeftIcon,
-  InformationCircleIcon,
-  PencilSquareIcon,
-  UserPlusIcon,
-} from 'react-native-heroicons/outline';
 import Animated, {
   FadeIn,
   FadeInLeft,
@@ -31,6 +24,7 @@ import { api, type Id } from '@/lib/convex-api';
 import { formatCurrencyXAF } from '@/lib/format-currency';
 import { haptics } from '@/lib/haptics';
 import { useAppTheme } from '@/lib/theme';
+import { Icon } from '@/components/ui/icon';
 
 type Schedule = 'weekly' | 'biweekly' | 'monthly';
 type CollectionMode = 'via_treasurer' | 'direct_to_beneficiary';
@@ -145,7 +139,7 @@ export default function GroupCreationWizard() {
             <AppButton
               variant="outline"
               label={t('groups.wizard.addWithoutPhone')}
-              icon={<UserPlusIcon size={19} color={theme.text} />}
+              icon={<Icon name="add-person" size="control" color={theme.text} />}
               onPress={() =>
                 router.push({
                   pathname: '/groups/[groupId]/add-member',
@@ -205,7 +199,7 @@ export default function GroupCreationWizard() {
             />
             <AppButton
               label={t('common.continue')}
-              icon={<ArrowRightIcon size={19} color={theme.primaryForeground} />}
+              icon={<Icon name="next" size="control" color={theme.primaryForeground} />}
               iconPosition="end"
               disabled={!name.trim()}
               onPress={() => goToStep(2)}
@@ -350,7 +344,7 @@ export default function GroupCreationWizard() {
               />
             </View>
             <View className="flex-row items-start gap-sm rounded-2xl bg-success-bg p-md">
-              <InformationCircleIcon size={20} color={theme.successDark} />
+              <Icon name="info" size="control" color={theme.successDark} />
               <Text className="flex-1 font-body text-body-sm text-muted">
                 {t('groups.wizard.modeCustodyNote')}
               </Text>
@@ -433,7 +427,7 @@ function WizardHeader({ step, onBack }: { step: number; onBack: () => void }) {
         onPress={onBack}
         className="h-[44px] w-[44px] items-center justify-center rounded-full bg-surface-muted"
       >
-        <ChevronLeftIcon size={22} color={theme.textMuted} />
+        <Icon name="back" size="control" color={theme.textMuted} />
       </SoftPressable>
       <View className="flex-row items-center gap-xs">
         {Array.from({ length: TOTAL_STEPS }, (_, index) => (
@@ -502,7 +496,7 @@ function ReviewRow({
         <Text className="font-body-medium text-caption text-muted">{label}</Text>
         <Text className="font-body-semi text-body text-foreground">{value}</Text>
       </View>
-      <PencilSquareIcon size={18} color={theme.textMuted} />
+      <Icon name="edit" size="control" color={theme.textMuted} />
     </SoftPressable>
   );
 }

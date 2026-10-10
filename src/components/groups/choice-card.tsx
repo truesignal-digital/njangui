@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
-import { CheckIcon, ChevronRightIcon } from 'react-native-heroicons/outline';
 
 import { cn } from '@/lib/cn';
 import { haptics } from '@/lib/haptics';
 import { useAppTheme } from '@/lib/theme';
 import { SoftPressable } from '@/components/ui/soft-pressable';
+import { Icon } from '@/components/ui/icon';
 
 export function ChoiceCard({
   title,
@@ -80,9 +80,9 @@ export function ChoiceCard({
         ) : null}
       </View>
       {selected ? (
-        <CheckIcon size={20} color={foreground} />
+        <Icon name="check" size="control" color={foreground} />
       ) : (
-        <ChevronRightIcon size={20} color={foreground} />
+        <Icon name="chevron" size="control" color={foreground} />
       )}
     </SoftPressable>
   );

@@ -22,7 +22,6 @@ import {
 } from '@/lib/attention-presentation';
 import { toIntlLocale } from '@/lib/app-locale';
 import { useAppTheme } from '@/lib/theme';
-import { ICON_SIZE } from '@/lib/icons';
 
 /**
  * Today answers one question: what can I move forward now? Waiting and the
@@ -146,7 +145,7 @@ export default function TodayScreen() {
             className="gap-sm rounded-2xl border border-success bg-success-bg p-lg"
             style={{ borderCurve: 'continuous' }}
           >
-            <Icon name="confirmed" size={ICON_SIZE.emphasis} color={theme.successDark} />
+            <Icon name="confirmed" size="emphasis" color={theme.successDark} />
             <Text className="font-heading text-headline text-foreground">
               {t('attention.today.allClearTitle')}
             </Text>
@@ -184,7 +183,7 @@ export default function TodayScreen() {
                 ? t('attention.today.moreActions', { count: moreCount })
                 : t('attention.today.seeAllActions')}
             </Text>
-            <Icon name="next" size={ICON_SIZE.metadata} color={theme.accent} />
+            <Icon name="next" size="metadata" color={theme.accent} />
           </SoftPressable>
         ) : null}
 

@@ -2,11 +2,11 @@ import { ScrollView, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ShieldCheckIcon } from 'react-native-heroicons/outline';
 
 import { NjangiMark } from '@/components/brand/njangi-mark';
 import { getPublicShareCodeCandidate } from '@/lib/public-share-code';
 import { useAppTheme } from '@/lib/theme';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Signed-out capability route for WhatsApp contribution links.
@@ -63,7 +63,7 @@ export default function PublicGroupScreen() {
         </Text>
 
         <View className="mt-xl flex-row gap-sm rounded-2xl border border-border-subtle bg-surface p-md">
-          <ShieldCheckIcon size={24} color={theme.successDark} />
+          <Icon name="custody" size="emphasis" color={theme.successDark} />
           <View className="flex-1 gap-xs">
             <Text className="font-body-semi text-label text-foreground">
               {t('publicGroup.safetyTitle')}

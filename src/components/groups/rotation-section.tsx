@@ -3,23 +3,15 @@ import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
-import {
-  CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ClockIcon,
-  LockClosedIcon,
-  PlayIcon,
-} from 'react-native-heroicons/outline';
 
-import { api, type Id } from '../../lib/convex-api';
-import { formatCurrencyXAF } from '../../lib/format-currency';
-import { useAppTheme } from '../../lib/theme';
-import { AppButton } from '../ui/button';
-import { Skeleton } from '../skeleton';
-import { SoftPressable } from '../ui/soft-pressable';
-import { ICON_SIZE } from '../../lib/icons';
-import { toIntlLocale } from '../../lib/app-locale';
+import { api, type Id } from '@/lib/convex-api';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { useAppTheme } from '@/lib/theme';
+import { AppButton } from '@/components/ui/button';
+import { Skeleton } from '@/components/skeleton';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { toIntlLocale } from '@/lib/app-locale';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Group-home rotation block (docs/03 §B2). State-driven:
@@ -57,7 +49,7 @@ export function RotationSection({
     return (
       <View className="gap-sm">
         <View className="flex-row items-center gap-sm">
-          <ClockIcon size={20} color={theme.textMuted} />
+          <Icon name="pending" size="control" color={theme.textMuted} />
           <Text className="flex-1 font-body text-body-sm text-muted">
             {canStart
               ? t('groups.cycle.setupReady')
@@ -67,7 +59,7 @@ export function RotationSection({
         {canStart ? (
           <AppButton
             label={t('groups.cycle.startCta')}
-            icon={<PlayIcon size={18} color={theme.primaryForeground} />}
+            icon={<Icon name="start" size="control" color={theme.primaryForeground} />}
             disabled={activeMemberCount < 2}
             onPress={() =>
               router.push({
@@ -123,7 +115,7 @@ export function RotationSection({
           {t('groups.cycle.cycleN', { n: cycle.index })}
         </Text>
         <View className="flex-row items-center gap-xs rounded-pill bg-surface-muted px-sm py-[2px]">
-          <LockClosedIcon size={13} color={theme.textMuted} />
+          <Icon name="locked" size="metadata" color={theme.textMuted} />
           <Text className="font-body-medium text-caption text-muted">
             {t('groups.cycle.locked')}
           </Text>
@@ -178,7 +170,7 @@ export function RotationSection({
                   {t('groups.cycle.thisRound')}
                 </Text>
               ) : done ? (
-                <CheckCircleIcon size={16} color={theme.textMuted} />
+                <Icon name="confirmed" size="metadata" color={theme.textMuted} />
               ) : null}
             </View>
           );
@@ -197,9 +189,9 @@ export function RotationSection({
                 : t('groups.cycle.showOrder', { count: hiddenCount })}
             </Text>
             {showAllRounds ? (
-              <ChevronUpIcon size={16} color={theme.accent} />
+              <Icon name="collapse" size="metadata" color={theme.accent} />
             ) : (
-              <ChevronDownIcon size={16} color={theme.accent} />
+              <Icon name="expand" size="metadata" color={theme.accent} />
             )}
           </Pressable>
         ) : null}

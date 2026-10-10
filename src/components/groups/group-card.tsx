@@ -2,19 +2,18 @@ import { memo } from 'react';
 import { Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronRightIcon } from 'react-native-heroicons/outline';
 
-import { cn } from '../../lib/cn';
-import { toIntlLocale } from '../../lib/app-locale';
-import { formatCurrencyXAF } from '../../lib/format-currency';
-import { groupSolid, resolveSeed } from '../../lib/group-colors';
-import { haptics } from '../../lib/haptics';
-import { useAppTheme, useShadow } from '../../lib/theme';
+import { cn } from '@/lib/cn';
+import { toIntlLocale } from '@/lib/app-locale';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { groupSolid, resolveSeed } from '@/lib/group-colors';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme, useShadow } from '@/lib/theme';
 import { GroupSeal } from './group-seal';
-import { SoftPressable } from '../ui/soft-pressable';
-import { ICON_SIZE } from '../../lib/icons';
-import type { GroupPurpose } from '../../lib/group-summary';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import type { GroupPurpose } from '@/lib/group-summary';
 import { GroupPurposeTag } from './group-purpose-tag';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Narrow data interface for the group lists — matches the `returns:`
@@ -187,10 +186,7 @@ export const GroupCard = memo(function GroupCard({ group }: { group: GroupListIt
           </Text>
         </View>
         {!isPendingViewer ? (
-          <ChevronRightIcon
-            size={ICON_SIZE.metadata}
-            color={theme.textPlaceholder}
-          />
+          <Icon name="chevron" size="metadata" color={theme.textPlaceholder} />
         ) : null}
       </View>
 

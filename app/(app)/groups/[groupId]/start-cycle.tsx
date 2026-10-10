@@ -4,22 +4,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArrowsUpDownIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  LockClosedIcon,
-  MinusIcon,
-  PlusIcon,
-  XMarkIcon,
-} from 'react-native-heroicons/outline';
 import { toast } from 'sonner-native';
 
-import { api, type Id } from '../../../../src/lib/convex-api';
-import { haptics } from '../../../../src/lib/haptics';
-import { useAppTheme, useShadow } from '../../../../src/lib/theme';
-import { AppButton } from '../../../../src/components/ui/button';
-import { Skeleton } from '../../../../src/components/skeleton';
+import { api, type Id } from '@/lib/convex-api';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme, useShadow } from '@/lib/theme';
+import { AppButton } from '@/components/ui/button';
+import { Skeleton } from '@/components/skeleton';
+import { Icon } from '@/components/ui/icon';
 
 type OrderRow = { membershipId: string; displayName: string };
 
@@ -235,7 +227,7 @@ export default function StartCycleScreen() {
             onPress={close}
             className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
           >
-            <XMarkIcon size={22} color={theme.textMuted} />
+            <Icon name="close" size="control" color={theme.textMuted} />
           </Pressable>
         </View>
 
@@ -257,7 +249,7 @@ export default function StartCycleScreen() {
                 onPress={shuffle}
                 className="flex-row items-center gap-xs rounded-pill border border-border bg-surface px-md py-xs active:bg-surface-muted"
               >
-                <ArrowsUpDownIcon size={16} color={theme.accent} />
+                <Icon name="shuffle" size="metadata" color={theme.accent} />
                 <Text className="font-body-medium text-body-sm text-foreground">
                   {t('groups.cycle.shuffle')}
                 </Text>
@@ -296,7 +288,7 @@ export default function StartCycleScreen() {
                       className="h-[34px] w-[34px] items-center justify-center rounded-md active:bg-surface-muted"
                       testID={`add-hand-${index}`}
                     >
-                      <PlusIcon size={18} color={theme.accent} />
+                      <Icon name="add" size="control" color={theme.accent} />
                     </Pressable>
                   ) : (
                     <Pressable
@@ -306,7 +298,7 @@ export default function StartCycleScreen() {
                       className="h-[34px] w-[34px] items-center justify-center rounded-md active:bg-surface-muted"
                       testID={`remove-hand-${index}`}
                     >
-                      <MinusIcon size={18} color={theme.textMuted} />
+                      <Icon name="remove" size="control" color={theme.textMuted} />
                     </Pressable>
                   )}
                   <Pressable
@@ -317,7 +309,7 @@ export default function StartCycleScreen() {
                     className="h-[34px] w-[34px] items-center justify-center rounded-md active:bg-surface-muted disabled:opacity-30"
                     style={{ opacity: index === 0 ? 0.3 : 1 }}
                   >
-                    <ChevronUpIcon size={20} color={theme.textMuted} />
+                    <Icon name="collapse" size="control" color={theme.textMuted} />
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
@@ -329,7 +321,7 @@ export default function StartCycleScreen() {
                       opacity: index === (order?.length ?? 0) - 1 ? 0.3 : 1,
                     }}
                   >
-                    <ChevronDownIcon size={20} color={theme.textMuted} />
+                    <Icon name="expand" size="control" color={theme.textMuted} />
                   </Pressable>
                 </View>
               ))}
@@ -339,7 +331,7 @@ export default function StartCycleScreen() {
               <AppButton
                 label={t('groups.cycle.startCta')}
                 icon={
-                  <LockClosedIcon size={18} color={theme.primaryForeground} />
+                  <Icon name="locked" size="control" color={theme.primaryForeground} />
                 }
                 className="mt-xl"
                 disabled={(order?.length ?? 0) < 2}

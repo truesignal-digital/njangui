@@ -1,10 +1,5 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  ArrowPathRoundedSquareIcon,
-  BanknotesIcon,
-  ChevronRightIcon,
-} from 'react-native-heroicons/outline';
 
 import { toIntlLocale } from '@/lib/app-locale';
 import { formatCurrencyXAF } from '@/lib/format-currency';
@@ -12,6 +7,7 @@ import type { GroupSummary } from '@/lib/group-summary';
 import { useAppTheme } from '@/lib/theme';
 import { SoftPressable } from '@/components/ui/soft-pressable';
 import { GroupPurposeTag } from '@/components/groups/group-purpose-tag';
+import { Icon } from '@/components/ui/icon';
 
 export function UnifiedGroupCard({
   group,
@@ -95,9 +91,9 @@ export function UnifiedGroupCard({
           }
         >
           {isContribution ? (
-            <BanknotesIcon size={22} color={theme.warningDark} />
+            <Icon name="cash" size="emphasis" color={theme.warningDark} />
           ) : (
-            <ArrowPathRoundedSquareIcon size={22} color={theme.successDark} />
+            <Icon name="rotation" size="emphasis" color={theme.successDark} />
           )}
         </View>
 
@@ -116,7 +112,7 @@ export function UnifiedGroupCard({
           </Text>
         </View>
 
-        <ChevronRightIcon size={19} color={theme.textPlaceholder} />
+        <Icon name="chevron" size="control" color={theme.textPlaceholder} />
       </View>
 
       <View className="gap-xs border-t border-border-subtle pt-sm">

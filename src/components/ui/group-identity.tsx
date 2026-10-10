@@ -19,7 +19,7 @@ import { useAppTheme } from '../../lib/theme';
 
 /**
  * Per-njangi identity primitives (03 §G spirit: recognizable, never loud).
- * Rendered with react-native-svg (already a heroicons dependency) — no
+ * Rendered with react-native-svg (a direct dependency) — no
  * extra native module, cheap on low-end Androids.
  */
 

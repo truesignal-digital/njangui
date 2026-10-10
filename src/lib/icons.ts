@@ -1,20 +1,21 @@
 import { mobileUiConfig } from './mobile-ui-config';
 
 /**
- * App-owned icon sizes. `Icon` only accepts these three values.
+ * App-owned icon sizes. `Icon` takes one of these keys, never a number.
  */
 export const ICON_SIZE = {
+  badge: mobileUiConfig.dimensions.iconXs,
   metadata: mobileUiConfig.dimensions.iconSm,
   control: mobileUiConfig.dimensions.iconMd,
   emphasis: mobileUiConfig.dimensions.iconLg,
 } as const;
 
-export type IconSize = (typeof ICON_SIZE)[keyof typeof ICON_SIZE];
+export type IconSize = keyof typeof ICON_SIZE;
 
 /**
  * One semantic name per meaning, mapped to SF Symbols (iOS) and Material
  * Symbols (Android). Mirrors `ICONS` in docs/design/ui-guide/kit.js; the
- * entries after `filter` extend the kit for the pay flow. Names are
+ * entries after `filter` extend the kit where no kit name fits. Names are
  * type-checked against expo-symbols in src/components/ui/icon.tsx, the only
  * file allowed to import it.
  */
@@ -73,6 +74,14 @@ export const ICONS = {
   warning: { ios: 'exclamationmark.triangle', android: 'warning' },
   collapse: { ios: 'chevron.up', android: 'expand_less' },
   photo: { ios: 'photo', android: 'image' },
+  'add-person': { ios: 'person.badge.plus', android: 'person_add' },
+  remove: { ios: 'minus', android: 'remove' },
+  shuffle: { ios: 'shuffle', android: 'shuffle' },
+  rotation: { ios: 'arrow.triangle.2.circlepath', android: 'autorenew' },
+  undo: { ios: 'arrow.uturn.backward', android: 'undo' },
+  edit: { ios: 'square.and.pencil', android: 'edit' },
+  start: { ios: 'play', android: 'play_arrow' },
+  featured: { ios: 'sparkles', android: 'auto_awesome' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

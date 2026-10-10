@@ -2,6 +2,7 @@ import { SymbolView, type AndroidSymbol, type SFSymbol } from 'expo-symbols';
 import { View, type ColorValue } from 'react-native';
 
 import {
+  ICON_SIZE,
   ICONS,
   iconAccessibilityProps,
   type IconName,
@@ -28,15 +29,16 @@ export function Icon({
   accessibilityLabel?: string;
 }) {
   const symbol = ICONS[name];
+  const px = ICON_SIZE[size];
 
   return (
     <View
-      style={{ width: size, height: size }}
+      style={{ width: px, height: px }}
       {...iconAccessibilityProps(accessibilityLabel)}
     >
       <SymbolView
         name={{ ios: symbol.ios, android: symbol.android }}
-        size={size}
+        size={px}
         tintColor={color}
       />
     </View>

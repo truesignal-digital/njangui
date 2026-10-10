@@ -21,7 +21,6 @@ import {
   type AttentionAction,
 } from '@/lib/attention-presentation';
 import { useAuth } from '@/lib/clerk-client';
-import { ICON_SIZE } from '@/lib/icons';
 import { useAppTheme } from '@/lib/theme';
 
 /** The complete executable queue. Waiting is a separate, collapsed shelf. */
@@ -95,7 +94,7 @@ export default function ActionsScreen() {
         }
         ListEmptyComponent={
           <View className="items-center gap-sm rounded-2xl border border-success bg-success-bg p-xl">
-            <Icon name="confirmed" size={ICON_SIZE.emphasis} color={theme.successDark} />
+            <Icon name="confirmed" size="emphasis" color={theme.successDark} />
             <Text className="text-center font-heading text-headline text-foreground">
               {t('attention.actions.emptyTitle')}
             </Text>
