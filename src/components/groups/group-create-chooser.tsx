@@ -1,9 +1,7 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useAppTheme } from '@/lib/theme';
 import { ChoiceCard } from '@/components/groups/choice-card';
-import { Icon } from '@/components/ui/icon';
 
 export function GroupCreateChooser({
   onContribution,
@@ -15,7 +13,6 @@ export function GroupCreateChooser({
   onJoin: () => void;
 }) {
   const { t } = useTranslation();
-  const theme = useAppTheme();
 
   return (
     <View className="gap-lg">
@@ -33,23 +30,21 @@ export function GroupCreateChooser({
           dominant
           title={t('groups.unifiedChooser.contributionTitle')}
           description={t('groups.unifiedChooser.contributionBody')}
-          icon={<Icon name="featured" size="emphasis" color={theme.textInverted} />}
+          icon="featured"
           onPress={onContribution}
           testID="choose-contribution"
         />
         <ChoiceCard
           title={t('groups.unifiedChooser.njangiTitle')}
           description={t('groups.unifiedChooser.njangiBody')}
-          icon={
-            <Icon name="rotation" size="emphasis" color={theme.successDark} />
-          }
+          icon="rotation"
           onPress={onNjangi}
           testID="choose-njangi"
         />
         <ChoiceCard
           title={t('groups.unifiedChooser.joinTitle')}
           description={t('groups.unifiedChooser.joinBody')}
-          icon={<Icon name="invite-code" size="emphasis" color={theme.successDark} />}
+          icon="invite-code"
           onPress={onJoin}
           testID="choose-invitation"
         />

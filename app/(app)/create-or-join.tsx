@@ -62,14 +62,14 @@ export default function CreateOrJoinSheet() {
               dominant
               title={t('groups.entry.createTitle')}
               description={t('groups.entry.createBody')}
-              icon={<Icon name="add" size="emphasis" color={theme.textInverted} />}
+              icon="add"
               onPress={() => router.replace('/groups/new')}
               testID="entry-create"
             />
             <ChoiceCard
               title={t('groups.entry.joinTitle')}
               description={t('groups.entry.joinBody')}
-              icon={<Icon name="invite-code" size="emphasis" color={theme.successDark} />}
+              icon="invite-code"
               onPress={() => setMode('join')}
               testID="entry-join"
             />
