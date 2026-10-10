@@ -53,7 +53,8 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
-    Appearance.setColorScheme(preference === 'system' ? null : preference);
+    // RN 0.86 removed null from ColorSchemeName; passing it crashes Android at launch.
+    Appearance.setColorScheme(preference === 'system' ? 'unspecified' : preference);
   }, [preference]);
 
   useEffect(() => {
