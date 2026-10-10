@@ -1,8 +1,11 @@
 name: Deploy Convex
 
+# develop = staging, main = production (docs/adr/0001-develop-is-staging.md).
+# Feature PRs merge into develop and deploy staging; a release PR develop → main
+# deploys the same backend code to prod.
 on:
   push:
-    branches: [main]
+    branches: [develop, main]
     # package.json/bun.lock/convex.json included: the deployed bundle carries
     # node_modules deps (svix, convex itself) — a dep bump must deploy too,
     # not ride silently on the next unrelated convex/ edit.
@@ -16,19 +19,19 @@ permissions:
   contents: read
 
 concurrency:
-  group: convex-deploy
+  group: convex-deploy-${{ github.ref_name }}
   cancel-in-progress: false # never cancel a half-finished backend deploy
 
 jobs:
-  # Staging (benevolent-gopher-102) deploys first and gates prod: a broken
-  # push dies where preview builds point, not where money lives.
-  deploy-staging:
+  deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Flip the repo variable CONVEX_DEPLOY_ENABLED to 'true' once the
     # deploy-key secrets exist (Settings → Secrets and variables).
     # Until then this workflow is a no-op instead of a red X on every merge.
     if: vars.CONVEX_DEPLOY_ENABLED == 'true'
+    # Staging (benevolent-gopher-102) from develop; prod only from main.
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,35 +48,11 @@ jobs:
       - run: bun install --frozen-lockfile
 
       # Gate the deploy on the money-math suite and typecheck at the MERGED
-      # commit. Two individually-green PRs can merge into a broken main;
+      # commit. Two individually-green PRs can merge into a broken branch;
       # `convex deploy` only typechecks functions — it never runs tests.
-      # This is ledger math shipping to prod in minutes; 0.5s of tests is free.
       - run: bun run test
       - run: bun run typecheck
 
       - run: bunx convex deploy
         env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_STAGING_DEPLOY_KEY }}
-
-  deploy-prod:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [deploy-staging]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.6
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      - run: bun install --frozen-lockfile
-
-      - run: bunx convex deploy
-        env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          CONVEX_DEPLOY_KEY: ${{ github.ref_name == 'main' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_STAGING_DEPLOY_KEY }}

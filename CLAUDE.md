@@ -22,6 +22,10 @@ Njangi is a mobile app for running njangi groups (rotating savings circles): mem
 
 Issues and decision maps are tracked in this repository's GitHub Issues. See `docs/agents/issue-tracker.md`.
 
+### Workflow
+
+`main` = production, `develop` = staging (`docs/adr/0001-develop-is-staging.md`). Issue → branch → PR into `develop` → different-model review → merge: `docs/agents/review-workflow.md`.
+
 ### Domain docs
 
 This is a single-context repository using root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
