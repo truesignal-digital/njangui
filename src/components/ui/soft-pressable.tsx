@@ -14,8 +14,9 @@ import Animated, {
 
 import { mobileUiConfig } from "@/lib/mobile-ui-config";
 
-// No cssInterop here: the inner Pressable already maps className. Registering the
-// animated wrapper too made primary CTAs render invisible (2026-09-25 pilot review).
+// No cssInterop: reanimated renders the inner RN Pressable through NativeWind's JSX
+// runtime, which already swaps it for the interop Pressable. Registering the animated
+// wrapper too hid primary CTAs (2026-09-25 pilot review).
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type SoftPressableProps = Omit<PressableProps, "children" | "style"> & {
