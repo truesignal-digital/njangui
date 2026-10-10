@@ -6,7 +6,7 @@
 
 Two long-lived branches:
 
-- **`develop`** is the integration branch and the **staging** environment. Feature PRs merge here. A merge deploys Convex staging (`benevolent-gopher-102`) and publishes the JS update to the `preview` channel, which testers' preview builds listen to.
+- **`develop`** is the integration branch and the **staging** environment. Feature PRs merge here. A merge deploys Convex staging (`benevolent-gopher-102`). The JS update goes to the `preview` channel, which testers' preview builds listen to: by hand today, automated by slice E0.4.
 - **`main`** is **production**. It changes only through a release PR from `develop` (titled `Release: <what> (YYYY-MM-DD)`) or a hotfix. A merge deploys Convex prod; the JS update is promoted to the `production` channel.
 
 ## Why
@@ -21,7 +21,7 @@ Two long-lived branches:
 2. A release merges the current head of `develop`, with a merge commit.
 3. A hotfix branches from `main`, merges into `main`, and is merged back into `develop` the same day.
 4. JS is promoted, never rebuilt: the update tested on `preview` goes to production with `eas update:republish --destination-channel production`. A fresh `eas update` from `main` would be a new, untested artifact.
-5. Convex prod deploys only from `main`; staging only from `develop` (`.github/workflows/deploy-convex.yml`).
+5. Convex prod deploys only from `main`; staging only from `develop` (`.github/workflows/deploy-convex.yml`). Each GitHub environment (`staging`, `production`) holds its own `CONVEX_DEPLOY_KEY`; the job fails if it is missing.
 6. Public Convex function signatures evolve additively across both deployments (CLAUDE.md, Server State).
 7. Branch protection on both branches: one required check named `CI`, conversations resolved, no force push, no deletion, admins included.
 

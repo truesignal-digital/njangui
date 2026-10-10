@@ -53,6 +53,14 @@ jobs:
       - run: bun run test
       - run: bun run typecheck
 
+      # One environment-scoped secret per environment (Settings → Environments →
+      # staging / production → CONVEX_DEPLOY_KEY). No branch ternary: an `a && b || c`
+      # fallback would silently deploy main to staging if the prod key were missing.
+      - name: Require the deploy key for this environment
+        run: test -n "$CONVEX_DEPLOY_KEY" || { echo "CONVEX_DEPLOY_KEY missing in environment ${{ github.ref_name == 'main' && 'production' || 'staging' }}"; exit 1; }
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
       - run: bunx convex deploy
         env:
-          CONVEX_DEPLOY_KEY: ${{ github.ref_name == 'main' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_STAGING_DEPLOY_KEY }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
