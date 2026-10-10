@@ -1,5 +1,6 @@
-import type { TextStyle, ViewStyle } from 'react-native';
+import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
+import { resolveFontStyle, type FontStyle, type FontToken } from './fonts';
 import { mobileUiConfig, type MobileThemeColors } from './mobile-ui-config';
 import { useThemePreference } from './theme-preference';
 
@@ -9,12 +10,20 @@ export type ShadowToken = keyof typeof mobileUiConfig.shadows;
 export type AppTheme = MobileThemeColors & {
   mode: 'light' | 'dark';
   isDark: boolean;
-  fonts: typeof mobileUiConfig.fonts;
+  fonts: Record<FontToken, FontStyle>;
   spacing: typeof mobileUiConfig.spacing;
   radius: typeof mobileUiConfig.radius;
   shadow: (token: ShadowToken) => ViewStyle;
   textStyle: (token: TypographyToken, color?: string) => TextStyle;
 };
+
+/** Resolved for this platform; spread into style props that can't take className. */
+export const FONTS = Object.fromEntries(
+  (Object.keys(mobileUiConfig.fonts) as FontToken[]).map((token) => [
+    token,
+    resolveFontStyle(token, Platform.OS),
+  ])
+) as Record<FontToken, FontStyle>;
 
 function buildShadow(mode: 'light' | 'dark', token: ShadowToken): ViewStyle {
   const shadow = mobileUiConfig.shadows[token] ?? mobileUiConfig.shadows.card;
@@ -33,17 +42,15 @@ export function getAppTheme(mode: 'light' | 'dark'): AppTheme {
     mode,
     isDark: mode === 'dark',
     ...palette,
-    fonts: mobileUiConfig.fonts,
+    fonts: FONTS,
     spacing: mobileUiConfig.spacing,
     radius: mobileUiConfig.radius,
     shadow(token) {
       return buildShadow(mode, token);
     },
     textStyle(token, color = palette.text) {
-      return {
-        ...(mobileUiConfig.typography[token] as TextStyle),
-        color,
-      };
+      const { font, ...metrics } = mobileUiConfig.typography[token];
+      return { ...(metrics as TextStyle), ...FONTS[font], color };
     },
   };
 }
@@ -65,6 +72,3 @@ export function useShadow() {
   const { mode } = useThemePreference();
   return (token: ShadowToken) => getShadow(token, mode);
 }
-
-/** Font families for expo-font loading — re-exported for convenience */
-export const FONT_FAMILIES = mobileUiConfig.fonts;

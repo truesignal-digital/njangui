@@ -63,7 +63,7 @@ export function GroupSeal({
         <Text
           style={{
             color: accent,
-            fontFamily: theme.fonts.bodyBold,
+            ...theme.fonts.bodyBold,
             fontSize: size * 0.13,
           }}
         >

@@ -2,8 +2,9 @@ import { Fragment } from 'react';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { DevSeedButton } from '../../src/components/dev/dev-tools';
-import { usePushNotifications } from '../../src/hooks/use-push-notifications';
+import { DevSeedButton } from '@/components/dev/dev-tools';
+import { usePushNotifications } from '@/hooks/use-push-notifications';
+import { FONTS } from '@/lib/theme';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -25,7 +26,7 @@ export default function AppLayout() {
           headerShown: false,
           headerBackButtonDisplayMode: 'minimal',
           headerTitleStyle: {
-            fontFamily: 'Newsreader_600SemiBold',
+            ...FONTS.heading,
             fontSize: 20,
           },
         }}
@@ -39,9 +40,7 @@ export default function AppLayout() {
           options={{
             headerShown: true,
             headerLargeTitle: true,
-            headerLargeTitleStyle: {
-              fontFamily: 'Newsreader_600SemiBold',
-            },
+            headerLargeTitleStyle: FONTS.heading,
             title: t('tabs.calendar'),
           }}
         />
@@ -50,9 +49,7 @@ export default function AppLayout() {
           options={{
             headerShown: true,
             headerLargeTitleEnabled: true,
-            headerLargeTitleStyle: {
-              fontFamily: 'Newsreader_600SemiBold',
-            },
+            headerLargeTitleStyle: FONTS.heading,
             title: t('tabs.profile'),
           }}
         />

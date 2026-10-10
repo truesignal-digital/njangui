@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAttention } from '@/hooks/use-attention';
-import { useAppTheme } from '@/lib/theme';
+import { FONTS, useAppTheme } from '@/lib/theme';
 
 /**
  * Three stable native destinations. Calendar and Profile are secondary Stack
@@ -29,14 +29,8 @@ export default function TabsLayout() {
   );
   const labelStyle = useMemo(
     () => ({
-      default: {
-        color: theme.textMuted,
-        fontFamily: 'PlusJakartaSans_600SemiBold',
-      },
-      selected: {
-        color: theme.accent,
-        fontFamily: 'PlusJakartaSans_600SemiBold',
-      },
+      default: { color: theme.textMuted, ...FONTS.bodySemiBold },
+      selected: { color: theme.accent, ...FONTS.bodySemiBold },
     }),
     [theme]
   );

@@ -9,30 +9,31 @@ import { toast } from 'sonner-native';
 import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { api, type Id } from '../../../../../../src/lib/convex-api';
-import { useAuth } from '../../../../../../src/lib/clerk-client';
-import { formatCurrencyXAF } from '../../../../../../src/lib/format-currency';
-import { haptics } from '../../../../../../src/lib/haptics';
-import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
+import { api, type Id } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { MoneyText } from '@/components/ui/money-text';
+import { haptics } from '@/lib/haptics';
+import { newIdempotencyKey } from '@/lib/idempotency';
 import {
   buildRoundSummary,
   shareRoundSummary,
-} from '../../../../../../src/lib/round-summary';
-import { useAppTheme, useShadow } from '../../../../../../src/lib/theme';
-import { TextField } from '../../../../../../src/components/ui/text-field';
+} from '@/lib/round-summary';
+import { useAppTheme, useShadow } from '@/lib/theme';
+import { TextField } from '@/components/ui/text-field';
 import {
   Badge,
   PaymentStateBadge,
   type PaymentState,
-} from '../../../../../../src/components/ui/badge';
-import { AppButton } from '../../../../../../src/components/ui/button';
-import { PotProgress } from '../../../../../../src/components/ui/pot-progress';
-import { SectionCard } from '../../../../../../src/components/ui/section-card';
-import { resolveSeed } from '../../../../../../src/lib/group-colors';
-import { Skeleton } from '../../../../../../src/components/skeleton';
-import { SoftPressable } from '../../../../../../src/components/ui/soft-pressable';
-import { ICON_SIZE } from '../../../../../../src/lib/icons';
-import { NjangiMark } from '../../../../../../src/components/brand/njangi-mark';
+} from '@/components/ui/badge';
+import { AppButton } from '@/components/ui/button';
+import { PotProgress } from '@/components/ui/pot-progress';
+import { SectionCard } from '@/components/ui/section-card';
+import { resolveSeed } from '@/lib/group-colors';
+import { Skeleton } from '@/components/skeleton';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { ICON_SIZE } from '@/lib/icons';
+import { NjangiMark } from '@/components/brand/njangi-mark';
 
 /**
  * Round detail (docs/03 B4 entry, payment-features-plan Slice 1): pot
@@ -320,9 +321,7 @@ function MyContributionBlock({
               </Text>
             ) : null}
           </View>
-          <Text className="font-body-semi text-body-sm text-foreground">
-            {formatCurrencyXAF(record.amount)}
-          </Text>
+          <MoneyText size="row">{formatCurrencyXAF(record.amount)}</MoneyText>
         </View>
       ))}
 
@@ -439,9 +438,7 @@ function PayoutBlock({
       <View className="gap-sm">
         <View className="flex-row items-center justify-between">
           <PaymentStateChip state={payout.state} />
-          <Text className="font-body-semi text-body text-foreground">
-            {formatCurrencyXAF(payout.amount)}
-          </Text>
+          <MoneyText size="row">{formatCurrencyXAF(payout.amount)}</MoneyText>
         </View>
         <AppButton
           variant="outline"
@@ -548,13 +545,13 @@ function MemberPaymentRow({ row, isMe }: { row: PaymentRow; isMe: boolean }) {
       </View>
       <View className="flex-row items-center gap-sm">
         <PaymentStateChip state={row.isSettled ? 'confirmed' : headline} />
-        <Text className="font-body-semi text-body-sm text-foreground">
-          {formatCurrencyXAF(row.confirmedAmount)}
+        <View className="flex-row items-baseline">
+          <MoneyText size="row">{formatCurrencyXAF(row.confirmedAmount)}</MoneyText>
           <Text className="font-body text-caption text-muted">
             {' '}
             / {formatCurrencyXAF(row.expectedAmount)}
           </Text>
-        </Text>
+        </View>
       </View>
     </View>
   );

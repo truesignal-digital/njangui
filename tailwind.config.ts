@@ -1,4 +1,5 @@
 const mobileUiConfig = require('./src/lib/mobile-ui-config.json');
+const { platformSelect } = require('nativewind/theme');
 
 const colorVars = {
   background: '--color-background',
@@ -79,6 +80,43 @@ function shadow(token: keyof typeof mobileUiConfig.shadows) {
   return `${value.x}px ${value.y}px ${value.blur}px rgba(0, 0, 0, ${value.opacity})`;
 }
 
+const fontClassNames: Record<keyof typeof mobileUiConfig.fonts, string> = {
+  heading: 'heading',
+  headingSemiBold: 'heading-semi',
+  body: 'body',
+  bodyMedium: 'body-medium',
+  bodySemiBold: 'body-semi',
+  bodyBold: 'body-bold',
+  mono: 'mono',
+  monoBold: 'mono-bold',
+  money: 'money',
+};
+
+/**
+ * `font-*` = family + weight. Family `system` emits no font-family (SF Pro /
+ * Roboto); a null platform entry is left out of platformSelect, so that
+ * platform gets no family. Android 500/600 name sans-serif-medium because RN
+ * Android picks only Regular or Bold faces below API 28. Mirrors
+ * resolveFontStyle() in src/lib/fonts.ts.
+ */
+function fontUtilities() {
+  return Object.fromEntries(
+    Object.entries(fontClassNames).map(([token, className]) => {
+      const { family, weight } = mobileUiConfig.fonts[token as keyof typeof fontClassNames];
+      const rule: Record<string, string> = { 'font-weight': weight };
+      if (family !== 'system') {
+        const { ios, android } =
+          mobileUiConfig.fontFamilies[family as keyof typeof mobileUiConfig.fontFamilies];
+        const specifics: Record<string, string> = {};
+        if (ios) specifics.ios = ios;
+        if (android) specifics.android = android;
+        rule['font-family'] = platformSelect(specifics);
+      }
+      return [`.font-${className}`, rule];
+    })
+  );
+}
+
 function fontSize(token: keyof typeof mobileUiConfig.typography) {
   const value = mobileUiConfig.typography[token];
   const options: Record<string, string> = {};
@@ -91,6 +129,9 @@ function fontSize(token: keyof typeof mobileUiConfig.typography) {
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  // `font-*` classes come from fontUtilities(); this also drops the preset's
+  // font-sans/serif/mono (Courier New on iOS).
+  corePlugins: { fontFamily: false },
   // ThemePreferenceProvider supports an explicit user choice. NativeWind's
   // web runtime throws if an app-controlled scheme is paired with `media`.
   darkMode: 'class',
@@ -202,17 +243,6 @@ module.exports = {
       full: px(mobileUiConfig.radius.full),
     },
 
-    fontFamily: {
-      heading: [mobileUiConfig.fonts.heading],
-      'heading-semi': [mobileUiConfig.fonts.headingSemiBold],
-      body: [mobileUiConfig.fonts.body],
-      'body-medium': [mobileUiConfig.fonts.bodyMedium],
-      'body-semi': [mobileUiConfig.fonts.bodySemiBold],
-      'body-bold': [mobileUiConfig.fonts.bodyBold],
-      mono: [mobileUiConfig.fonts.mono],
-      'mono-bold': [mobileUiConfig.fonts.monoBold],
-    },
-
     fontSize: {
       display: fontSize('display'),
       'display-lg': fontSize('displayLarge'),
@@ -226,6 +256,8 @@ module.exports = {
       caption: fontSize('caption'),
       overline: fontSize('overline'),
       'tab-label': fontSize('tabLabel'),
+      'money-hero': fontSize('moneyHero'),
+      money: fontSize('money'),
       'price-lg': fontSize('priceLarge'),
       'price-md': fontSize('priceMedium'),
       'price-sm': fontSize('priceSmall'),
@@ -267,6 +299,9 @@ module.exports = {
     },
   },
   plugins: [
+    function ({ addUtilities }: { addUtilities: (utilities: Record<string, any>) => void }) {
+      addUtilities(fontUtilities());
+    },
     /* ─── CSS Variables for Light/Dark ─── */
     function ({ addBase }: { addBase: (styles: Record<string, any>) => void }) {
       addBase({

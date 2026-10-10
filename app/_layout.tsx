@@ -9,23 +9,8 @@ import {
 } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-} from '@expo-google-fonts/plus-jakarta-sans';
-import {
-  JetBrainsMono_600SemiBold,
-  JetBrainsMono_700Bold,
-} from '@expo-google-fonts/jetbrains-mono';
-import {
-  Newsreader_600SemiBold,
-  Newsreader_700Bold,
-} from '@expo-google-fonts/newsreader';
 import { Toaster } from 'sonner-native';
 
 import * as Sentry from '@sentry/react-native';
@@ -71,24 +56,13 @@ function AppNavigation() {
       },
     };
   }, [theme]);
-  const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-    JetBrainsMono_600SemiBold,
-    JetBrainsMono_700Bold,
-    Newsreader_600SemiBold,
-    Newsreader_700Bold,
-  });
-
   useEffect(() => {
-    if (fontsLoaded && themeHydrated) {
+    if (themeHydrated) {
       void SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, themeHydrated]);
+  }, [themeHydrated]);
 
-  if (!fontsLoaded || !themeHydrated) {
+  if (!themeHydrated) {
     return null;
   }
 

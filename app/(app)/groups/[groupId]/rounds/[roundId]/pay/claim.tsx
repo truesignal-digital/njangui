@@ -16,18 +16,19 @@ import {
   PhotoIcon,
 } from 'react-native-heroicons/outline';
 
-import { api, type Id } from '../../../../../../../src/lib/convex-api';
-import { formatCurrencyXAF } from '../../../../../../../src/lib/format-currency';
-import { haptics } from '../../../../../../../src/lib/haptics';
-import { newIdempotencyKey } from '../../../../../../../src/lib/idempotency';
-import { useAppTheme } from '../../../../../../../src/lib/theme';
-import { usePayFlow } from '../../../../../../../src/hooks/use-pay-flow';
-import { AppButton } from '../../../../../../../src/components/ui/button';
-import { TextField } from '../../../../../../../src/components/ui/text-field';
-import { Skeleton } from '../../../../../../../src/components/skeleton';
-import { ImagePreviewModal } from '../../../../../../../src/components/image-preview-modal';
-import { SoftPressable } from '../../../../../../../src/components/ui/soft-pressable';
-import { ICON_SIZE } from '../../../../../../../src/lib/icons';
+import { api, type Id } from '@/lib/convex-api';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { MoneyText } from '@/components/ui/money-text';
+import { haptics } from '@/lib/haptics';
+import { newIdempotencyKey } from '@/lib/idempotency';
+import { useAppTheme } from '@/lib/theme';
+import { usePayFlow } from '@/hooks/use-pay-flow';
+import { AppButton } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Skeleton } from '@/components/skeleton';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { ICON_SIZE } from '@/lib/icons';
 
 /**
  * Pay flow step 3 — claim (docs/03 B4): amount prefilled with the remaining
@@ -204,9 +205,9 @@ export default function PayClaimScreen() {
           <Text className="font-body-semi text-overline uppercase text-success-dark">
             {t('pay.roundEyebrow', { n: flow.round.index })}
           </Text>
-          <Text selectable className="pt-xs font-heading text-display-lg text-foreground">
+          <MoneyText selectable size="hero" className="pt-xs">
             {formatCurrencyXAF(flow.record.amount)}
-          </Text>
+          </MoneyText>
           <Text className="font-heading text-title-lg text-foreground">
             {t('pay.yourContribution')}
           </Text>

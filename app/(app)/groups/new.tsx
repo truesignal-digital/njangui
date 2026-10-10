@@ -29,6 +29,7 @@ import { SoftPressable } from '@/components/ui/soft-pressable';
 import { TextField } from '@/components/ui/text-field';
 import { api, type Id } from '@/lib/convex-api';
 import { formatCurrencyXAF } from '@/lib/format-currency';
+import { MoneyText } from '@/components/ui/money-text';
 import { haptics } from '@/lib/haptics';
 import { useAppTheme } from '@/lib/theme';
 
@@ -289,7 +290,7 @@ export default function GroupCreationWizard() {
               placeholder={t('groups.wizard.amountPlaceholder')}
               keyboardType="number-pad"
               inputMode="numeric"
-              className="font-mono text-title"
+              className="font-money text-title"
               autoFocus
             />
             {amountValid ? (
@@ -312,9 +313,9 @@ export default function GroupCreationWizard() {
                 <Text className="font-body-medium text-caption text-highlight-fg">
                   {t('groups.wizard.handoverLabel')}
                 </Text>
-                <Text className="mt-[2px] font-mono-bold text-price-lg text-highlight-fg">
+                <MoneyText size="hero" tone="onHighlight" className="mt-[2px]">
                   {formatCurrencyXAF(parsedAmount * parsedTarget)}
-                </Text>
+                </MoneyText>
                 <Text className="mt-xs font-body text-caption text-highlight-fg">
                   {t('groups.wizard.handoverNote')}
                 </Text>
@@ -449,7 +450,7 @@ function WizardHeader({ step, onBack }: { step: number; onBack: () => void }) {
           />
         ))}
       </View>
-      <Text className="w-[44px] text-right font-mono text-caption text-muted">
+      <Text className="w-[44px] text-right font-body-semi text-caption text-muted">
         {step}/{TOTAL_STEPS}
       </Text>
     </View>

@@ -52,8 +52,24 @@ type ThemeColors = {
 
 type TextTransform = 'none' | 'capitalize' | 'uppercase' | 'lowercase';
 
+type FontFamilyToken = 'system' | 'systemMedium' | 'rounded' | 'mono';
+type FontWeightToken = '400' | '500' | '600' | '700';
+type FontConfig = { family: FontFamilyToken; weight: FontWeightToken };
+
+type FontsMap = {
+  heading: FontConfig;
+  headingSemiBold: FontConfig;
+  body: FontConfig;
+  bodyMedium: FontConfig;
+  bodySemiBold: FontConfig;
+  bodyBold: FontConfig;
+  mono: FontConfig;
+  monoBold: FontConfig;
+  money: FontConfig;
+};
+
 type TypographyConfig = {
-  fontFamily: string;
+  font: keyof FontsMap;
   fontSize: number;
   lineHeight?: number;
   letterSpacing?: number;
@@ -73,6 +89,8 @@ type TypographyMap = {
   caption: TypographyConfig;
   overline: TypographyConfig;
   tabLabel: TypographyConfig;
+  moneyHero: TypographyConfig;
+  money: TypographyConfig;
   priceLarge: TypographyConfig;
   priceMedium: TypographyConfig;
   priceSmall: TypographyConfig;
@@ -122,16 +140,12 @@ export type MobileUiConfig = {
     pill: number;
     full: number;
   };
-  fonts: {
-    heading: string;
-    headingSemiBold: string;
-    body: string;
-    bodyMedium: string;
-    bodySemiBold: string;
-    bodyBold: string;
-    mono: string;
-    monoBold: string;
-  };
+  /** Named families per platform; `system` and `null` mean no family (SF Pro / Roboto). */
+  fontFamilies: Record<
+    Exclude<FontFamilyToken, 'system'>,
+    { ios: string | null; android: string | null }
+  >;
+  fonts: FontsMap;
   typography: TypographyMap;
   shadows: ShadowMap;
   shadowDarkOpacityMultiplier: number;
