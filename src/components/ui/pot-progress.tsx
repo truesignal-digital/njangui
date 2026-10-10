@@ -58,6 +58,10 @@ export function PotProgress({
       ? groupAccent(colorSeed, dark)
       : theme.accent;
 
+  // Payee-side claims already appear in the "en main" line; showing them again as
+  // "déclaré, en attente" made the two lines read as if they should be added.
+  const otherInFlight = Math.max(0, inFlightTotal - Math.max(0, inHandTotal - confirmedTotal));
+
   return (
     <View className="gap-xs">
       <Text className="font-body-semi text-body text-foreground">
@@ -84,9 +88,9 @@ export function PotProgress({
           })}
         </Text>
       ) : null}
-      {inFlightTotal > 0 ? (
+      {otherInFlight > 0 ? (
         <Text className="font-body text-caption text-muted">
-          {t('round.inFlight', { amount: formatCurrencyXAF(inFlightTotal) })}
+          {t('round.inFlight', { amount: formatCurrencyXAF(otherInFlight) })}
         </Text>
       ) : null}
     </View>
