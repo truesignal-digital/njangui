@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAttention } from '@/hooks/use-attention';
+import { ICONS } from '@/lib/icons';
 import { useAppTheme } from '@/lib/theme';
 
 /**
@@ -69,17 +70,26 @@ export default function TabsLayout() {
       disableTransparentOnScrollEdge
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon sf={ICONS.index.sf} md={ICONS.index.md} />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: ICONS.today.ios, selected: `${ICONS.today.ios}.fill` }}
+          md={ICONS.today.android}
+        />
         <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="group">
-        <NativeTabs.Trigger.Icon sf={ICONS.group.sf} md={ICONS.group.md} />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: ICONS.groups.ios, selected: `${ICONS.groups.ios}.fill` }}
+          md={ICONS.groups.android}
+        />
         <NativeTabs.Trigger.Label>{t('tabs.group')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="inbox">
-        <NativeTabs.Trigger.Icon sf={ICONS.inbox.sf} md={ICONS.inbox.md} />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: ICONS.actions.ios, selected: `${ICONS.actions.ios}.fill` }}
+          md={ICONS.actions.android}
+        />
         <NativeTabs.Trigger.Label>{t('tabs.inbox')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Badge hidden={!badge}>
           {badge}
@@ -88,18 +98,3 @@ export default function TabsLayout() {
     </NativeTabs>
   );
 }
-
-const ICONS = {
-  index: {
-    sf: { default: 'sun.max', selected: 'sun.max.fill' },
-    md: { default: 'today', selected: 'today' },
-  },
-  group: {
-    sf: { default: 'person.3', selected: 'person.3.fill' },
-    md: { default: 'groups', selected: 'groups' },
-  },
-  inbox: {
-    sf: { default: 'checkmark.circle', selected: 'checkmark.circle.fill' },
-    md: { default: 'check_circle', selected: 'check_circle' },
-  },
-} as const;
