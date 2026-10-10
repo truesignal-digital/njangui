@@ -7,11 +7,11 @@ import {
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircleIcon } from 'react-native-heroicons/outline';
 
 import { AttentionRow } from '@/components/attention/attention-card';
 import { WaitingShelf } from '@/components/attention/waiting-shelf';
 import { Skeleton } from '@/components/skeleton';
+import { Icon } from '@/components/ui/icon';
 import { StatusBarCover } from '@/components/ui/status-bar-cover';
 import { useAttention } from '@/hooks/use-attention';
 import { usePullRefresh } from '@/hooks/use-pull-refresh';
@@ -21,6 +21,7 @@ import {
   type AttentionAction,
 } from '@/lib/attention-presentation';
 import { useAuth } from '@/lib/clerk-client';
+import { ICON_SIZE } from '@/lib/icons';
 import { useAppTheme } from '@/lib/theme';
 
 /** The complete executable queue. Waiting is a separate, collapsed shelf. */
@@ -94,7 +95,7 @@ export default function ActionsScreen() {
         }
         ListEmptyComponent={
           <View className="items-center gap-sm rounded-2xl border border-success bg-success-bg p-xl">
-            <CheckCircleIcon size={34} color={theme.successDark} />
+            <Icon name="confirmed" size={ICON_SIZE.emphasis} color={theme.successDark} />
             <Text className="text-center font-heading text-headline text-foreground">
               {t('attention.actions.emptyTitle')}
             </Text>

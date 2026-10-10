@@ -4,17 +4,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronUpIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  PhoneIcon,
-} from 'react-native-heroicons/outline';
 
 import { formatCurrencyXAF } from '@/lib/format-currency';
 import { haptics } from '@/lib/haptics';
+import { ICON_SIZE } from '@/lib/icons';
 import { useAppTheme } from '@/lib/theme';
 import {
   interpolateUssdStep,
@@ -23,6 +16,7 @@ import {
 } from '@/lib/ussd-content';
 import { usePayFlow } from '@/hooks/use-pay-flow';
 import { AppButton } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/skeleton';
 
 /** Local display form for the USSD copy-tap field: +2376… → 6… */
@@ -86,7 +80,7 @@ export default function UssdScreen() {
           }
           className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
         >
-          <ChevronLeftIcon size={22} color={theme.textMuted} />
+          <Icon name="back" size={ICON_SIZE.control} color={theme.textMuted} />
         </Pressable>
         <Text className="flex-1 font-heading text-title text-foreground">
           {content.title}
@@ -103,7 +97,7 @@ export default function UssdScreen() {
         // picker never offers this path; a stale link can still land here.
         <View className="mt-lg gap-sm">
           <View className="flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
-            <ExclamationTriangleIcon size={16} color={theme.warningDark} />
+            <Icon name="warning" size={ICON_SIZE.metadata} color={theme.warningDark} />
             <Text className="flex-1 font-body-medium text-body-sm text-warning-dark">
               {!flow.record
                 ? t('round.noObligation')
@@ -179,7 +173,7 @@ export default function UssdScreen() {
           <View className="mt-lg gap-sm">
             <AppButton
               label={t('pay.dial', { code: content.code })}
-              icon={<PhoneIcon size={18} color={theme.primaryForeground} />}
+              icon={<Icon name="call" size={ICON_SIZE.control} color={theme.primaryForeground} />}
               onPress={dial}
               testID="ussd-dial"
             />
@@ -213,9 +207,9 @@ export default function UssdScreen() {
               {helpOpen ? t('pay.hideHelp') : t('pay.needHelp')}
             </Text>
             {helpOpen ? (
-              <ChevronUpIcon size={18} color={theme.textMuted} />
+              <Icon name="collapse" size={ICON_SIZE.control} color={theme.textMuted} />
             ) : (
-              <ChevronDownIcon size={18} color={theme.textMuted} />
+              <Icon name="expand" size={ICON_SIZE.control} color={theme.textMuted} />
             )}
           </Pressable>
 
@@ -223,7 +217,7 @@ export default function UssdScreen() {
             <View className="mt-sm gap-sm">
               {/* Non-dismissable menu-drift banner (03 §C) */}
               <View className="flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
-                <ExclamationTriangleIcon size={16} color={theme.warningDark} />
+                <Icon name="warning" size={ICON_SIZE.metadata} color={theme.warningDark} />
                 <Text className="flex-1 font-body-medium text-body-sm text-warning-dark">
                   {t('pay.banner')}
                 </Text>
@@ -251,7 +245,7 @@ export default function UssdScreen() {
           ) : null}
 
           <View className="mt-lg flex-row items-start gap-xs">
-            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Icon name="info" size={ICON_SIZE.metadata} color={theme.textMuted} />
             <Text className="flex-1 font-body text-body-sm text-muted">
               {t('pay.custodyNote', {
                 name: flow.payee?.displayName ?? t('pay.recipientFallback'),
