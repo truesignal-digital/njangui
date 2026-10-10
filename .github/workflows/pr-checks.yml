@@ -1,0 +1,41 @@
+name: PR checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Runs the base branch's copy of the checker, so a PR cannot relax the check
+  # that judges it. The PR that adds the script falls back to its own copy.
+  evidence:
+    name: pr-evidence
+    # Release PRs (develop → main) and hotfixes carry reels from their feature PRs.
+    if: github.base_ref != 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.6 # keep in sync with packageManager in package.json
+
+      - name: Load the checker from the base branch
+        run: git show "origin/$BASE_REF:scripts/pr-evidence.ts" > "$RUNNER_TEMP/pr-evidence.ts" 2>/dev/null || cp scripts/pr-evidence.ts "$RUNNER_TEMP/pr-evidence.ts"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+
+      - name: Require a walkthrough video and the found-while-testing list
+        run: bun "$RUNNER_TEMP/pr-evidence.ts"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}

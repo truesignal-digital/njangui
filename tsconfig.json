@@ -25,6 +25,8 @@
     "node_modules",
     ".port-reference",
     "convex/**/*.test.ts",
-    "src/**/*.test.ts"
+    "src/**/*.test.ts",
+    "scripts/**/*.test.ts",
+    ".verify"
   ]
 }

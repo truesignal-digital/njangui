@@ -1,0 +1,20 @@
+# Sign in with a dev persona and land on Home. Template for new flows:
+# end each beat with waitForAnimationToEnd, then takeScreenshot with a label
+# (the reel's caption) and a numbered path (pairs before/after runs).
+appId: com.truesignal.njangi
+name: Sign in as a dev persona
+---
+- runFlow: _start.yaml
+- takeScreenshot:
+    path: shots/01-sign-in
+    label: "Signed out: the sign-in screen"
+- tapOn:
+    id: "dev-signin-${ROLE}"
+- extendedWaitUntil:
+    visible:
+      id: "dev-open-console"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot:
+    path: shots/02-home
+    label: "Signed in: Home shows the persona's groups"

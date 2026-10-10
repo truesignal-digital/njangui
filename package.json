@@ -32,11 +32,12 @@
     "eas:run:ios": "npx eas-cli@latest build:run -p ios --latest",
     "eas:run:android": "npx eas-cli@latest build:run -p android --latest",
     "test": "bun run test:unit && bun run test:convex",
-    "test:unit": "bun test convex/lib src/lib",
+    "test:unit": "bun test convex/lib src/lib scripts",
     "test:convex": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint:design": "bun scripts/lint-design-system.ts",
     "release:status": "bun scripts/release-status.ts",
+    "verify": "bun scripts/verify/cli.ts",
     "doctor": "npx expo-doctor"
   },
   "dependencies": {

@@ -57,6 +57,11 @@ bun run typecheck           # tsc --noEmit
 bun run lint:design         # scripts/lint-design-system.ts (house rules + fr/en key parity)
 bun test convex/lib         # bun:test money-math suites
 
+# Walkthrough reel for a PR (skill: .claude/skills/verify-njangi)
+bun run verify up                       # own Metro on 8101, iOS simulator
+bun run verify drive sign-in --reel     # Maestro flow → .verify/<run>/reel.mp4
+bun run verify upload <reel.mp4> <reel-sheet.png>
+
 bun run doctor              # npx expo-doctor
 # EAS builds: bun run eas:build:development:{ios,android}, eas:build:preview:android
 ```

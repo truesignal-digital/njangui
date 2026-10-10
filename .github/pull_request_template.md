@@ -4,9 +4,9 @@ Part of #<issue> · targets `develop` (release PRs: `develop` → `main`)
 
 <!-- Plain sentences. What a reviewer should look at first. -->
 
-## Walkthrough
+## Walkthrough video
 
-<!-- Required for UI or native changes: a screen recording on a real device or simulator. -->
+<!-- Required when this PR changes app/, src/, convex/ or app.json (tests excepted); the pr-evidence check enforces it. Link the reel from `bun run verify drive <flow> --reel` (before | after with `bun run verify reel <after> --before <before>` when behaviour changed), uploaded with `bun run verify upload`: the .mp4 link plus the contact sheet image. When nothing visible changed, write "Walkthrough video: not recorded (<reason>)" instead. -->
 
 ## Merge danger
 
