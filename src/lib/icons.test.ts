@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { ICONS } from './icons';
+import { ICONS, iconAccessibilityProps } from './icons';
 
 const androidSymbols: Record<string, number> = JSON.parse(
   readFileSync(
@@ -25,5 +25,23 @@ describe('ICONS', () => {
 
   test.each(entries)('%s android name exists in Material Symbols', (_name, symbol) => {
     expect(Object.hasOwn(androidSymbols, symbol.android)).toBe(true);
+  });
+});
+
+describe('iconAccessibilityProps', () => {
+  test('decorative icons are hidden from screen readers on both platforms', () => {
+    expect(iconAccessibilityProps(undefined)).toEqual({
+      accessible: false,
+      importantForAccessibility: 'no-hide-descendants',
+      accessibilityElementsHidden: true,
+    });
+  });
+
+  test('labelled icons are announced as an image', () => {
+    expect(iconAccessibilityProps('Confirmé')).toEqual({
+      accessible: true,
+      accessibilityRole: 'image',
+      accessibilityLabel: 'Confirmé',
+    });
   });
 });

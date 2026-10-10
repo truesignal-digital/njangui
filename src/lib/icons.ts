@@ -76,3 +76,21 @@ export const ICONS = {
 } as const;
 
 export type IconName = keyof typeof ICONS;
+
+/**
+ * Accessibility props for the View that wraps an icon. expo-symbols on
+ * Android forwards none of its props, so they must live on the wrapper.
+ */
+export function iconAccessibilityProps(label: string | undefined) {
+  return label === undefined
+    ? {
+        accessible: false,
+        importantForAccessibility: 'no-hide-descendants' as const,
+        accessibilityElementsHidden: true,
+      }
+    : {
+        accessible: true,
+        accessibilityRole: 'image' as const,
+        accessibilityLabel: label,
+      };
+}

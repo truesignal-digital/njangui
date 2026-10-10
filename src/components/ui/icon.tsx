@@ -1,7 +1,12 @@
 import { SymbolView, type AndroidSymbol, type SFSymbol } from 'expo-symbols';
-import type { ColorValue } from 'react-native';
+import { View, type ColorValue } from 'react-native';
 
-import { ICONS, type IconName, type IconSize } from '@/lib/icons';
+import {
+  ICONS,
+  iconAccessibilityProps,
+  type IconName,
+  type IconSize,
+} from '@/lib/icons';
 
 // A misspelled platform name in ICONS fails typecheck here.
 ICONS satisfies Record<IconName, { ios: SFSymbol; android: AndroidSymbol }>;
@@ -23,18 +28,17 @@ export function Icon({
   accessibilityLabel?: string;
 }) {
   const symbol = ICONS[name];
-  const labelled = accessibilityLabel !== undefined;
 
   return (
-    <SymbolView
-      name={{ ios: symbol.ios, android: symbol.android }}
-      size={size}
-      tintColor={color}
-      accessible={labelled}
-      accessibilityRole={labelled ? 'image' : undefined}
-      accessibilityLabel={accessibilityLabel}
-      importantForAccessibility={labelled ? 'yes' : 'no-hide-descendants'}
-      accessibilityElementsHidden={!labelled}
-    />
+    <View
+      style={{ width: size, height: size }}
+      {...iconAccessibilityProps(accessibilityLabel)}
+    >
+      <SymbolView
+        name={{ ios: symbol.ios, android: symbol.android }}
+        size={size}
+        tintColor={color}
+      />
+    </View>
   );
 }
