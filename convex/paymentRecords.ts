@@ -1,6 +1,11 @@
-import { v } from 'convex/values';
+import { v, type Infer } from 'convex/values';
 import type { Doc, Id } from './_generated/dataModel';
-import { mutation, type MutationCtx, query } from './_generated/server';
+import {
+  mutation,
+  type MutationCtx,
+  query,
+  type QueryCtx,
+} from './_generated/server';
 import {
   type Actor,
   counterpartySideOf,
@@ -12,6 +17,7 @@ import {
 import {
   membershipNeedsRepresentation,
   paymentActorForMembership,
+  representationContext,
   toPaymentRecordSnapshot,
 } from './lib/paymentCapabilities';
 import { payoutPrefillAmount } from './lib/roundMath';
@@ -1275,73 +1281,146 @@ const inboxItemValidator = v.object({
   reference: v.string(), // NJG-T<round> — matches the carrier SMS reason field
 });
 
+const MAX_GROUP_CLAIMED_RECORDS = 200;
+
+async function toInboxItem(
+  ctx: QueryCtx,
+  record: Doc<'paymentRecords'>
+): Promise<Infer<typeof inboxItemValidator>> {
+  const group = await ctx.db.get(record.groupId);
+  const claimantId =
+    record.claimedBySide === 'payer'
+      ? record.payerMembershipId
+      : record.payeeMembershipId;
+  const claimant = await ctx.db.get(claimantId);
+  const round =
+    record.roundId !== undefined ? await ctx.db.get(record.roundId) : null;
+  return {
+    paymentRecordId: record._id,
+    groupId: record.groupId,
+    groupName: group?.name ?? '—',
+    roundId: record.roundId ?? null,
+    roundIndex: round ? round.index : null,
+    kind: record.kind,
+    amount: record.amount,
+    method: record.method,
+    momoTxnId: record.momoTxnId,
+    claimedAt: record.claimedAt,
+    claimedBySide: record.claimedBySide,
+    counterpartyName: claimant?.displayName ?? '—',
+    reference: round ? `NJG-T${round.index}` : '',
+  };
+}
+
+/**
+ * One group's confirm list. Eligibility is the state machine's own confirm
+ * check (same as Attention's `confirm_records`), so a president sees the
+ * claims they may confirm on behalf of an offline counterparty, and every
+ * record the Attention row counts is listed here.
+ */
+async function groupInboxRecords(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  groupId: Id<'groups'>
+): Promise<Doc<'paymentRecords'>[]> {
+  const memberships = (
+    await ctx.db
+      .query('memberships')
+      .withIndex('by_group_and_user', (q) =>
+        q.eq('groupId', groupId).eq('userId', userId)
+      )
+      .collect()
+  ).filter((m) => m.status === 'active');
+  if (memberships.length === 0) {
+    return [];
+  }
+  const claimed = await ctx.db
+    .query('paymentRecords')
+    .withIndex('by_group_and_state', (q) =>
+      q.eq('groupId', groupId).eq('state', 'claimed')
+    )
+    .take(MAX_GROUP_CLAIMED_RECORDS);
+
+  const awaiting: Doc<'paymentRecords'>[] = [];
+  for (const record of claimed) {
+    if (record.claimedBySide === undefined) {
+      continue;
+    }
+    const snapshot = toPaymentRecordSnapshot(record);
+    const counterpartyId = membershipIdForSide(
+      snapshot,
+      counterpartySideOf(record.claimedBySide)
+    ) as Id<'memberships'>;
+    const context = representationContext(await ctx.db.get(counterpartyId));
+    const canConfirm = memberships.some(
+      (membership) =>
+        validateTransition(
+          snapshot,
+          'confirmed',
+          paymentActorForMembership(membership),
+          context
+        ).ok
+    );
+    if (canConfirm) {
+      awaiting.push(record);
+    }
+  }
+  return awaiting;
+}
+
 /**
  * Claims awaiting the CALLER's confirmation, across all their groups
  * (docs/03 B5 « À confirmer »): payer-side claims where I am the payee
  * (treasurer inbox), payee-side claims where I am the payer (objection
  * window — Meeting Mode ticks / beneficiary receipts). Newest first.
+ * With `groupId`, only that group (see groupInboxRecords); a malformed or
+ * foreign id returns [] so a stale deep link renders the empty state.
  */
 export const myInbox = query({
-  args: {},
+  args: { groupId: v.optional(v.string()) },
   returns: v.array(inboxItemValidator),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const auth = await getCurrentUserOrNull(ctx);
     if (!auth) {
       return [];
     }
-    const memberships = await ctx.db
-      .query('memberships')
-      .withIndex('by_user', (q) => q.eq('userId', auth.user._id))
-      .collect();
 
-    const items = [];
-    for (const membership of memberships.filter((m) => m.status === 'active')) {
-      const awaitingAsPayee = await ctx.db
-        .query('paymentRecords')
-        .withIndex('by_payee_and_state', (q) =>
-          q.eq('payeeMembershipId', membership._id).eq('state', 'claimed')
-        )
-        .take(100);
-      const awaitingAsPayer = await ctx.db
-        .query('paymentRecords')
-        .withIndex('by_payer_and_state', (q) =>
-          q.eq('payerMembershipId', membership._id).eq('state', 'claimed')
-        )
-        .take(100);
-      const awaiting = [
-        ...awaitingAsPayee.filter((r) => r.claimedBySide === 'payer'),
-        ...awaitingAsPayer.filter((r) => r.claimedBySide === 'payee'),
-      ];
-
-      for (const record of awaiting) {
-        const group = await ctx.db.get(record.groupId);
-        const claimantId =
-          record.claimedBySide === 'payer'
-            ? record.payerMembershipId
-            : record.payeeMembershipId;
-        const claimant = await ctx.db.get(claimantId);
-        const round =
-          record.roundId !== undefined
-            ? await ctx.db.get(record.roundId)
-            : null;
-        items.push({
-          paymentRecordId: record._id,
-          groupId: record.groupId,
-          groupName: group?.name ?? '—',
-          roundId: record.roundId ?? null,
-          roundIndex: round ? round.index : null,
-          kind: record.kind,
-          amount: record.amount,
-          method: record.method,
-          momoTxnId: record.momoTxnId,
-          claimedAt: record.claimedAt,
-          claimedBySide: record.claimedBySide,
-          counterpartyName: claimant?.displayName ?? '—',
-          reference: round ? `NJG-T${round.index}` : '',
-        });
+    let awaiting: Doc<'paymentRecords'>[] = [];
+    if (args.groupId !== undefined) {
+      const groupId = ctx.db.normalizeId('groups', args.groupId);
+      if (!groupId) {
+        return [];
+      }
+      awaiting = await groupInboxRecords(ctx, auth.user._id, groupId);
+    } else {
+      const memberships = await ctx.db
+        .query('memberships')
+        .withIndex('by_user', (q) => q.eq('userId', auth.user._id))
+        .collect();
+      for (const membership of memberships.filter((m) => m.status === 'active')) {
+        const awaitingAsPayee = await ctx.db
+          .query('paymentRecords')
+          .withIndex('by_payee_and_state', (q) =>
+            q.eq('payeeMembershipId', membership._id).eq('state', 'claimed')
+          )
+          .take(100);
+        const awaitingAsPayer = await ctx.db
+          .query('paymentRecords')
+          .withIndex('by_payer_and_state', (q) =>
+            q.eq('payerMembershipId', membership._id).eq('state', 'claimed')
+          )
+          .take(100);
+        awaiting.push(
+          ...awaitingAsPayee.filter((r) => r.claimedBySide === 'payer'),
+          ...awaitingAsPayer.filter((r) => r.claimedBySide === 'payee')
+        );
       }
     }
 
+    const items = [];
+    for (const record of awaiting) {
+      items.push(await toInboxItem(ctx, record));
+    }
     return items.sort((a, b) => (b.claimedAt ?? 0) - (a.claimedAt ?? 0));
   },
 });

@@ -587,3 +587,200 @@ describe('payment record integration', () => {
     ).toBe(10_000);
   });
 });
+
+async function insertClaimedGroup(
+  t: Awaited<ReturnType<typeof seedContributionScenario>>['t'],
+  opts: {
+    name: string;
+    inviteCode: string;
+    treasurerUserId?: Id<'users'>;
+    presidentUserId?: Id<'users'>;
+    amount: number;
+  }
+) {
+  return t.run(async (ctx) => {
+    const payerUserId = await ctx.db.insert('users', {
+      clerkId: `payer-${opts.inviteCode}`,
+      name: `Payer ${opts.name}`,
+      language: 'fr',
+    });
+    const groupId = await ctx.db.insert('groups', {
+      name: opts.name,
+      schedule: 'monthly',
+      contributionAmount: opts.amount,
+      graceDays: 2,
+      finesEnabled: false,
+      beneficiaryContributes: true,
+      collectionMode: 'via_treasurer',
+      inviteCode: opts.inviteCode,
+      status: 'active',
+      language: 'fr',
+      createdByUserId: payerUserId,
+    });
+    const payerMembershipId = await ctx.db.insert('memberships', {
+      groupId,
+      userId: payerUserId,
+      displayName: `Payer ${opts.name}`,
+      role: 'member',
+      status: 'active',
+      joinedAt: Date.now(),
+    });
+    const treasurerMembershipId = await ctx.db.insert('memberships', {
+      groupId,
+      userId: opts.treasurerUserId,
+      displayName: `Treasurer ${opts.name}`,
+      role: 'treasurer',
+      status: 'active',
+      joinedAt: Date.now() + 1,
+    });
+    if (opts.presidentUserId) {
+      await ctx.db.insert('memberships', {
+        groupId,
+        userId: opts.presidentUserId,
+        displayName: `President ${opts.name}`,
+        role: 'president',
+        status: 'active',
+        joinedAt: Date.now() + 2,
+      });
+    }
+    const cycleId = await ctx.db.insert('cycles', {
+      groupId,
+      index: 1,
+      status: 'active',
+      rotationOrder: [payerMembershipId, treasurerMembershipId],
+      contributionAmount: opts.amount,
+      schedule: 'monthly',
+      beneficiaryContributes: true,
+      collectionMode: 'via_treasurer',
+      graceDays: 2,
+      startDate: '2026-07-10',
+      lockedAt: Date.now(),
+    });
+    const roundId = await ctx.db.insert('rounds', {
+      cycleId,
+      groupId,
+      index: 1,
+      beneficiaryMembershipId: payerMembershipId,
+      scheduledOpenAt: Date.now() - 1_000,
+      dueAt: Date.now() + 86_400_000,
+      graceEndAt: Date.now() + 3 * 86_400_000,
+      status: 'open',
+      expectedAmountPerMember: opts.amount,
+      openedAt: Date.now(),
+    });
+    const paymentRecordId = await ctx.db.insert('paymentRecords', {
+      groupId,
+      roundId,
+      kind: 'contribution',
+      state: 'claimed',
+      amount: opts.amount,
+      payerMembershipId,
+      payeeMembershipId: treasurerMembershipId,
+      proofType: 'none',
+      method: 'cash',
+      claimedBySide: 'payer',
+      claimedAt: Date.now(),
+      recordedByMembershipId: payerMembershipId,
+    });
+    return { groupId, paymentRecordId };
+  });
+}
+
+describe('group confirm list (myInbox groupId)', () => {
+  test('lists only that group, rejects malformed and foreign ids, and empties on confirm', async () => {
+    const { t, groupId, paymentRecordId, treasurerUserId, outsiderUserId } =
+      await seedContributionScenario();
+    const otherGroup = await insertClaimedGroup(t, {
+      name: 'Other Njangi',
+      inviteCode: 'OTHER2',
+      treasurerUserId,
+      amount: 7_000,
+    });
+    const foreignGroup = await insertClaimedGroup(t, {
+      name: 'Foreign Njangi',
+      inviteCode: 'FORGN2',
+      treasurerUserId: outsiderUserId,
+      amount: 5_000,
+    });
+    const payer = t.withIdentity({ subject: 'clerk-payer' });
+    const treasurer = t.withIdentity({ subject: 'clerk-treasurer' });
+    await payer.mutation(api.paymentRecords.claim, {
+      paymentRecordId,
+      idempotencyKey: 'confirm-list-claim',
+      method: 'cash',
+    });
+
+    const scoped = await treasurer.query(api.paymentRecords.myInbox, { groupId });
+    expect(scoped.map((item) => item.paymentRecordId)).toEqual([paymentRecordId]);
+    expect(scoped[0]).toMatchObject({
+      groupId,
+      amount: 10_000,
+      method: 'cash',
+      counterpartyName: 'Paul Member',
+      reference: 'NJG-T1',
+    });
+
+    const other = await treasurer.query(api.paymentRecords.myInbox, {
+      groupId: otherGroup.groupId,
+    });
+    expect(other.map((item) => item.paymentRecordId)).toEqual([
+      otherGroup.paymentRecordId,
+    ]);
+
+    expect(
+      await treasurer.query(api.paymentRecords.myInbox, { groupId: 'not-an-id' })
+    ).toEqual([]);
+    expect(
+      await treasurer.query(api.paymentRecords.myInbox, {
+        groupId: foreignGroup.groupId,
+      })
+    ).toEqual([]);
+    expect(
+      await treasurer.query(api.paymentRecords.myInbox, {
+        groupId: paymentRecordId,
+      })
+    ).toEqual([]);
+    expect(await t.query(api.paymentRecords.myInbox, { groupId })).toEqual([]);
+
+    const all = await treasurer.query(api.paymentRecords.myInbox, {});
+    expect(all.map((item) => item.paymentRecordId).sort()).toEqual(
+      [paymentRecordId, otherGroup.paymentRecordId].sort()
+    );
+
+    await treasurer.mutation(api.paymentRecords.confirm, { paymentRecordId });
+    expect(await treasurer.query(api.paymentRecords.myInbox, { groupId })).toEqual([]);
+    const attention = await treasurer.query(api.attention.readV1, {
+      scope: { kind: 'group', groupId },
+    });
+    expect(
+      attention.actions.filter((action) => action.kind === 'confirm_records')
+    ).toEqual([]);
+  });
+
+  test('matches the attention count when the president confirms for an offline treasurer', async () => {
+    const { t, presidentUserId } = await seedContributionScenario();
+    const offline = await insertClaimedGroup(t, {
+      name: 'Offline Treasurer Njangi',
+      inviteCode: 'OFFLN2',
+      presidentUserId,
+      amount: 8_000,
+    });
+    const president = t.withIdentity({ subject: 'clerk-president' });
+
+    const attention = await president.query(api.attention.readV1, {
+      scope: { kind: 'group', groupId: offline.groupId },
+    });
+    expect(attention.actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'confirm_records', recordCount: 1 }),
+      ])
+    );
+
+    const scoped = await president.query(api.paymentRecords.myInbox, {
+      groupId: offline.groupId,
+    });
+    expect(scoped.map((item) => item.paymentRecordId)).toEqual([
+      offline.paymentRecordId,
+    ]);
+  });
+});

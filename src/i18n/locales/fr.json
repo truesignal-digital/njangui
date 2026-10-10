@@ -682,6 +682,12 @@
     "claimedByPayee": "{{name}} a enregistré votre paiement — confirmez ou signalez",
     "emptyHint": "Quand un membre déclare un paiement qui vous concerne, il apparaît ici."
   },
+  "confirmations": {
+    "title": "À confirmer",
+    "emptyTitle": "Tout est confirmé",
+    "emptyBody": "Aucun paiement de ce groupe n'attend votre réponse.",
+    "rowLabel": "Vérifier {{amount}} de {{name}}"
+  },
   "payment": {
     "notFound": "Paiement introuvable.",
     "group": "Groupe",
