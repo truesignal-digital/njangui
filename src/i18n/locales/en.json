@@ -892,7 +892,10 @@
     "handOf": "hand {{n}}/{{total}}",
     "monthOut": "Outgoing {{month}}",
     "monthIn": "Incoming {{month}}",
-    "next": "Next"
+    "next": "Next",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "todayLabel": "{{date}}, today"
   },
   "errors": {
     "network": "No connection. Your data is safe — try again once you're back online."
