@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every franc, every pocket: a personal finance direction for Cameroon</title>
+<style>
+  :root {
+    --bg: #0e1511; --bg2: #111914; --surface: #18231d; --surface2: #223128; --recess: #27372e;
+    --ink: #f3eee4; --muted: #a9b3a8; --faint: #7d8a7f; --line: #2a3b31; --line2: #34483c;
+    --plum: #d3a7c4; --plum-deep: #6a465e; --plum-soft: #31252d;
+    --gold: #e6c978; --gold-soft: #2f2a18;
+    --green: #8fb392; --green-deep: #314a38; --green-soft: #1c2c22;
+    --red: #e39a83; --red-soft: #33201a;
+    --om: #ff8a3d; --momo: #f2cb2e; --cash: #8fb392; --njangi: #d3a7c4; --bank: #8fb3c9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.62 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--plum); }
+  .wrap { max-width: 68rem; margin: 0 auto; padding: 0 1.5rem; }
+  .prose { max-width: 46rem; }
+  header.hero {
+    background:
+      radial-gradient(60rem 30rem at 85% -10%, #3a2a35 0%, transparent 60%),
+      radial-gradient(50rem 30rem at -10% 110%, #1f3427 0%, transparent 60%),
+      var(--bg2);
+    border-bottom: 1px solid var(--line);
+    padding: 5rem 0 4rem;
+  }
+  .kicker { color: var(--gold); font-weight: 650; font-size: .92rem; letter-spacing: .02em; margin: 0 0 1rem; }
+  h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.08; letter-spacing: -.03em; margin: 0 0 1.25rem; max-width: 52rem; font-weight: 750; }
+  .lede { font-size: 1.2rem; color: var(--muted); max-width: 44rem; margin: 0; }
+  .meta { margin-top: 2rem; color: var(--faint); font-size: .9rem; }
+  nav.toc { border-bottom: 1px solid var(--line); background: var(--bg2); position: sticky; top: 0; z-index: 5; }
+  nav.toc .wrap { display: flex; gap: 1.4rem; overflow-x: auto; padding-top: .8rem; padding-bottom: .8rem; }
+  nav.toc a { color: var(--muted); text-decoration: none; font-size: .9rem; white-space: nowrap; }
+  nav.toc a:hover { color: var(--ink); }
+  section { padding: 4.5rem 0 1rem; }
+  h2 { font-size: 1.9rem; line-height: 1.2; letter-spacing: -.02em; margin: 0 0 1rem; font-weight: 720; }
+  h3 { font-size: 1.15rem; margin: 2rem 0 .5rem; font-weight: 680; }
+  p { margin: 0 0 1rem; }
+  strong { font-weight: 680; color: #fff9ef; }
+  .muted { color: var(--muted); }
+  .small { font-size: .88rem; }
+  ul.tight { padding-left: 1.2rem; margin: 0 0 1rem; }
+  ul.tight li { margin: .3rem 0; }
+
+  /* Answer box */
+  .answer { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 1rem; margin: 2rem 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem 1.5rem; }
+  .card h3 { margin-top: 0; }
+  .card.no { border-top: 3px solid var(--red); }
+  .card.yes { border-top: 3px solid var(--green); }
+  .card.edge { border-top: 3px solid var(--gold); }
+  .verdict { font-size: 1.5rem; font-weight: 750; margin: 0 0 .5rem; letter-spacing: -.01em; }
+  .card.no .verdict { color: var(--red); }
+  .card.yes .verdict { color: var(--green); }
+  .card.edge .verdict { color: var(--gold); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin: 2rem 0; }
+  .stat { background: var(--surface); padding: 1.3rem 1.3rem 1.1rem; }
+  .stat b { display: block; font-size: 2rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--gold); line-height: 1.1; }
+  .stat span { display: block; color: var(--ink); font-size: .95rem; margin-top: .35rem; }
+  .stat small { display: block; color: var(--faint); font-size: .78rem; margin-top: .35rem; }
+
+  table { border-collapse: collapse; width: 100%; font-size: .93rem; margin: 1.25rem 0 2rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: .6rem .8rem .6rem 0; border-bottom: 1px solid var(--line2); }
+  td { padding: .7rem .8rem .7rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .scroll { overflow-x: auto; }
+  .tag { display: inline-block; font-size: .78rem; font-weight: 650; padding: .12rem .45rem; border-radius: 5px; white-space: nowrap; }
+  .t-good { background: var(--green-soft); color: var(--green); }
+  .t-mid { background: var(--gold-soft); color: var(--gold); }
+  .t-bad { background: var(--red-soft); color: var(--red); }
+  .t-plum { background: var(--plum-soft); color: var(--plum); }
+
+  .note { border-left: 3px solid var(--gold); background: var(--gold-soft); padding: .9rem 1.1rem; border-radius: 0 10px 10px 0; margin: 1.5rem 0; font-size: .96rem; }
+  .warn { border-left: 3px solid var(--red); background: var(--red-soft); padding: .9rem 1.1rem; border-radius: 0 10px 10px 0; margin: 1.5rem 0; font-size: .96rem; }
+
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { color: var(--faint); font-size: .86rem; margin-top: .6rem; }
+  .diagram { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 1.5rem; }
+
+  /* Ideas grid */
+  .ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 1rem; margin: 1.5rem 0 2rem; }
+  .idea { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.25rem 1.35rem; }
+  .idea h3 { margin: 0 0 .4rem; font-size: 1.05rem; }
+  .idea p { font-size: .94rem; color: var(--muted); margin: 0 0 .6rem; }
+  .idea .why { font-size: .86rem; color: var(--ink); border-top: 1px solid var(--line); padding-top: .6rem; margin-top: .6rem; }
+  .idea .why b { color: var(--gold); font-weight: 650; }
+
+  /* Phones */
+  .phones { display: grid; grid-template-columns: repeat(auto-fit, minmax(16.5rem, 1fr)); gap: 1.6rem; margin: 2rem 0; justify-items: center; }
+  #screens .wrap { max-width: 76rem; }
+  @media (max-width: 1220px) { .phones { grid-template-columns: repeat(2, minmax(16.5rem, 1fr)); } }
+  @media (max-width: 620px) { .phones { grid-template-columns: 1fr; } }
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: .8rem; }
+  .phone-wrap .cap { color: var(--muted); font-size: .88rem; text-align: center; max-width: 16rem; }
+  .phone-wrap .cap b { color: var(--ink); display: block; font-size: .95rem; }
+  .phone {
+    width: 16.5rem; height: 36rem; border-radius: 2.4rem; background: #0b100d;
+    border: 8px solid #222b25; box-shadow: 0 30px 60px -20px #000c, 0 0 0 1px #3a4a3f;
+    overflow: hidden; position: relative; font-size: 12px; line-height: 1.35;
+  }
+  .phone .notch { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); width: 72px; height: 20px; background: #000; border-radius: 12px; z-index: 2; }
+  .screen { position: absolute; inset: 0; padding: 38px 14px 14px; display: flex; flex-direction: column; gap: 10px; background: #111914; }
+  .s-title { font-size: 17px; font-weight: 750; letter-spacing: -.01em; }
+  .s-sub { color: var(--muted); font-size: 11px; }
+  .hero-card { border-radius: 16px; padding: 14px; background: linear-gradient(140deg, #6a465e, #3d2a37 60%, #2a2228); }
+  .hero-card .lbl { color: #e7d4df; font-size: 11px; }
+  .hero-card .amt { font-size: 26px; font-weight: 780; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .hero-card .delta { font-size: 11px; color: #cfe3cf; }
+  .pockets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pocket { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 10px; }
+  .pocket .nm { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+  .pocket .v { font-size: 14px; font-weight: 720; font-variant-numeric: tabular-nums; margin-top: 3px; }
+  .pocket .x { font-size: 10px; color: var(--faint); }
+  .bar { height: 6px; border-radius: 4px; background: var(--recess); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 4px; }
+  .row { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 13px; font-weight: 750; flex: none; }
+  .row .mid { flex: 1; min-width: 0; }
+  .row .mid b { display: block; font-size: 12px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .mid span { color: var(--faint); font-size: 10.5px; }
+  .row .amt { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 12px; text-align: right; }
+  .neg { color: var(--ink); } .pos { color: var(--green); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 11px; }
+  .alert { background: var(--red-soft); border: 1px solid #5a3226; border-radius: 12px; padding: 9px 10px; font-size: 11px; color: #f2c9bc; }
+  .alert b { color: #ffd9cc; display: block; font-size: 11.5px; margin-bottom: 2px; }
+  .btn { background: var(--plum); color: #241d21; border-radius: 11px; text-align: center; padding: 10px; font-weight: 750; font-size: 12.5px; }
+  .btn.ghost { background: transparent; color: var(--plum); border: 1px solid var(--line2); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line2); border-radius: 8px; padding: 5px 8px; font-size: 11px; color: var(--ink); background: var(--surface); }
+  .chip.on { background: var(--plum-soft); border-color: var(--plum-deep); color: var(--plum); }
+  .bigq { font-size: 15px; font-weight: 700; line-height: 1.3; }
+  .numpad { background: var(--surface2); border-radius: 12px; padding: 12px; text-align: center; font-size: 26px; font-weight: 780; font-variant-numeric: tabular-nums; }
+  .env { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .env:last-child { border-bottom: 0; }
+  .env .top { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 5px; }
+  .env .top b { font-weight: 650; }
+  .env .top span { color: var(--faint); font-variant-numeric: tabular-nums; }
+  .tabbar { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); padding-top: 8px; font-size: 10px; color: var(--faint); text-align: center; }
+  .tabbar .on { color: var(--plum); font-weight: 700; }
+  .src { font-size: 9.5px; padding: 1px 4px; border-radius: 4px; background: var(--recess); color: var(--muted); margin-left: 4px; }
+
+  .phase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .phase { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem 1.25rem; position: relative; }
+  .phase .when { color: var(--gold); font-size: .84rem; font-weight: 650; }
+  .phase h3 { margin: .2rem 0 .6rem; }
+  .phase ul { padding-left: 1.05rem; margin: 0; font-size: .9rem; color: var(--muted); }
+  .phase ul li { margin: .25rem 0; }
+  .phase .gate { margin-top: .8rem; padding-top: .7rem; border-top: 1px solid var(--line); font-size: .84rem; }
+  .phase .gate b { color: var(--green); }
+
+  .decide { counter-reset: d; list-style: none; padding: 0; margin: 1.5rem 0; }
+  .decide li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem 1.25rem; margin-bottom: .8rem; }
+  .decide li b.q { display: block; font-size: 1.05rem; margin-bottom: .3rem; }
+  .decide .rec { color: var(--green); font-weight: 650; }
+
+  .sources { font-size: .84rem; color: var(--muted); columns: 2 22rem; column-gap: 2rem; }
+  .sources li { margin: .3rem 0; break-inside: avoid; }
+  footer { border-top: 1px solid var(--line); margin-top: 4rem; padding: 2rem 0 4rem; color: var(--faint); font-size: .86rem; }
+  @media (max-width: 640px) { body { font-size: 16px; } section { padding-top: 3.2rem; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Direction draft · 6 October 2026 · for Linus and the team</p>
+    <h1>Every franc, every pocket. A money app built for how Cameroon pays.</h1>
+    <p class="lede">Cash in the wallet, Orange Money on one SIM, MoMo on the other, savings locked in a njangi, money owed by a cousin. Nobody sees the whole picture today. This draft explains how we can, what the operators will and won't give us, and how far the idea can go.</p>
+    <p class="meta">Built on research from Orange Developer, MTN MoMo Developer, BEAC, the World Bank, Google Play policy and the Cameroon competitors that already exist. Sources are at the end. Claims we could not confirm are marked.</p>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#answer">Short answer</a>
+  <a href="#problem">The problem</a>
+  <a href="#data">Getting the data</a>
+  <a href="#market">Who's already here</a>
+  <a href="#product">The product</a>
+  <a href="#screens">Screens</a>
+  <a href="#ambition">Going further</a>
+  <a href="#arch">Architecture</a>
+  <a href="#rules">Rules and trust</a>
+  <a href="#money">Business model</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#risks">Risks</a>
+  <a href="#decide">Your decisions</a>
+</div></nav>
+
+<!-- ============ ANSWER ============ -->
+<section id="answer"><div class="wrap">
+  <h2>The short answer</h2>
+  <div class="prose">
+    <p>Your question was: can we ask Orange Money for a member's latest transactions when they connect, read-only, with no transfers? <strong>Not through any public API today.</strong> But we can still get most of that data, and we can get it this year.</p>
+  </div>
+  <div class="answer">
+    <div class="card no">
+      <p class="verdict">Official API: no, not yet</p>
+      <p class="small">Orange Money Cameroon APIs (Web Pay, CoreAPIs) only serve merchants: start a payment, check its status. MTN MoMo's Open API has a user-consent flow (<code>bc-authorize</code> → <code>GetUserInfoWithConsent</code>), but it returns identity, not history. <code>GetAccountBalance</code> reads <em>our</em> merchant wallet, not the user's. No aggregator (CamPay, Notch Pay, CinetPay, pawaPay…) sells consumer history either.</p>
+    </div>
+    <div class="card yes">
+      <p class="verdict">The data path: SMS, plus import</p>
+      <p class="small">Every Orange Money and MoMo transaction sends an SMS with the amount, the other party, a transaction ID, and usually the new balance. Google Play explicitly allows <code>READ_SMS</code> for <strong>"SMS-based money management: apps that track and manage budget"</strong>. On Android (about 83% of Cameroon's mobile web traffic) we can capture transactions automatically. On iOS we use share, paste, screenshot and statement import.</p>
+    </div>
+    <div class="card edge">
+      <p class="verdict">The catch: SMS alone is no moat</p>
+      <p class="small">MoniTrack (claims 50,000+ active users) and WalletEye already parse OM/MoMo SMS in Cameroon. So reading SMS is table stakes. What sets us apart is everything an SMS can't see: <strong>cash, njangis, family obligations, debts between people</strong>, and the two-sided confirmation we already built. That is where the app wins.</p>
+    </div>
+  </div>
+  <div class="note prose"><strong>The direction in one sentence:</strong> expand OnCotise from "the njangi ledger" into the money record of a Cameroonian household. Capture Mobile Money automatically, make cash quick to log, and treat njangis, family support and personal debts as real money with real positions. Never move the money ourselves, at least at first.</div>
+</div></section>
+
+<!-- ============ PROBLEM ============ -->
+<section id="problem"><div class="wrap">
+  <h2>The problem: money lives in five places, and none of them talk</h2>
+  <div class="prose">
+    <p>A typical salaried worker in Douala gets paid into a bank or MoMo, cashes out part of it, pays the moto driver in cash and the boutique via Orange Money merchant code, sends 15,000 F to Maman, pays 20,000 F into the office njangi and lends 10,000 F to a colleague. At month end they have no idea where 60,000 F went.</p>
+    <p>The operators' apps each show one wallet, and only about 10 recent lines in the MoMo app. The USSD mini-statement shows 5 lines (<code>#150#</code>, <code>*126*7*2#</code>). Nobody shows cash. Nobody treats a njangi as savings. Nobody tracks the 10,000 F lent to the colleague.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>31.0 M</b><span>mobile money wallets in Cameroon</span><small>BEAC, end-2024. Wallets, not people: many people hold two.</small></div>
+    <div class="stat"><b>XAF 26.8 T</b><span>moved via mobile money in one year</span><small>BEAC 2024, 2.73 billion transactions</small></div>
+    <div class="stat"><b>55%</b><span>of adults have a mobile money account</span><small>World Bank Findex 2025 (2024 survey), up from 42% in 2021</small></div>
+    <div class="stat"><b>38%</b><span>of adults saved in a savings club or with someone outside the family</span><small>Findex 2025. The njangi/tontine economy.</small></div>
+    <div class="stat"><b>86.6%</b><span>of employment is informal</span><small>INS Cameroon, EESI3 (2021). Irregular income, heavy cash.</small></div>
+    <div class="stat"><b>$690 M</b><span>remittances received per year</span><small>World Bank WDI, 2024. The diaspora pays school fees and hospital bills.</small></div>
+  </div>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 960 360" role="img" aria-label="Diagram of a person's money spread across cash, Orange Money, MTN MoMo, njangi, bank and informal debts">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7d8a7f"/></marker>
+      </defs>
+      <circle cx="480" cy="180" r="62" fill="#223128" stroke="#34483c"/>
+      <text x="480" y="174" text-anchor="middle" fill="#f3eee4" font-size="17" font-weight="700">You</text>
+      <text x="480" y="196" text-anchor="middle" fill="#a9b3a8" font-size="12">"Where did it go?"</text>
+      <!-- pockets -->
+      <g font-size="14" font-weight="650">
+        <rect x="60" y="40" width="190" height="70" rx="12" fill="#18231d" stroke="#ff8a3d"/>
+        <text x="80" y="70" fill="#ff8a3d">Orange Money</text><text x="80" y="92" fill="#a9b3a8" font-size="12" font-weight="400">SMS per txn · Max It history</text>
+        <rect x="60" y="145" width="190" height="70" rx="12" fill="#18231d" stroke="#f2cb2e"/>
+        <text x="80" y="175" fill="#f2cb2e">MTN MoMo</text><text x="80" y="197" fill="#a9b3a8" font-size="12" font-weight="400">SMS per txn · ~10 lines in app</text>
+        <rect x="60" y="250" width="190" height="70" rx="12" fill="#18231d" stroke="#8fb3c9"/>
+        <text x="80" y="280" fill="#8fb3c9">Bank / salary</text><text x="80" y="302" fill="#a9b3a8" font-size="12" font-weight="400">SMS alerts, sometimes</text>
+        <rect x="710" y="40" width="190" height="70" rx="12" fill="#18231d" stroke="#8fb392" stroke-dasharray="5 4"/>
+        <text x="730" y="70" fill="#8fb392">Cash</text><text x="730" y="92" fill="#a9b3a8" font-size="12" font-weight="400">invisible · no record at all</text>
+        <rect x="710" y="145" width="190" height="70" rx="12" fill="#18231d" stroke="#d3a7c4" stroke-dasharray="5 4"/>
+        <text x="730" y="175" fill="#d3a7c4">Njangi</text><text x="730" y="197" fill="#a9b3a8" font-size="12" font-weight="400">savings or debt? nobody says</text>
+        <rect x="710" y="250" width="190" height="70" rx="12" fill="#18231d" stroke="#e39a83" stroke-dasharray="5 4"/>
+        <text x="730" y="280" fill="#e39a83">Family &amp; debts</text><text x="730" y="302" fill="#a9b3a8" font-size="12" font-weight="400">"I'll pay you Friday"</text>
+      </g>
+      <g stroke="#7d8a7f" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+        <path d="M250 75 C 340 90, 380 130, 420 155"/>
+        <path d="M250 180 L 415 180"/>
+        <path d="M250 285 C 340 270, 380 230, 420 205"/>
+        <path d="M540 155 C 590 120, 640 90, 708 76"/>
+        <path d="M545 180 L 708 180"/>
+        <path d="M540 205 C 590 240, 640 270, 708 284"/>
+      </g>
+      <text x="80" y="345" fill="#a9b3a8" font-size="12">Solid: leaves a digital trace we can read</text>
+      <text x="710" y="345" fill="#a9b3a8" font-size="12">Dashed: no trace. This is where we win.</text>
+    </svg>
+    <figcaption>Left: money that produces SMS. Right: money that produces nothing. Competitors cover the left. OnCotise already owns the middle-right (njangi) and can own the rest.</figcaption>
+  </figure>
+</div></section>
+
+<!-- ============ DATA ============ -->
+<section id="data"><div class="wrap">
+  <h2>Getting the data: every channel, ranked</h2>
+  <div class="prose">
+    <p>We looked at every way to read a user's Orange Money and MoMo history. Seven channels, ranked by what we can ship now.</p>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Channel</th><th>Ship now?</th><th>Completeness</th><th>Platforms</th><th>What it takes / risk</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Android SMS reading</strong><br><span class="muted small">READ_SMS / RECEIVE_SMS</span></td><td><span class="tag t-good">Yes</span></td><td>High. Every txn going forward, plus whatever SMS history is still on the phone (often months).</td><td>Android</td><td>Play Console Permissions Declaration, category "SMS-based money management", demo video, must be core function. Review takes weeks. Parsers break when operators change wording.</td></tr>
+      <tr><td><strong>Share / paste SMS</strong><br><span class="muted small">iOS share sheet, clipboard</span></td><td><span class="tag t-good">Yes</span></td><td>Medium. One-at-a-time or multi-select.</td><td>iOS + Android</td><td>Same parser as Android. Friction is the cost. Make it 2 taps.</td></tr>
+      <tr><td><strong>Screenshot OCR</strong><br><span class="muted small">Max It / MoMo history screens</span></td><td><span class="tag t-good">Yes</span></td><td>Medium. Backfills weeks in one go.</td><td>iOS + Android</td><td>On-device text recognition (ML Kit / Vision). Good for onboarding backfill.</td></tr>
+      <tr><td><strong>Statement import</strong><br><span class="muted small">PDF from Orange / MTN</span></td><td><span class="tag t-mid">Partly</span></td><td>High for history (up to 180 days per older Orange FAQ)</td><td>Both</td><td>Orange statement is requested inside Max It; MTN via 8787 / careline. Self-serve PDF export not confirmed for either. <span class="tag t-mid">Unverified</span></td></tr>
+      <tr><td><strong>Notification listener</strong><br><span class="muted small">reading Max It / MoMo app pushes</span></td><td><span class="tag t-bad">Avoid</span></td><td>Medium</td><td>Android</td><td>No Play exception covers this use. Higher policy risk than SMS for no gain.</td></tr>
+      <tr><td><strong>Operator partnership API</strong><br><span class="muted small">Orange / MTN, consented read access</span></td><td><span class="tag t-bad">No</span></td><td>Would be best</td><td>Both</td><td>Not public. Needs a business deal. Ask now (contacts in roadmap), expect months.</td></tr>
+      <tr><td><strong>CEMAC account-information regime</strong></td><td><span class="tag t-bad">Future</span></td><td>Would be best</td><td>Both</td><td>Today's BEAC rule (Règlement 04/18) has no account-information service. A 2026 draft CEMAC payment-services regulation reportedly adds one, with consent-based data access and COBAC approval, possibly from 2027. <span class="tag t-mid">Unverified draft</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What an SMS gives us, and the trick that makes it trustworthy</h3>
+  <div class="prose">
+    <p>Operator SMS usually carry the amount, counterparty name and number, fee, transaction ID and <strong>balance after</strong>. The balance is the key. Each new SMS must equal the previous balance plus or minus the transaction. If it doesn't, we know an SMS is missing (deleted, phone off, number changed). We can ask the user to fill exactly that gap instead of guessing. This "balance chain" fits the house rule of server truth over optimism: the ledger proves its own completeness.</p>
+  </div>
+  <figure class="diagram">
+    <svg viewBox="0 0 960 230" role="img" aria-label="Balance chain: consecutive SMS balances reveal a missing transaction">
+      <g font-size="13">
+        <rect x="20" y="40" width="200" height="110" rx="12" fill="#18231d" stroke="#34483c"/>
+        <text x="38" y="66" fill="#ff8a3d" font-weight="700">SMS 14:02</text>
+        <text x="38" y="90" fill="#f3eee4">Paiement 1 500 F</text>
+        <text x="38" y="110" fill="#f3eee4">Boulangerie Saker</text>
+        <text x="38" y="134" fill="#a9b3a8">Solde: 43 800 F</text>
+        <rect x="270" y="40" width="200" height="110" rx="12" fill="#18231d" stroke="#34483c"/>
+        <text x="288" y="66" fill="#ff8a3d" font-weight="700">SMS 18:40</text>
+        <text x="288" y="90" fill="#f3eee4">Transfert 5 000 F</text>
+        <text x="288" y="110" fill="#f3eee4">à Brice T.</text>
+        <text x="288" y="134" fill="#a9b3a8">Solde: 38 786 F</text>
+        <rect x="520" y="40" width="200" height="110" rx="12" fill="#33201a" stroke="#e39a83" stroke-dasharray="5 4"/>
+        <text x="538" y="66" fill="#e39a83" font-weight="700">Missing</text>
+        <text x="538" y="90" fill="#f3eee4">−8 200 F</text>
+        <text x="538" y="110" fill="#f3eee4">no SMS on phone</text>
+        <text x="538" y="134" fill="#e39a83">"Ajouter ce qui manque?"</text>
+        <rect x="770" y="40" width="170" height="110" rx="12" fill="#18231d" stroke="#34483c"/>
+        <text x="788" y="66" fill="#ff8a3d" font-weight="700">SMS next day</text>
+        <text x="788" y="90" fill="#f3eee4">Reçu 10 000 F</text>
+        <text x="788" y="110" fill="#f3eee4">de Maman</text>
+        <text x="788" y="134" fill="#a9b3a8">Solde: 40 586 F</text>
+      </g>
+      <g stroke="#7d8a7f" stroke-width="1.5"><line x1="220" y1="95" x2="268" y2="95"/><line x1="470" y1="95" x2="518" y2="95"/><line x1="720" y1="95" x2="768" y2="95"/></g>
+      <text x="20" y="190" fill="#8fb392" font-size="13">43 800 − 5 000 − 14 F tax = 38 786 ✓</text>
+      <text x="520" y="190" fill="#e39a83" font-size="13">38 786 + 10 000 = 48 786, but SMS says 40 586 → 8 200 F gap</text>
+    </svg>
+    <figcaption>Illustrative amounts. Real SMS wordings must be collected from users in Phase 0 before we write parsers. The 14 F is the e-transfer tax on 5,000 F: 0.2% + 4 F per transfer, per 2026 operator tariffs.</figcaption>
+  </figure>
+
+  <div class="warn prose"><strong>SMS is sensitive.</strong> Google's rule and Law 2024/017 point the same way. Parse on the phone. Send only structured transaction fields to Convex, never raw SMS. Never read or upload messages from anyone other than known operator sender IDs. This also gives us a true and simple privacy promise: "we read only Orange, MTN and your bank, and only on your phone."</div>
+</div></section>
+
+<!-- ============ MARKET ============ -->
+<section id="market"><div class="wrap">
+  <h2>Who's already here</h2>
+  <div class="prose"><p>Cameroon has early players on both sides of our idea, but nobody joins them up. Personal trackers ignore groups. Group apps ignore personal money.</p></div>
+  <div class="scroll"><table>
+    <thead><tr><th>Product</th><th>What it does</th><th>How it earns</th><th>Gap we exploit</th></tr></thead>
+    <tbody>
+      <tr><td><strong>MoniTrack</strong> <span class="muted small">Cameroon</span></td><td>OM/MoMo SMS parsing (Android only), expense dashboard, cross-operator transfers, ENEO/Camwater/TV bills. Claims 50k+ active users.</td><td>3–3.5% on cross-operator transfers</td><td>It is a payments app with tracking bolted on. It moves money, so it carries custody risk and licensing weight. No cash, njangi or debts.</td></tr>
+      <tr><td><strong>WalletEye</strong> <span class="muted small">Cameroon</span></td><td>OM/MoMo SMS parsing, charts, monthly summaries. Android only, v1.</td><td>Free, subscription "later"</td><td>Pure SMS viewer. No planning, no cash, no iOS.</td></tr>
+      <tr><td><strong>RAVA</strong> <span class="muted small">Cameroon</span></td><td>SMS parse, cash tracking, budgets, PDF export</td><td>Unclear (100+ installs)</td><td>Closest concept, tiny reach.</td></tr>
+      <tr><td><strong>Djangui</strong>, <strong>Tontiin</strong></td><td>Tontine schedules, rotations, reminders. Tontiin also collects via OM/MTN.</td><td>Varies</td><td>Group-only. No personal picture.</td></tr>
+      <tr><td><strong>Max It</strong> (Orange), <strong>MoMo app</strong> (MTN)</td><td>Own-wallet history, bills, some savings/loans</td><td>Fees</td><td>Each sees one operator. Neither will show the other's wallet, cash or njangi.</td></tr>
+      <tr><td><strong>Chamasoft</strong>, <strong>Chumz</strong> <span class="muted small">Kenya</span></td><td>Chama (group savings) accounting; Chumz routes savings to a money-market fund. Chamasoft powers Equity Bank's EazzyChama.</td><td>Group subscription (~KES 1,000/mo), bank white-label, partner fund</td><td>Proof that group tools sell to treasurers and banks.</td></tr>
+      <tr><td><strong>Safaricom M-Ledger</strong> <span class="muted small">Kenya, 2014</span></td><td>Read M-Pesa SMS, auto-classify, budgets. 120k+ users by 2015.</td><td>Free</td><td>Proof SMS-based PFM works on mobile money, and that pure tracking alone stalls.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note prose">M-Ledger is the warning. A beautiful SMS reader gets installed, admired for a week, then forgotten. Retention comes from things people <em>must</em> come back for: the njangi meeting, the debt to settle, the rentrée deadline, the cash check at night. Our group features are the retention engine. Personal finance is the daily reason to open the app.</div>
+</div></section>
+
+<!-- ============ PRODUCT ============ -->
+<section id="product"><div class="wrap">
+  <h2>The product: pockets, not accounts</h2>
+  <div class="prose">
+    <p>Cameroonians don't think in "accounts". They think in pockets: the money on Orange, the money on MTN, the cash in hand, the njangi, what Paul owes me. The app models exactly that.</p>
+  </div>
+
+  <div class="ideas">
+    <div class="idea">
+      <h3><span class="dot" style="background:var(--om)"></span> <span class="dot" style="background:var(--momo)"></span> Mobile Money pockets, automatic</h3>
+      <p>One pocket per SIM per operator; many people run two or three. SMS fills them on Android, share/paste/OCR on iOS. Transfers between your own wallets count as moves, not spending.</p>
+      <p class="why"><b>Why it matters:</b> 55% of adults have MoMo/OM, and dual-SIM is normal. Double-counting own transfers is the #1 way trackers lie.</p>
+    </div>
+    <div class="idea">
+      <h3><span class="dot" style="background:var(--cash)"></span> Cash pocket, anchored by cash-outs</h3>
+      <p>Every "Retrait 20 000 F" SMS adds cash to the cash pocket. Then a nightly 10-second check: "how much cash do you have left?" The difference is spent; tap 1–3 categories or say it by voice. No one has to log every beignet.</p>
+      <p class="why"><b>Why it matters:</b> cash is the blind spot of every tracker. Cash-out SMS give us the inflow for free; we only ask for the outflow.</p>
+    </div>
+    <div class="idea">
+      <h3><span class="dot" style="background:var(--njangi)"></span> Njangi as a real position</h3>
+      <p>Before you take the pot, your njangi is savings: +120,000 F after six rounds. After you take it, it's an interest-free loan you repay each round. We already hold this data in the ledger. Show it as money.</p>
+      <p class="why"><b>Why it matters:</b> 38% of adults save this way and no app counts it in net worth. This is ours alone.</p>
+    </div>
+    <div class="idea">
+      <h3><span class="dot" style="background:var(--red)"></span> Debts &amp; family, two-sided</h3>
+      <p>"I lent Brice 10,000 F." Brice gets a link and confirms with one tap, the same handshake as our PaymentRecord. Repayments match automatically when a MoMo SMS from Brice's number arrives.</p>
+      <p class="why"><b>Why it matters:</b> informal lending is huge and runs on memory. We already built the confirm/dispute machinery.</p>
+    </div>
+    <div class="idea">
+      <h3>Envelopes that match Cameroonian life</h3>
+      <p>Default envelopes: Loyer, Ration, Transport, Crédit &amp; data, Famille, Njangi &amp; réunions, Église / association, École, Santé, Imprévus (deuils, fêtes). Budgets planned per month and per season.</p>
+      <p class="why"><b>Why it matters:</b> imported budget apps think in "Dining out" and "Netflix". Here the real lines are family support and funerals.</p>
+    </div>
+    <div class="idea">
+      <h3>The fee and tax lens</h3>
+      <p>Every SMS shows the fee. We total them: "This month: 6,412 F in fees and tax. 4,800 F came from cash-outs you could have avoided by paying the merchant code directly."</p>
+      <p class="why"><b>Why it matters:</b> cash-out costs about 1%, transfers carry 0.2% + 4 F. The total stays invisible until someone adds it up, and the advice pays for the app.</p>
+    </div>
+  </div>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 960 330" role="img" aria-label="Chart of a njangi member's position across ten rounds: rising savings then a loan after taking the pot">
+      <text x="30" y="30" fill="#f3eee4" font-size="15" font-weight="700">Your njangi position: 10 members, 20,000 F per round, you take the pot in round 7</text>
+      <line x1="80" y1="190" x2="920" y2="190" stroke="#34483c"/>
+      <text x="40" y="194" fill="#a9b3a8" font-size="12">0 F</text>
+      <text x="22" y="84" fill="#8fb392" font-size="12">+140k</text>
+      <text x="30" y="270" fill="#e39a83" font-size="12">−60k</text>
+      <!-- y scale: 0 at 190, 140k at 70 -> 120px/140k ≈ 0.857px per 1k -->
+      <!-- bars x positions every 80 starting 110 -->
+      <g>
+        <rect x="100" y="172.9" width="44" height="17.1" rx="4" fill="#8fb392"/>
+        <rect x="180" y="155.7" width="44" height="34.3" rx="4" fill="#8fb392"/>
+        <rect x="260" y="138.6" width="44" height="51.4" rx="4" fill="#8fb392"/>
+        <rect x="340" y="121.4" width="44" height="68.6" rx="4" fill="#8fb392"/>
+        <rect x="420" y="104.3" width="44" height="85.7" rx="4" fill="#8fb392"/>
+        <rect x="500" y="87.1" width="44" height="102.9" rx="4" fill="#8fb392"/>
+        <rect x="580" y="190" width="44" height="51.4" rx="4" fill="#e39a83"/>
+        <rect x="660" y="190" width="44" height="34.3" rx="4" fill="#e39a83"/>
+        <rect x="740" y="190" width="44" height="17.1" rx="4" fill="#e39a83"/>
+        <rect x="820" y="188" width="44" height="4" rx="2" fill="#a9b3a8"/>
+      </g>
+      <g fill="#a9b3a8" font-size="12" text-anchor="middle">
+        <text x="122" y="310">R1</text><text x="202" y="310">R2</text><text x="282" y="310">R3</text><text x="362" y="310">R4</text><text x="442" y="310">R5</text><text x="522" y="310">R6</text><text x="602" y="310">R7 · pot</text><text x="682" y="310">R8</text><text x="762" y="310">R9</text><text x="842" y="310">R10</text>
+      </g>
+      <text x="522" y="78" fill="#8fb392" font-size="12" text-anchor="middle">+120,000 F saved</text>
+      <text x="602" y="262" fill="#e39a83" font-size="12" text-anchor="middle">−60,000 F owed</text>
+      <text x="260" y="60" fill="#a9b3a8" font-size="12">Savings phase: counts toward net worth</text>
+      <text x="640" y="160" fill="#a9b3a8" font-size="12">Loan phase: future rounds are a commitment</text>
+    </svg>
+    <figcaption>Same data the ledger already holds. Multi-hand rotations must use <code>expectedForMember</code>, the only legal source of a member's expected amount.</figcaption>
+  </figure>
+</div></section>
+
+<!-- ============ SCREENS ============ -->
+<section id="screens"><div class="wrap">
+  <h2>What it could look like</h2>
+  <div class="prose"><p>Four key screens, in French (the default locale), built from the app's existing dark tokens and plum money hero. These are concept frames, not final design.</p></div>
+
+  <div class="phones">
+    <!-- Home -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div><div class="s-sub">Bonsoir Linus</div><div class="s-title">Mes poches</div></div>
+        <div class="hero-card">
+          <div class="lbl">Tout ce que j'ai · aujourd'hui</div>
+          <div class="amt">187 450 F</div>
+          <div class="delta">+12 300 F depuis le 1er · njangi compris</div>
+        </div>
+        <div class="pockets">
+          <div class="pocket"><div class="nm"><span class="dot" style="background:var(--om)"></span>Orange Money</div><div class="v">98 200 F</div><div class="x">auto · il y a 2 min</div></div>
+          <div class="pocket"><div class="nm"><span class="dot" style="background:var(--momo)"></span>MoMo</div><div class="v">41 250 F</div><div class="x">auto · hier</div></div>
+          <div class="pocket"><div class="nm"><span class="dot" style="background:var(--cash)"></span>Liquide</div><div class="v">≈ 23 000 F</div><div class="x">vérifié hier soir</div></div>
+          <div class="pocket"><div class="nm"><span class="dot" style="background:var(--njangi)"></span>Njangi Bureau</div><div class="v">+25 000 F</div><div class="x">épargne · tour 3/10</div></div>
+        </div>
+        <div class="panel" style="padding:10px 11px">
+          <div class="env" style="border:0;padding:0">
+            <div class="top"><b>Octobre</b><span>142 000 / 180 000 F</span></div>
+            <div class="bar"><i style="width:79%;background:var(--gold)"></i></div>
+          </div>
+          <div class="s-sub" style="margin-top:6px">Brice vous doit 10 000 F · rappel vendredi</div>
+        </div>
+        <div class="tabbar"><span class="on">Poches</span><span>Budget</span><span>Groupes</span><span>Moi</span></div>
+      </div></div>
+      <div class="cap"><b>Home: the whole picture</b>Every pocket on one screen, with its freshness shown. The njangi counts as money.</div>
+    </div>
+
+    <!-- Feed -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="s-title">Mouvements</div>
+        <div class="alert"><b>SMS suspect bloqué</b>«Vous avez reçu 50 000 F…» venant de +237 6•• •• 41 21, pas d'Orange Money. Ne renvoyez rien.</div>
+        <div class="panel">
+          <div class="row"><div class="ico" style="background:#3a2414;color:var(--om)">OM</div><div class="mid"><b>Boulangerie Saker</b><span>Ration · code marchand<span class="src">SMS</span></span></div><div class="amt neg">−1 500</div></div>
+          <div class="row"><div class="ico" style="background:#352f12;color:var(--momo)">M</div><div class="mid"><b>Maman</b><span>Famille · reçu<span class="src">SMS</span></span></div><div class="amt pos">+15 000</div></div>
+          <div class="row"><div class="ico" style="background:#3a2414;color:var(--om)">OM</div><div class="mid"><b>Retrait → Liquide</b><span>Mouvement interne · frais 204 F</span></div><div class="amt neg">−20 000</div></div>
+          <div class="row"><div class="ico" style="background:#31252d;color:var(--plum)">N</div><div class="mid"><b>Njangi Bureau · tour 4</b><span>Confirmé par la trésorière</span></div><div class="amt neg">−10 000</div></div>
+          <div class="row"><div class="ico" style="background:#33201a;color:var(--red)">!</div><div class="mid"><b>8 200 F sans SMS</b><span>Le solde Orange ne colle pas</span></div><div class="amt" style="color:var(--red)">Compléter</div></div>
+        </div>
+        <div class="tabbar"><span class="on">Poches</span><span>Budget</span><span>Groupes</span><span>Moi</span></div>
+      </div></div>
+      <div class="cap"><b>Feed: auto, honest, protective</b>Each line shows its source. Missing SMS are flagged, not hidden. Fake credit SMS from ordinary numbers are caught.</div>
+    </div>
+
+    <!-- Cash check -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="s-sub">Point liquide · 21:30</div>
+        <div class="bigq">Combien de liquide vous reste-t-il ?</div>
+        <div class="s-sub">Ce matin : 23 000 F + retrait 20 000 F</div>
+        <div class="numpad">34 500 F</div>
+        <div class="s-sub">Donc 8 500 F dépensés. Pour quoi ?</div>
+        <div class="chips">
+          <span class="chip on">Transport</span><span class="chip on">Ration</span><span class="chip">Famille</span><span class="chip">Crédit</span><span class="chip">Église</span><span class="chip">Autre</span>
+        </div>
+        <div class="panel" style="padding:9px 11px">
+          <div class="env"><div class="top"><b>Transport</b><span>3 000 F</span></div></div>
+          <div class="env"><div class="top"><b>Ration</b><span>5 500 F</span></div></div>
+        </div>
+        <div class="btn ghost">🎙 Dire « moto 3000, marché 5500 »</div>
+        <div class="btn" style="margin-top:auto">Enregistrer</div>
+      </div></div>
+      <div class="cap"><b>Cash check: 10 seconds a night</b>We know the cash in; we ask once for the cash left. Voice in French, English or Pidgin.</div>
+    </div>
+
+    <!-- Budget -->
+    <div class="phone-wrap">
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="s-title">Budget d'octobre</div>
+        <div class="panel" style="padding:10px 12px;border-color:#5a4a1e;background:#221f12">
+          <div class="env" style="border:0;padding:0">
+            <div class="top"><b style="color:var(--gold)">Rentrée 2027 · 2 enfants</b><span>J−320</span></div>
+            <div class="bar"><i style="width:22%;background:var(--gold)"></i></div>
+            <div class="s-sub" style="margin-top:5px">88 000 / 400 000 F · 26 000 F/mois suffit</div>
+          </div>
+        </div>
+        <div class="panel" style="padding:4px 12px">
+          <div class="env"><div class="top"><b>Loyer</b><span>45 000 / 45 000</span></div><div class="bar"><i style="width:100%;background:var(--green)"></i></div></div>
+          <div class="env"><div class="top"><b>Ration</b><span>38 500 / 50 000</span></div><div class="bar"><i style="width:77%;background:var(--green)"></i></div></div>
+          <div class="env"><div class="top"><b>Transport</b><span>21 000 / 20 000</span></div><div class="bar"><i style="width:100%;background:var(--red)"></i></div></div>
+          <div class="env"><div class="top"><b>Famille</b><span>15 000 / 25 000</span></div><div class="bar"><i style="width:60%;background:var(--green)"></i></div></div>
+          <div class="env"><div class="top"><b>Njangi &amp; réunions</b><span>20 000 / 20 000</span></div><div class="bar"><i style="width:100%;background:var(--plum)"></i></div></div>
+          <div class="env"><div class="top"><b>Imprévus</b><span>2 500 / 15 000</span></div><div class="bar"><i style="width:17%;background:var(--green)"></i></div></div>
+        </div>
+        <div class="s-sub">Frais Mobile Money ce mois : 6 412 F</div>
+        <div class="tabbar"><span>Poches</span><span class="on">Budget</span><span>Groupes</span><span>Moi</span></div>
+      </div></div>
+      <div class="cap"><b>Budget: envelopes plus seasons</b>Real Cameroonian lines, a rentrée goal that sets the monthly target, and the fee total.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ AMBITION ============ -->
+<section id="ambition"><div class="wrap">
+  <h2>Going further: where this can grow</h2>
+  <div class="prose"><p>You asked for ambition. These are the expansions that grow from what we're building, not side bets. Each one reuses the ledger, the two-sided confirmation, or the transaction stream.</p></div>
+
+  <div class="ideas">
+    <div class="idea">
+      <h3>Anti-scam shield</h3>
+      <p>Fake "Vous avez reçu 50 000 F" SMS from a normal phone number, followed by "please send it back", is a classic Cameroon scam. We already read operator SMS, so we know the real sender IDs. We flag the fake one and check it against the wallet balance.</p>
+      <p class="why"><b>Hook:</b> a reason to install that has nothing to do with budgeting, and it fits Google's anti-smishing goals.</p>
+    </div>
+    <div class="idea">
+      <h3>Diaspora earmarks</h3>
+      <p>A brother in Lyon sends 150,000 F "for school fees". He gets a read-only view where the recipient attaches receipts and marks the money used. Both sides confirm. It is a Contribution group with one sponsor.</p>
+      <p class="why"><b>Hook:</b> $690M a year flows in, with constant "where did my money go?" friction. The diaspora pays in euros and can afford a subscription.</p>
+    </div>
+    <div class="idea">
+      <h3>Household mode</h3>
+      <p>A couple or family shares envelopes (loyer, ration, école) while keeping personal pockets private. Each person's SMS feed contributes only what they choose to share.</p>
+      <p class="why"><b>Hook:</b> household budgeting is the real unit of money in Cameroon. Sharing also brings in a second user per household.</p>
+    </div>
+    <div class="idea">
+      <h3>Buyam-sellam mode</h3>
+      <p>For small traders: split business from household money, log daily sales with voice, see what they really earn, and track customer credit ("ardoise").</p>
+      <p class="why"><b>Hook:</b> 86.6% informal employment. Kippa, Bumpa and Biashara show trader bookkeeping sells in Nigeria and Kenya.</p>
+    </div>
+    <div class="idea">
+      <h3>Financial passport</h3>
+      <p>A report the user owns: income regularity, njangi contributions confirmed on time, debts repaid. They choose to share it with a microfinance lender as a PDF or link. Consent-based, user-held, revocable.</p>
+      <p class="why"><b>Hook:</b> njangi reliability is real creditworthiness that no bank can see. This becomes our partner revenue later.</p>
+    </div>
+    <div class="idea">
+      <h3>Talk to your money</h3>
+      <p>"Combien j'ai dépensé en transport cette semaine?" "How much moto this week?" A voice and text assistant in French, English and Pidgin over the structured ledger. It answers from data and never guesses amounts.</p>
+      <p class="why"><b>Hook:</b> low literacy and reluctance to type are real barriers. An LLM over a clean ledger is cheap now; the clean ledger is the hard part, and we'd have it.</p>
+    </div>
+    <div class="idea">
+      <h3>WhatsApp companion</h3>
+      <p>Njangi reminders, "you owe Brice" nudges, a weekly summary and a quick "log 2000 taxi" by message. Useful for iOS users and feature-phone family members.</p>
+      <p class="why"><b>Hook:</b> money conversations already start in WhatsApp. Our contribution links already spread there.</p>
+    </div>
+    <div class="idea">
+      <h3>Seasonal planner</h3>
+      <p>The year has known spikes: rentrée (August–September), Christmas and New Year, Ramadan and Tabaski, funerals that arrive without warning. The app turns each into a goal with a monthly target, and can suggest a njangi to fund it.</p>
+      <p class="why"><b>Hook:</b> people already use njangis to time big expenses. We just make the plan explicit.</p>
+    </div>
+    <div class="idea">
+      <h3>Partner products, later</h3>
+      <p>Once we hold trust and data, licensed partners (an EMF, a bank, a microinsurer, Orange or MTN themselves) can offer savings, insurance and credit in the app. We earn referral fees; they hold the money and the licence.</p>
+      <p class="why"><b>Hook:</b> how Chumz, Chamasoft and PiggyVest's partner model make money, without us becoming a regulated custodian.</p>
+    </div>
+  </div>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 960 250" role="img" aria-label="Expansion rings from the core ledger outward">
+      <g text-anchor="middle">
+        <circle cx="480" cy="250" r="235" fill="#141d18" stroke="#2a3b31"/>
+        <circle cx="480" cy="250" r="175" fill="#18231d" stroke="#2a3b31"/>
+        <circle cx="480" cy="250" r="115" fill="#1c2c22" stroke="#34483c"/>
+        <circle cx="480" cy="250" r="58" fill="#31252d" stroke="#6a465e"/>
+        <text x="480" y="232" fill="#d3a7c4" font-size="14" font-weight="700">Ledger</text>
+        <text x="480" y="155" fill="#8fb392" font-size="13" font-weight="650">Track · Plan</text>
+        <text x="480" y="173" fill="#a9b3a8" font-size="11">pockets, cash check, envelopes, fees</text>
+        <text x="480" y="97" fill="#e6c978" font-size="13" font-weight="650">Together</text>
+        <text x="480" y="115" fill="#a9b3a8" font-size="11">njangi, debts, household, diaspora, scam shield</text>
+        <text x="480" y="38" fill="#8fb3c9" font-size="13" font-weight="650">Partners</text>
+        <text x="480" y="56" fill="#a9b3a8" font-size="11">financial passport, savings, insurance, credit, operator APIs</text>
+      </g>
+    </svg>
+    <figcaption>Each ring needs the one inside it. Partners only come in once the ledger is trusted.</figcaption>
+  </figure>
+</div></section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section id="arch"><div class="wrap">
+  <h2>Architecture: parse on the phone, sync structure</h2>
+  <div class="prose"><p>This fits the current stack (Expo, Convex, Clerk) with one native addition: an Android SMS module. That needs a small Expo config plugin and a native module. We'd build it in-house, because the SMS permission has to be justified by our own core feature.</p></div>
+  <figure class="diagram">
+    <svg viewBox="0 0 960 420" role="img" aria-label="Architecture diagram: sources flow into an on-device parser, then a normalized transaction, dedupe, categorization, and Convex sync">
+      <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a9b3a8"/></marker></defs>
+      <text x="20" y="28" fill="#a9b3a8" font-size="12" font-weight="650">SOURCES</text>
+      <g font-size="12.5">
+        <rect x="20" y="40" width="190" height="40" rx="9" fill="#18231d" stroke="#ff8a3d"/><text x="34" y="65" fill="#f3eee4">Android SMS (auto)</text>
+        <rect x="20" y="90" width="190" height="40" rx="9" fill="#18231d" stroke="#34483c"/><text x="34" y="115" fill="#f3eee4">Share / paste SMS (iOS)</text>
+        <rect x="20" y="140" width="190" height="40" rx="9" fill="#18231d" stroke="#34483c"/><text x="34" y="165" fill="#f3eee4">Screenshot OCR</text>
+        <rect x="20" y="190" width="190" height="40" rx="9" fill="#18231d" stroke="#34483c"/><text x="34" y="215" fill="#f3eee4">Statement PDF</text>
+        <rect x="20" y="240" width="190" height="40" rx="9" fill="#18231d" stroke="#8fb392"/><text x="34" y="265" fill="#f3eee4">Cash check / voice</text>
+        <rect x="20" y="290" width="190" height="40" rx="9" fill="#18231d" stroke="#d3a7c4"/><text x="34" y="315" fill="#f3eee4">Njangi + debt ledger</text>
+        <rect x="20" y="340" width="190" height="40" rx="9" fill="#141d18" stroke="#34483c" stroke-dasharray="5 4"/><text x="34" y="365" fill="#a9b3a8">Operator API (future)</text>
+      </g>
+      <rect x="270" y="40" width="250" height="290" rx="14" fill="#1c2c22" stroke="#34483c"/>
+      <text x="290" y="68" fill="#8fb392" font-size="13" font-weight="700">ON THE PHONE</text>
+      <g font-size="12.5" fill="#f3eee4">
+        <text x="290" y="100">1. Sender allowlist</text><text x="306" y="118" fill="#a9b3a8">OrangeMoney, MobileMoney, banks only</text>
+        <text x="290" y="148">2. Template parser</text><text x="306" y="166" fill="#a9b3a8">versioned, updated over the air</text>
+        <text x="290" y="196">3. Normalize</text><text x="306" y="214" fill="#a9b3a8">amount, fee, tax, party, ref, balance</text>
+        <text x="290" y="244">4. Scam check</text><text x="306" y="262" fill="#a9b3a8">fake-credit patterns from normal numbers</text>
+        <text x="290" y="292">Raw SMS never leaves the phone</text>
+      </g>
+      <rect x="580" y="40" width="360" height="290" rx="14" fill="#18231d" stroke="#6a465e"/>
+      <text x="600" y="68" fill="#d3a7c4" font-size="13" font-weight="700">CONVEX (server truth)</text>
+      <g font-size="12.5" fill="#f3eee4">
+        <text x="600" y="100">Dedupe by operator txn ID + idempotency key</text>
+        <text x="600" y="130">Balance chain → gap detection</text>
+        <text x="600" y="160">Own-wallet transfer matching (OM ↔ MoMo ↔ cash)</text>
+        <text x="600" y="190">Categories: rules → merchant directory → your fixes</text>
+        <text x="600" y="220">Debt matching: SMS from Brice ↔ open debt</text>
+        <text x="600" y="250">Envelopes, goals, njangi position</text>
+        <text x="600" y="280">Paginated tables, per-user indexes</text>
+        <text x="600" y="310" fill="#a9b3a8">Parser templates served like USSD content today</text>
+      </g>
+      <g stroke="#a9b3a8" stroke-width="1.4" fill="none" marker-end="url(#ar2)">
+        <path d="M210 60 L268 120"/><path d="M210 110 L268 140"/><path d="M210 160 L268 165"/><path d="M210 210 L268 190"/>
+        <path d="M210 260 C 400 380, 500 380, 640 332"/><path d="M210 310 C 400 400, 560 400, 700 332"/><path d="M210 360 C 420 415, 620 415, 760 332" stroke-dasharray="5 4"/>
+        <path d="M520 185 L578 185"/>
+      </g>
+    </svg>
+    <figcaption>Cash, njangi and debt entries go straight to Convex (they are not SMS). SMS-derived rows carry their source and a confidence score, so the UI never presents a guess as fact.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <h3>A normalized transaction (sketch)</h3>
+    <p class="small muted">A new table beside the njangi ledger. It doesn't replace <code>paymentRecords</code>; a confirmed njangi PaymentRecord links to the matching personal transaction.</p>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Field</th><th>Example</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>pocketId</code></td><td>OM · 6•• •• •4 12</td><td>One per SIM per operator, plus cash, bank, njangi</td></tr>
+      <tr><td><code>direction / kind</code></td><td>out · merchant_payment</td><td>p2p, merchant, cash_out, cash_in, airtime, bill, fee, internal_move</td></tr>
+      <tr><td><code>amount, fee, tax</code></td><td>1 500 · 0 · 0</td><td>Integers in XAF. Fee and tax kept apart for the fee lens</td></tr>
+      <tr><td><code>counterparty</code></td><td>Boulangerie Saker / +237…</td><td>Phone numbers hashed server-side unless the user saves them as a contact</td></tr>
+      <tr><td><code>operatorRef</code></td><td>MP2610…</td><td>Dedupe key, unique per pocket</td></tr>
+      <tr><td><code>balanceAfter</code></td><td>43 800</td><td>Optional; drives the balance chain</td></tr>
+      <tr><td><code>source, confidence</code></td><td>sms_auto · 0.98</td><td>sms_auto, sms_shared, ocr, statement, manual, voice, ledger</td></tr>
+      <tr><td><code>envelopeId, splits[]</code></td><td>Ration</td><td>User correction trains the merchant directory</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<!-- ============ RULES ============ -->
+<section id="rules"><div class="wrap">
+  <h2>Rules and trust</h2>
+  <div class="prose">
+    <h3>What we can do without a licence</h3>
+    <p>Reading your own SMS, recording cash and tracking njangis does not take deposits, extend credit or execute payments. Those are the activities BEAC Règlement 04/18 regulates. So a read-only tracker <strong>very likely needs no COBAC or e-money licence</strong>. That is our inference, not an official exemption. Get a short written opinion from a Cameroonian fintech lawyer before launch.</p>
+    <p>The line moves the moment we <em>move money</em> (MoniTrack does, through transfers), hold funds, or lend. Payment institutions need XAF 500 M of paid-up capital. We stay non-custodial and partner with licensed institutions for anything that touches funds.</p>
+
+    <h3>Data protection: Law No. 2024/017</h3>
+    <p>Cameroon's personal data protection law was promulgated on 23 December 2024 and fully in force from <strong>23 June 2026</strong>, after an 18-month grace period. It creates a data protection authority. Practical duties for us: explicit consent, purpose limitation, data minimization, user rights (access, correction, deletion), security, and breach notification. Financial SMS are about the most sensitive data a person has, so the design above (parse on the phone, upload structure only) is not optional.</p>
+
+    <h3>Trust promises we can actually keep</h3>
+    <ul class="tight">
+      <li><strong>We never move your money.</strong> Same as OnCotise's current line: "Your Mobile Money stays yours."</li>
+      <li><strong>We read only Orange, MTN and bank messages, on your phone.</strong> Sender allowlist, enforced in code.</li>
+      <li><strong>No ads, no data selling.</strong> The financial passport is shared only by you, one lender at a time, and can be revoked.</li>
+      <li><strong>Delete everything</strong> from the profile in one step. The law requires it anyway.</li>
+    </ul>
+  </div>
+</div></section>
+
+<!-- ============ MONEY ============ -->
+<section id="money"><div class="wrap">
+  <h2>Business model</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Stream</th><th>Who pays</th><th>When</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Free core</strong></td><td>No one</td><td>Day 1</td><td>Pockets, SMS capture, cash check, basic envelopes, njangi member. Must be free to win against WalletEye.</td></tr>
+      <tr><td><strong>Plus subscription</strong></td><td>Individuals</td><td>Phase 2</td><td>Household sharing, seasonal goals, unlimited history, exports, assistant. Price to test: 500–1,000 F/month, paid via OM/MoMo merchant code. <span class="tag t-mid">Hypothesis</span></td></tr>
+      <tr><td><strong>Treasurer / Group Pro</strong></td><td>Njangi officers, associations</td><td>Phase 2</td><td>Reports, multi-group, meeting tools. Chamasoft charges ~KES 1,000 (≈ $8) per month per group in Kenya.</td></tr>
+      <tr><td><strong>Diaspora plan</strong></td><td>Senders abroad</td><td>Phase 3</td><td>Earmarks with receipts. Priced in euros. Highest willingness to pay.</td></tr>
+      <tr><td><strong>Partner referrals</strong></td><td>EMFs, banks, insurers</td><td>Phase 4</td><td>Financial passport referrals, savings and insurance products. Revenue share, no custody.</td></tr>
+      <tr><td><strong>Bank white-label</strong></td><td>Banks / EMFs</td><td>Phase 4</td><td>Njangi tools inside a bank's app, as Chamasoft does for Equity Bank's EazzyChama.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose muted small">Deliberately excluded: transfer fees (needs custody or licensing and competes head-on with MoniTrack and the operators), ads and data sale (they kill trust).</p>
+</div></section>
+
+<!-- ============ ROADMAP ============ -->
+<section id="roadmap"><div class="wrap">
+  <h2>Roadmap</h2>
+  <div class="prose"><p>Strangler, not big-bang, just like our code rule. The njangi pilot stays live; personal finance lands beside it as a new tab. Every phase ends at a gate where you decide whether to continue.</p></div>
+  <div class="phase-grid">
+    <div class="phase">
+      <div class="when">Phase 0 · ~3 weeks</div>
+      <h3>Prove the data</h3>
+      <ul>
+        <li>Collect 300–500 real OM/MoMo/bank SMS from consenting pilot members (anonymized) → parser fixtures</li>
+        <li>15 interviews: salaried, trader, student, diaspora sender</li>
+        <li>Email Orange (business.orangemoney@orange.com) and MTN Cameroon to ask about consented read access</li>
+        <li>Lawyer opinion: read-only status + Law 2024/017 checklist</li>
+        <li>Dry-run Play SMS declaration on an internal track</li>
+      </ul>
+      <div class="gate"><b>Gate:</b> parser handles ≥95% of fixtures; ≥10 of 15 interviewees want the cash check or njangi position.</div>
+    </div>
+    <div class="phase">
+      <div class="when">Phase 1 · ~6–8 weeks</div>
+      <h3>Voir (see)</h3>
+      <ul>
+        <li>Android SMS capture + backfill, iOS share/paste + OCR</li>
+        <li>Pockets home, feed, balance-chain gaps</li>
+        <li>Cash check (tap first, voice later)</li>
+        <li>Default categories + fee lens</li>
+        <li>Scam-SMS flag</li>
+        <li>Njangi position on the home screen</li>
+      </ul>
+      <div class="gate"><b>Gate:</b> ≥80% of OM/MoMo transactions captured automatically on Android; 4-week retention beats the current pilot.</div>
+    </div>
+    <div class="phase">
+      <div class="when">Phase 2 · ~8 weeks</div>
+      <h3>Planifier (plan)</h3>
+      <ul>
+        <li>Envelopes, monthly plan, seasonal goals (rentrée first)</li>
+        <li>Two-sided debts with SMS matching</li>
+        <li>Household sharing</li>
+        <li>Plus + Group Pro pricing test</li>
+        <li>WhatsApp reminders</li>
+      </ul>
+      <div class="gate"><b>Gate:</b> some users pay; debts get confirmed by the other side.</div>
+    </div>
+    <div class="phase">
+      <div class="when">Phase 3–4 · 2027</div>
+      <h3>Ensemble &amp; partenaires</h3>
+      <ul>
+        <li>Diaspora earmarks</li>
+        <li>Assistant (FR/EN/Pidgin)</li>
+        <li>Buyam-sellam mode</li>
+        <li>Financial passport + first EMF partner</li>
+        <li>Operator API if a deal or the CEMAC regime lands</li>
+      </ul>
+      <div class="gate"><b>Gate:</b> partner signed, regulator view in writing.</div>
+    </div>
+  </div>
+  <div class="note prose">Timeline assumes the current 2-dev team plus agent help, and that the six pilot blockers from the 25 September review are fixed first. Personal finance should not start on a base whose CTAs are invisible on Android.</div>
+</div></section>
+
+<!-- ============ RISKS ============ -->
+<section id="risks"><div class="wrap">
+  <h2>Risks</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Risk</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Google rejects the SMS permission</td><td><span class="tag t-mid">Medium</span></td><td>Make SMS capture the visible core in the listing and onboarding; finance category; demo video. Fallback: paste/share/OCR on Android too, and the app still works.</td></tr>
+      <tr><td>Operators change SMS wording</td><td><span class="tag t-good">Certain</span></td><td>Templates served over the air (like USSD content), fixture tests in <code>bun test</code>, balance-chain alarms show breakage within hours.</td></tr>
+      <tr><td>iOS users get a worse experience</td><td><span class="tag t-good">Certain</span></td><td>iOS is ~17% of traffic. Lean on OCR backfill, share sheet and the parts that need no SMS (cash, njangi, debts). Don't promise parity.</td></tr>
+      <tr><td>Competitors (MoniTrack) add njangi or cash</td><td><span class="tag t-mid">Medium</span></td><td>Our njangi ledger and two-sided confirmation took months to build and work well. Move faster on the "together" features.</td></tr>
+      <tr><td>Operators see us as a threat</td><td><span class="tag t-mid">Low–medium</span></td><td>We never move money; we drive merchant-code payments (their revenue). Pitch as a partner. Use only the user's own SMS.</td></tr>
+      <tr><td>A data breach destroys trust</td><td><span class="tag t-bad">Severe if it happens</span></td><td>No raw SMS on servers, hashed phone numbers, minimal fields, Law 2024/017 breach procedure ready before launch.</td></tr>
+      <tr><td>Scope creep kills the pilot</td><td><span class="tag t-bad">High</span></td><td>Phase gates. Phase 0 is research only. Fix pilot blockers first.</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<!-- ============ DECIDE ============ -->
+<section id="decide"><div class="wrap">
+  <h2>Your decisions</h2>
+  <ol class="decide prose">
+    <li><b class="q">Pivot or expand?</b>Option A: replace njangi with personal finance. Option B: personal finance becomes the daily home; Groups (njangi + contribution) stay as a tab. <span class="rec">Recommended: B.</span> The groups are the moat and the retention engine.</li>
+    <li><b class="q">Accept Android-first?</b>Automatic capture only works on Android. iOS gets import and manual tools. <span class="rec">Recommended: yes.</span> That matches the Android-first pilot recommendation already on the table.</li>
+    <li><b class="q">Brand</b>"OnCotise" says "we contribute": group-first. A personal money app may need a wider name, with OnCotise kept for the groups feature. <span class="rec">Recommended: decide after Phase 0 interviews, not now.</span></li>
+    <li><b class="q">Start Phase 0?</b>Three weeks of SMS samples, interviews, operator emails and a lawyer opinion. No app code. <span class="rec">Recommended: yes, in parallel with fixing pilot blockers.</span> Sending the operator emails is outward-facing, so you should send them or approve the text.</li>
+  </ol>
+</div></section>
+
+<!-- ============ SOURCES ============ -->
+<section id="sources"><div class="wrap">
+  <h2>Sources</h2>
+  <ul class="sources">
+    <li>Google Play, SMS &amp; Call Log permissions, exception "SMS-based money management": <a href="https://support.google.com/googleplay/android-developer/answer/10208820?hl=en">support.google.com/…/10208820</a> (checked 6 Oct 2026)</li>
+    <li>Google Play, Permissions Declaration Form: <a href="https://support.google.com/googleplay/android-developer/answer/9214102?hl=en">support.google.com/…/9214102</a></li>
+    <li>Orange Money Web Payment API: <a href="https://developer.orange.com/apis/om-webpay?hl=fr-fr">developer.orange.com/apis/om-webpay</a></li>
+    <li>Orange Money Cameroon CoreAPIs: <a href="https://apiis.orange.cm/store/apis/info?name=OrangeMoneyCoreAPIS&amp;provider=bmhb8456&amp;version=1.0.2">apiis.orange.cm</a></li>
+    <li>Orange Money on Max It: <a href="https://orangemoney.orange.cm/fr/orange-money-sur-max-it.html">orangemoney.orange.cm</a>; FAQ: <a href="https://orangemoney.orange.cm/fr/assistance/faq-orange-money.html">faq-orange-money</a></li>
+    <li>Orange merchant payment (#150*47#): <a href="https://orangemoney.orange.cm/en/om-payment/merchant-payment.html">orangemoney.orange.cm/en/om-payment</a></li>
+    <li>MTN MoMo Developer, use cases &amp; consent flow: <a href="https://momodeveloper.mtn.com/content/html_widgets/v98wn.html">momodeveloper.mtn.com</a></li>
+    <li>MTN Cameroon MoMo help (*126#): <a href="https://mtn.cm/fr/helppersonal/momo-bills-payment/">mtn.cm/fr/helppersonal</a></li>
+    <li>Notch Pay balance API: <a href="https://developer.notchpay.co/api-reference/balance">developer.notchpay.co</a>; CamPay SDK: <a href="https://github.com/CamPay/campay-python-sdk">github.com/CamPay</a>; CinetPay: <a href="https://docs.cinetpay.com/api/1.0-fr/transfert/utilisation">docs.cinetpay.com</a></li>
+    <li>BEAC payment-systems regulations (Règlement 04/18/CEMAC/UMAC/COBAC): <a href="https://www.beac.int/systemes-paiement/instructions-circulaires-reglements/">beac.int</a></li>
+    <li>2026 CEMAC payment-services draft (unofficial copy, unverified): <a href="https://fr.scribd.com/document/1067190081/Projet-Reglement-CEMAC-2026-Services-de-Paiement-1-1">scribd.com</a></li>
+    <li>BEAC, Services de paiement CEMAC 2024 (mobile money wallets, volume, value)</li>
+    <li>World Bank, Global Findex 2025 (2024 survey) via Little Data Book 2025; microdata: <a href="https://microdata.worldbank.org/catalog/7880">microdata.worldbank.org/catalog/7880</a></li>
+    <li>World Bank WDI, personal remittances received, Cameroon 2024</li>
+    <li>INS Cameroon, EESI3 (informal employment, 2021)</li>
+    <li>StatCounter, mobile OS market share Cameroon, Sept 2026</li>
+    <li>MTN Group FY2025 results (MoMo active users, Cameroon)</li>
+    <li>Law No. 2024/017 in force 23 June 2026: <a href="https://droitmediasfinance.com/index.php/actualites/droit-tech-fintech/1297-cameroun-la-loi-sur-la-protection-des-donnees-a-caractere-personnel-entre-en-vigueur-ce-23-juin-2026">droitmediasfinance.com</a>; <a href="https://cio-mag.com/?p=59861">cio-mag.com</a>; authority created: <a href="https://www.digitalbusiness.africa/cameroun-lautorite-de-protection-des-donnees-a-caractere-personnel-creee/">digitalbusiness.africa</a></li>
+    <li>MoniTrack: <a href="https://monitrack.tech/en">monitrack.tech</a> (self-reported user numbers); WalletEye: <a href="https://walleteye.app/en/">walleteye.app</a></li>
+    <li>RAVA: <a href="https://play.google.com/store/apps/details?id=com.sedoid.rava">Google Play</a>; Djangui: <a href="https://djangui.net/">djangui.net</a>; Tontiin: <a href="https://tontiin.com/en/faq">tontiin.com</a></li>
+    <li>Safaricom M-Ledger (GSMA): <a href="https://www.gsma.com/solutions-and-impact/connectivity-for-good/mobile-for-development/country/kenya/harnessing-the-power-of-transaction-data-safaricom-launches-m-ledger/">gsma.com</a></li>
+    <li>Chamasoft pricing: <a href="https://chamasoft.com/">chamasoft.com</a>; Chumz: <a href="https://chumz.io/faqs">chumz.io</a></li>
+    <li>Operator tariffs (0.2% + 4 F transfer tax, ~1% cash-out): Orange Money and MTN Cameroon official tariff pages, 2026</li>
+  </ul>
+</div></section>
+
+<footer><div class="wrap">
+  Draft for internal discussion. Numbers marked unverified or hypothesis should be checked before they go into a pitch. SMS formats in mockups are illustrative. Collect real samples before writing parsers.
+</div></footer>
+
+</body>
+</html>

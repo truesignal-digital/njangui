@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal finance mockups, round 3 (neutral kit)</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="kit/kit.css">
+<link rel="stylesheet" href="extra.css">
+<script src="kit/sf-symbols.js"></script>
+<script src="kit/sf-extra.js"></script>
+<script src="kit/kit.js"></script>
+<script src="extra.js"></script>
+</head>
+<body>
+<div class="doc">
+  <nav class="doc-nav">
+    <h1>Personal finance · round 3</h1>
+    <div class="sub">Neutral kit · 360 dp · 2026-10-07</div>
+    <a href="../../personal-finance-direction-2026-10-06.html">Direction doc</a>
+    <a href="../../personal-finance-ui-review-2026-10-07.md">Round 1 review</a>
+    <div class="group">Screens</div>
+    <a href="#consent">1 · SMS consent and onboarding</a><a href="#numbers">2 · Numbers and start date</a><a href="#backfill">3 · First read</a><a href="#accueil">4 · Accueil in six states</a><a href="#feed">5 · Mouvements</a><a href="#gap">6 · Gap fill</a><a href="#cash">7 · Cash check</a><a href="#scam">8 · Suspicious SMS (operator-only scope)</a><a href="#privacy">9 · Privacy and deletion</a><a href="#ios">10 · iPhone: paste and screenshot</a><a href="#empty">11 · Empty states</a><a href="#commit">13 · Vos njangis</a>
+  </nav>
+  <main class="doc-main">
+    <header>
+      <h2>Personal finance mockups, round 3</h2>
+      <p class="lede">Round 3: Fable's round 2 fixes applied to screens 1–9, plus 7d, 8c, 10, 11 and 13. Drawn in the neutral kit (copied from the <code>docs/mobile-ui-guide</code> worktree). Decisions applied: tabs Accueil · Mouvements · Groupes · Moi; scam checks on operator SMS only; hide-amounts asked at onboarding. Android first. Word counts under each frame are computed live from the visible text (numbers, times and system UI excluded).</p>
+    </header>
+    
+  <section class="section" id="consent">
+    <h3>1 · SMS consent and onboarding</h3>
+    <p class="rule">Play's prominent disclosure, then the system prompt, then the hide-amounts choice.</p>
+    <div class="shots">
+    <figure class="shot" id="f1a">
+      <div class="frame-label">1a · SMS disclosure (before the system prompt)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:18px;gap:16px">
+  <div class="steps"><div class="done"></div><div class="done"></div><div></div><div></div></div>
+  <div class="h-headline">Remplir vos poches avec vos SMS&nbsp;?</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money</b></div><span class="dir strong">lu</span></div>
+    <div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo</b></div><span class="dir strong">lu</span></div>
+    <div class="row "><span class="op neutral"><i data-i="chat" data-c=""></i></span><div class="main"><b>Autres SMS</b></div><span class="dir strong">jamais</span></div>
+  </div>
+  <div class="banner info"><i data-i="shield" data-c=""></i><div><b>Montants, noms, dates gardés. Jamais le texte.</b></div></div>
+</div>
+        <div class="footer"><div class="btn primary">Autoriser</div><div class="btn ghost">Plus tard</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f1a"></div>
+      <ul class="notes"><li>Google Play prominent disclosure and Law 2024/017 consent: purpose (title), what is read (Orange, MTN), what is never read, what is kept (amount, name, date) and what is not (the SMS text).</li><li>Round 2 said "jamais envoyé", which was false: structured fields go to Convex. Accuracy beats reassurance here.</li><li>Banks dropped from Phase 1: list only senders the parser actually handles. Full field list (fee, reference, balance after; numbers hashed) is on 9a.</li></ul>
+    </figure>
+    <figure class="shot" id="f1b">
+      <div class="frame-label">1b · Android system prompt</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:18px">
+  <div class="steps"><div class="done"></div><div class="done"></div><div></div><div></div></div>
+  <div class="h-headline">Remplir vos poches avec vos SMS&nbsp;?</div>
+</div>
+        
+        
+        
+  <div class="scrim"></div>
+  <div class="sysdlg" data-nowc>
+    <div style="text-align:center"><i data-i="sms" data-c="lg"></i></div>
+    <div class="t">Autoriser OnCotise à envoyer et afficher des SMS&nbsp;?</div>
+    <div class="b"><span>Autoriser</span><span>Ne pas autoriser</span></div>
+  </div>
+      </div>
+      <div class="wc" data-wc-for="f1b"></div>
+      <ul class="notes"><li>System text, not ours, so it is left out of the word count. Wording approximate; check on a real Android 14/15 device.</li><li>If refused: Accueil in the "SMS coupés" state (4c). Never ask again on the same session.</li><li>Android says the app could <em>send</em> SMS. Round 2 pre-empted that with "jamais envoyé", which was inaccurate; 1a no longer has room for it. Test in Phase 0 interviews whether the system wording scares people off.</li></ul>
+    </figure>
+    <figure class="shot" id="f1c">
+      <div class="frame-label">1c · Hide amounts? (decided: ask at onboarding)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:18px;gap:14px">
+  <div class="steps"><div class="done"></div><div class="done"></div><div class="done"></div><div></div></div>
+  <div class="h-headline">Cacher les montants&nbsp;?</div>
+  <div class="t-body muted">Utile dans le taxi ou au marché.</div>
+  <div class="select on"><span class="op neutral"><i data-i="eye-off" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Cacher à l'ouverture</div><div class="t-small muted">Vous voyez ••••&nbsp;F</div></div><span class="radio"></span></div>
+  <div class="select"><span class="op neutral"><i data-i="eye" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Toujours montrer</div><div class="t-small muted">Vous voyez 98 200&nbsp;F</div></div><span class="radio"></span></div>
+  <div class="t-small muted" style="display:flex;gap:6px;align-items:center"><i data-i="eye" data-c="sm"></i>L'œil en haut les montre.</div>
+</div>
+        <div class="footer"><div class="btn primary">Continuer</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f1c"></div>
+      <ul class="notes"><li>Choice persists (one storage key in src/lib/storage-keys.ts). The eye toggle on Accueil and Mouvements flips it for the session.</li><li>Notifications never contain amounts, whatever is chosen here.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="numbers">
+    <h3>2 · Numbers and start date</h3>
+    <p class="rule">Dual SIM and second-hand phones decide what we read.</p>
+    <div class="shots">
+    <figure class="shot" id="f2a">
+      <div class="frame-label">2a · Your numbers (dual SIM)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:18px;gap:14px">
+  <div class="steps"><div class="done"></div><div class="done"></div><div class="done"></div><div class="done"></div></div>
+  <div class="h-headline">Vos numéros</div>
+  <div class="t-body muted">Trouvés dans vos SMS.</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money ··41</b><span>214 SMS</span></div><span class="sw on" role="switch" aria-checked="true"></span></div>
+    <div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo ··07</b><span>96 SMS</span></div><span class="sw on" role="switch" aria-checked="true"></span></div>
+    <div class="row off"><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money ··88</b><span>12 SMS · coupé</span></div><span class="sw" role="switch" aria-checked="false"></span></div>
+  </div>
+  <div class="banner warn"><i data-i="sim" data-c=""></i><div>Un numéro de la famille&nbsp;? Coupez-le.</div></div>
+</div>
+        <div class="footer"><div class="btn primary">Continuer</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f2a"></div>
+      <ul class="notes"><li>Dual-SIM phones receive SMS for both slots; Tecno/Infinix/itel ROMs report the slot unreliably, so the user confirms each number.</li><li>A number switched off is never stored, not even as counts.</li><li>"Coupé" is the state; "pas à moi" is the reason the user picks when switching it off (small sheet, not drawn).</li></ul>
+    </figure>
+    <figure class="shot" id="f2b">
+      <div class="frame-label">2b · Since when? (second-hand phones)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:8px;gap:12px">
+  <div class="h-headline" style="margin-top:12px">Depuis quand&nbsp;?</div>
+  <div class="select"><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Depuis le premier SMS</div><div class="t-small muted">3 juillet</div></div><span class="radio"></span></div>
+  <div class="select on"><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Depuis le 1er octobre</div></div><span class="radio"></span></div>
+  <div class="select"><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">À partir d'aujourd'hui</div></div><span class="radio"></span></div>
+  <div class="banner warn"><i data-i="phone-lock" data-c=""></i><div>Téléphone d'occasion&nbsp;? Choisissez aujourd'hui.</div></div>
+</div>
+        <div class="footer"><div class="btn primary">Continuer</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f2b"></div>
+      <ul class="notes"><li>Old SMS on a second-hand phone belong to the previous owner. The default is the 1st of the current month, not the oldest SMS.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="backfill">
+    <h3>3 · First read</h3>
+    <p class="rule">Parsing on the phone; first result with the review count.</p>
+    <div class="shots">
+    <figure class="shot" id="f3a">
+      <div class="frame-label">3a · Reading SMS</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="gap:16px">
+  <div style="flex:1"></div>
+  <div class="h-headline" style="text-align:center">Lecture de vos SMS</div>
+  <div class="money-hero" style="text-align:center">31 / 52</div>
+  <div class="progress"><i style="width:60%;background:var(--accent)"></i></div>
+  <div class="t-body muted" style="text-align:center">Le texte reste sur ce téléphone.</div>
+  <div style="flex:1"></div>
+</div>
+        <div class="footer"><div class="btn ghost">Continuer pendant la lecture</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f3a"></div>
+      <ul class="notes"><li>52 = SMS since the chosen start date (2b) on the two numbers kept in 2a; older SMS are skipped.</li><li>Parsing runs on the device. Only structured fields (amount, fee, party, reference, time, balance after) are sent to Convex.</li></ul>
+    </figure>
+    <figure class="shot" id="f3b">
+      <div class="frame-label">3b · First result</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:8px;gap:14px">
+  <div class="h-headline" style="margin-top:12px">52 mouvements depuis le 1er&nbsp;octobre</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money ··41</b><span>31 mouvements</span></div><div class="end"><span class="money-md">98 200&nbsp;F</span></div></div>
+    <div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo ··07</b><span>21 mouvements</span></div><div class="end"><span class="money-md">41 250&nbsp;F</span></div></div>
+  </div>
+  <div class="banner info"><i data-i="tag" data-c=""></i><div><b>6 mouvements à classer</b>Le reste est déjà classé.</div></div>
+</div>
+        <div class="footer"><div class="btn primary">Voir mes poches</div><div class="btn secondary">Classer 6 mouvements</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f3b"></div>
+      <ul class="notes"><li>Two buttons only here: onboarding exit is the primary, review is optional.</li><li>Cash is not shown yet: the first cash check comes in the evening (7a).</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="accueil">
+    <h3>4 · Accueil in six states</h3>
+    <p class="rule">Hero = first action. Pockets name where the money is and when we last saw it. No total.</p>
+    <div class="shots">
+    <figure class="shot" id="f4a">
+      <div class="frame-label">4a · Accueil · Android, SMS on</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px;gap:12px">
+  <div class="hero">
+    <div class="t-label muted">Njangi Bureau · tour 4</div>
+    <div class="money-lg" style="margin:6px 0 2px">10 000&nbsp;F</div>
+    <div class="t-small muted" style="margin-bottom:14px;display:flex;align-items:center;gap:6px">avant jeudi · <span class="benef"></span>Alice reçoit</div>
+    <div class="btn hero-btn">Cotiser 10 000&nbsp;F</div>
+  </div><div class="section-h">Chez Orange, MTN et vous<span class="icon-btn" aria-label="Montrer les montants"><i data-i="eye" data-c=""></i></span></div><div class="card" style="overflow:hidden"><div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money</b><span><span class="when"><i data-i="sms" data-c="sm"></i></span>14:02</span></div><div class="end"><span class="money-md">98 200&nbsp;F</span></div></div><div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo</b><span><span class="when"><i data-i="sms" data-c="sm"></i></span>hier</span></div><div class="end"><span class="money-md">41 250&nbsp;F</span></div></div><div class="row "><span class="op neutral"><i data-i="cash" data-c=""></i></span><div class="main"><b>Liquide</b><span>à vérifier</span></div><div class="end"><span class="money-md">23 000&nbsp;F</span></div></div></div><div class="card" style="overflow:hidden"><div class="row "><span class="stack"><span class="avatar sq">NB</span><span class="avatar sq">NF</span></span><div class="main"><b>Vos njangis</b></div><div class="end"><span class="money-md"></span></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div></div></div>
+        
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f4a"></div>
+      <ul class="notes"><li>No total. Each pocket says where the money is ("Chez Orange, MTN et vous") and when we last saw it.</li><li>Hero = first attention action from convex/attention.ts (new kinds: cash_check, fill_gap, confirm_debt, check_sms). Only the hero has a filled button.</li><li>"Vos njangis" opens 13a. It becomes "Njangi et dettes" (13b) when debts ship in Phase 2.</li><li>Badge on Accueil replaces the Actions tab badge.</li></ul>
+    </figure>
+    <figure class="shot" id="f4b">
+      <div class="frame-label">4b · Accueil · iPhone (no SMS access)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px;gap:12px">
+  <div class="banner info"><i data-i="paste" data-c=""></i><div><b>iPhone : collez vos SMS.</b></div></div>
+  <div class="section-h">Chez Orange, MTN et vous<span class="icon-btn" aria-label="Montrer les montants"><i data-i="eye" data-c=""></i></span></div><div class="card" style="overflow:hidden"><div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money</b><span>ajouté 14:02</span></div><div class="end"><span class="money-md">98 200&nbsp;F</span></div></div><div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo</b><span>ajouté hier</span></div><div class="end"><span class="money-md">41 250&nbsp;F</span></div></div><div class="row "><span class="op neutral"><i data-i="cash" data-c=""></i></span><div class="main"><b>Liquide</b><span>à vérifier</span></div><div class="end"><span class="money-md">23 000&nbsp;F</span></div></div></div>
+  <div class="card" style="overflow:hidden"><div class="row "><span class="stack"><span class="avatar sq">NB</span><span class="avatar sq">NF</span></span><div class="main"><b>Vos njangis</b></div><div class="end"><span class="money-md"></span></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div></div>
+</div>
+        <div class="footer"><div class="btn primary"><i data-i="paste" data-c=""></i>Coller un SMS</div></div>
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f4b"></div>
+      <ul class="notes"><li>iOS has no SMS API. The share sheet ("Partager" on a message → OnCotise) and paste use the same parser as Android.</li><li>Screenshot import of the Max It / MoMo history list comes in screen 10 (next round).</li></ul>
+    </figure>
+    <figure class="shot" id="f4c">
+      <div class="frame-label">4c · Accueil · Android, SMS refused or paused</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px;gap:12px">
+  <div class="banner warn"><i data-i="pause" data-c=""></i><div><b>Lecture des SMS coupée.</b></div></div>
+  <div class="section-h">Chez Orange, MTN et vous<span class="icon-btn" aria-label="Montrer les montants"><i data-i="eye" data-c=""></i></span></div><div class="card" style="overflow:hidden"><div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money</b><span><span class="when"><i data-i="sms" data-c="sm"></i></span>14:02</span></div><div class="end"><span class="money-md">98 200&nbsp;F</span></div></div><div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo</b><span><span class="when"><i data-i="sms" data-c="sm"></i></span>hier</span></div><div class="end"><span class="money-md">41 250&nbsp;F</span></div></div><div class="row "><span class="op neutral"><i data-i="cash" data-c=""></i></span><div class="main"><b>Liquide</b><span>à vérifier</span></div><div class="end"><span class="money-md">23 000&nbsp;F</span></div></div></div>
+  <div class="card" style="overflow:hidden"><div class="row "><span class="stack"><span class="avatar sq">NB</span><span class="avatar sq">NF</span></span><div class="main"><b>Vos njangis</b></div><div class="end"><span class="money-md"></span></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div></div>
+</div>
+        <div class="footer"><div class="btn primary">Activer la lecture</div></div>
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f4c"></div>
+      <ul class="notes"><li>Times stay visible so the user sees the data aging. Re-enabling reopens 1a, then the system prompt.</li></ul>
+    </figure>
+    <figure class="shot" id="f4d">
+      <div class="frame-label">4d · Accueil · first run, nothing yet</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px">
+  <div class="empty" style="flex:1;justify-content:center">
+    <i data-i="cash" data-c=""></i>
+    <b>Rien pour l'instant</b>
+    <div class="t-body">Commencez par le liquide dans votre poche.</div>
+  </div>
+</div>
+        <div class="footer"><div class="btn primary">Compter mon liquide</div></div>
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f4d"></div>
+      <ul class="notes"><li>Shown when SMS is refused and nothing was entered. The one action is the first cash count (7d), which works on every phone.</li></ul>
+    </figure>
+    <figure class="shot" id="f4e">
+      <div class="frame-label">4e · Accueil · stale pocket</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px;gap:12px"><div class="hero">
+    <div class="t-label muted">MTN MoMo ··07</div>
+    <div class="t-title" style="font-size:19px;line-height:24px;margin:6px 0 14px">Aucun SMS depuis 9 jours</div>
+    <div class="btn hero-btn">Composer *126#</div>
+  </div><div class="section-h">Chez Orange, MTN et vous<span class="icon-btn" aria-label="Montrer les montants"><i data-i="eye" data-c=""></i></span></div><div class="card" style="overflow:hidden"><div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money</b><span><span class="when"><i data-i="sms" data-c="sm"></i></span>14:02</span></div><div class="end"><span class="money-md">98 200&nbsp;F</span></div></div><div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo</b><span><span class="badge b-disputed"><i data-i="warning" data-c=""></i>9 j</span></span></div><div class="end"><span class="money-md">41 250&nbsp;F</span></div></div><div class="row "><span class="op neutral"><i data-i="cash" data-c=""></i></span><div class="main"><b>Liquide</b><span>à vérifier</span></div><div class="end"><span class="money-md">23 000&nbsp;F</span></div></div></div><div class="card" style="overflow:hidden"><div class="row "><span class="stack"><span class="avatar sq">NB</span><span class="avatar sq">NF</span></span><div class="main"><b>Vos njangis</b></div><div class="end"><span class="money-md"></span></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div></div></div>
+        
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f4e"></div>
+      <ul class="notes"><li>Silence is a state, not a zero. 9 days is a placeholder threshold; tune it on real usage.</li><li>*126# should make MTN send a fresh SMS, which restarts the chain. UNVERIFIED: check in Phase 0; if it only shows a USSD screen, the button becomes "Ajouter le dernier SMS".</li><li>Hero button is inverted (white on black), never marigold: amber is reserved for states and the beneficiary.</li></ul>
+    </figure>
+    <figure class="shot" id="f4f">
+      <div class="frame-label">4f · Accueil · amounts hidden</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px;gap:12px">
+  <div class="hero">
+    <div class="t-label muted">Njangi Bureau · tour 4</div>
+    <div class="money-lg" style="margin:6px 0 2px">••••&nbsp;F</div>
+    <div class="t-small muted" style="margin-bottom:14px;display:flex;align-items:center;gap:6px">avant jeudi · <span class="benef"></span>Alice reçoit</div>
+    <div class="btn hero-btn">Cotiser ••••&nbsp;F</div>
+  </div><div class="section-h">Chez Orange, MTN et vous<span class="icon-btn" aria-label="Montrer les montants"><i data-i="eye-off" data-c=""></i></span></div><div class="card" style="overflow:hidden"><div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Orange Money</b><span><span class="when"><i data-i="sms" data-c="sm"></i></span>14:02</span></div><div class="end"><span class="money-md">••••&nbsp;F</span></div></div><div class="row "><span class="op mtn" aria-hidden="true">MTN</span><div class="main"><b>MTN MoMo</b><span><span class="when"><i data-i="sms" data-c="sm"></i></span>hier</span></div><div class="end"><span class="money-md">••••&nbsp;F</span></div></div><div class="row "><span class="op neutral"><i data-i="cash" data-c=""></i></span><div class="main"><b>Liquide</b><span>à vérifier</span></div><div class="end"><span class="money-md">••••&nbsp;F</span></div></div></div><div class="card" style="overflow:hidden"><div class="row "><span class="stack"><span class="avatar sq">NB</span><span class="avatar sq">NF</span></span><div class="main"><b>Vos njangis</b></div><div class="end"><span class="money-md"></span></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div></div></div>
+        
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f4f"></div>
+      <ul class="notes"><li>The eye toggles for this session. The hero hides its amount too, including the button label.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="feed">
+    <h3>5 · Mouvements</h3>
+    <p class="rule">Who, how much, when, direction in words. Moves are not spending.</p>
+    <div class="shots">
+    <figure class="shot" id="f5a">
+      <div class="frame-label">5a · Mouvements · feed</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px;gap:10px">
+  <div style="display:flex;align-items:center"><div class="h-headline" style="flex:1">Mouvements</div><span class="icon-btn"><i data-i="filter" data-c=""></i></span></div>
+  <div class="banner warn"><i data-i="gap" data-c=""></i><div><b>8 200&nbsp;F sans SMS</b>Orange, lundi soir</div></div>
+  <div class="day">Aujourd'hui</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Boulangerie Saker</b><span>Ration · 14:02</span></div><div class="end"><span class="money-md">1 500&nbsp;F</span><span class="dir"><i data-i="money-out" data-c="sm"></i>payé</span></div></div>
+    <div class="row "><span class="avatar ">MA</span><div class="main"><b>Maman</b><span>MoMo · 11:20</span></div><div class="end"><span class="money-md">15 000&nbsp;F</span><span class="dir"><i data-i="money-in" data-c="sm"></i>reçu</span></div></div>
+    <div class="row "><span class="op neutral"><i data-i="move" data-c=""></i></span><div class="main"><b>Retrait</b><span>frais 204&nbsp;F</span></div><div class="end"><span class="money-md">20 000&nbsp;F</span><span class="dir">déplacé</span></div></div>
+  </div>
+  <div class="day">Hier</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="avatar ">MN</span><div class="main"><b>Marie Ngo</b><span>Njangi Bureau · tour 3</span></div><div class="end"><span class="money-md">10 000&nbsp;F</span><span class="badge b-claimed"><i data-i="claimed" data-c=""></i>envoyé</span></div></div>
+  </div>
+</div>
+        <div class="footer"><div class="btn primary">Compléter 8 200&nbsp;F</div></div>
+        <div data-tabbar="feed"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f5a"></div>
+      <ul class="notes"><li>Money line on every row: who, how much, when (day header + time), direction as a word with an arrow. No minus signs, no green for income.</li><li>Withdrawals are moves between pockets, not spending; only the 204 F fee counts as spent.</li><li>Njangi rows keep the handshake badge: "envoyé" (blue) until Marie confirms. Never green before the payee confirms.</li><li>Names wrap to two lines instead of truncating. FlashList + paginated query, as the house rules require for unbounded tables.</li></ul>
+    </figure>
+    <figure class="shot" id="f5b">
+      <div class="frame-label">5b · Movement detail</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t"></div><span style="width:24px"></span></div><div class="scroll" style="gap:14px">
+  <div style="display:flex;gap:12px;align-items:center"><span class="op om" aria-hidden="true">OM</span><div class="h-title-lg">Boulangerie Saker</div></div>
+  <div style="display:flex;align-items:center;gap:10px"><span class="money-hero">1 500&nbsp;F</span><span class="dir strong"><i data-i="money-out" data-c="sm"></i>payé</span></div>
+  <dl class="kv card pad">
+    <dt>Poche</dt><dd>Orange Money ··41</dd>
+    <dt>Date</dt><dd>mardi 7 octobre, 14:02</dd>
+    <dt>Source</dt><dd>SMS Orange</dd>
+    <dt>Catégorie</dt><dd>Ration</dd>
+  </dl>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op neutral"><i data-i="split" data-c=""></i></span><div class="main"><b>Diviser</b></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div>
+    <div class="row "><span class="op neutral"><i data-i="move" data-c=""></i></span><div class="main"><b>D'une poche à l'autre</b></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div>
+    <div class="row "><span class="op neutral"><i data-i="cancelled" data-c=""></i></span><div class="main"><b>Pas à moi</b></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div>
+  </div>
+</div>
+        <div class="footer"><div class="btn primary">Changer la catégorie</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f5b"></div>
+      <ul class="notes"><li>"Pas à moi" (same words as 2a) covers a shared phone or a wrong number. It removes the movement and teaches the parser.</li><li>Changing the category also updates the merchant directory for this merchant code (user corrections win).</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="gap">
+    <h3>6 · Gap fill</h3>
+    <p class="rule">From the balance chain, never guessed.</p>
+    <div class="shots">
+    <figure class="shot" id="f6a">
+      <div class="frame-label">6a · Fill a gap (sheet over the feed)</div>
+      <div class="frame " data-budget="20">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px">
+  <div class="h-headline">Mouvements</div>
+</div>
+        
+        <div data-tabbar="feed"></div>
+        
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="h-title-lg">8 200&nbsp;F sans SMS</div>
+    <div class="t-small muted" style="margin-top:-6px">Orange Money, lundi soir</div>
+    <div class="select on"><span class="op neutral"><i data-i="money-out" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Un paiement</div></div><span class="radio"></span></div>
+    <div class="select"><span class="op neutral"><i data-i="cash" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Un retrait</div></div><span class="radio"></span></div>
+    <div class="select"><span class="op neutral"><i data-i="claimed" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Un envoi</div></div><span class="radio"></span></div>
+    <div class="select"><span class="op neutral"><i data-i="gap" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Je ne sais pas</div></div><span class="radio"></span></div>
+    <div class="btn primary">Continuer</div>
+  </div>
+      </div>
+      <div class="wc" data-wc-for="f6a"></div>
+      <ul class="notes"><li>The gap comes from the balance chain: the SMS before plus this movement doesn't match the next SMS.</li><li>"Je ne sais pas" files it as unknown spending, so totals stay true; it never invents a payee.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="cash">
+    <h3>7 · Cash check</h3>
+    <p class="rule">Count, split, the branch for cash received, and the first count.</p>
+    <div class="shots">
+    <figure class="shot" id="f7a">
+      <div class="frame-label">7a · Cash check · count</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="close" data-c=""></i></span><div class="t">Point liquide</div><span style="width:24px"></span></div><div class="scroll" style="gap:12px">
+  <dl class="kv card pad">
+    <dt>Hier soir</dt><dd>23 000&nbsp;F</dd>
+    <dt>Retrait Orange</dt><dd>20 000&nbsp;F</dd>
+    <dt style="color:var(--text);font-weight:600">Normalement</dt><dd>43 000&nbsp;F</dd>
+  </dl>
+  <div class="t-title">Combien avez-vous&nbsp;?</div>
+  <div class="input filled focus" style="justify-content:center;font:700 26px/32px var(--font-body);font-variant-numeric:tabular-nums;min-height:60px">34 500&nbsp;F</div>
+  <div class="keypad"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>000</span><span>0</span><span><i data-i="backspace" data-c=""></i></span></div>
+</div>
+        <div class="footer"><div class="btn primary">Continuer</div><div class="btn ghost">Pas ce soir</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f7a"></div>
+      <ul class="notes"><li>Opened from the evening attention card or the 20:30 notification "Point liquide" (no amount in the notification).</li><li>Normalement = last count + cash-outs from SMS + cash received from njangi pots − cash already logged.</li></ul>
+    </figure>
+    <figure class="shot" id="f7b">
+      <div class="frame-label">7b · Cash check · what was it for</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t">Point liquide</div><span style="width:24px"></span></div><div class="scroll" style="gap:12px">
+  <div class="h-headline">8 500&nbsp;F dépensés</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op neutral"><i data-i="next" data-c=""></i></span><div class="main"><b>Transport</b></div><div class="end"><span class="money-md">3 000&nbsp;F</span></div></div>
+    <div class="row "><span class="op neutral"><i data-i="cash" data-c=""></i></span><div class="main"><b>Ration</b></div><div class="end"><span class="money-md">5 500&nbsp;F</span></div></div>
+    <div class="row "><span class="op neutral"><i data-i="person" data-c=""></i></span><div class="main"><b>Famille</b></div><div class="end"><span class="money-md">—</span></div></div>
+    <div class="row "><span class="op neutral"><i data-i="groups" data-c=""></i></span><div class="main"><b>Njangi</b></div><div class="end"><span class="money-md">—</span></div></div>
+    <div class="row "><span class="op neutral"><i data-i="call" data-c=""></i></span><div class="main"><b>Crédit</b></div><div class="end"><span class="money-md">—</span></div></div>
+    <div class="row "><span class="op neutral"><i data-i="more" data-c=""></i></span><div class="main"><b>Autre</b></div><div class="end"><span class="money-md">—</span></div></div>
+  </div>
+  <div class="t-small muted" style="text-align:right">Reste 0&nbsp;F</div>
+</div>
+        <div class="footer"><div class="btn primary">Enregistrer 8 500&nbsp;F</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f7b"></div>
+      <ul class="notes"><li>Tap a line to type its amount. "Reste" must reach 0 F, or the remainder goes to "Autre" on save.</li><li>Voice entry is Phase 2. No mic here.</li></ul>
+    </figure>
+    <figure class="shot" id="f7c">
+      <div class="frame-label">7c · Cash check · more cash than expected</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t">Point liquide</div><span style="width:24px"></span></div><div class="scroll" style="gap:12px">
+  <div class="h-headline">5 000&nbsp;F de plus</div>
+  <div class="t-body muted">Normalement 43 000&nbsp;F, compté 48 000&nbsp;F.</div>
+  <div class="select on"><span class="op neutral"><i data-i="money-in" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">J'ai reçu du liquide</div></div><span class="radio"></span></div>
+  <div class="select"><span class="op neutral"><i data-i="edit" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Je m'étais trompé hier</div></div><span class="radio"></span></div>
+  <div class="field"><label>De qui&nbsp;?</label><div class="input filled">Papa</div></div>
+</div>
+        <div class="footer"><div class="btn primary">Continuer</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f7c"></div>
+      <ul class="notes"><li>Cash income breaks "spent = difference", so it gets its own branch instead of a negative spend.</li></ul>
+    </figure>
+    <figure class="shot" id="f7d">
+      <div class="frame-label">7d · Cash check · first time (nothing expected yet)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="close" data-c=""></i></span><div class="t">Point liquide</div><span style="width:24px"></span></div><div class="scroll" style="gap:12px">
+  <div class="h-headline">Combien de liquide avez-vous&nbsp;?</div>
+  <div class="t-body muted">Comptez ce qui est dans votre poche.</div>
+  <div class="input filled focus" style="justify-content:center;font:700 26px/32px var(--font-body);font-variant-numeric:tabular-nums;min-height:60px">12 500&nbsp;F</div>
+  <div class="keypad"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>000</span><span>0</span><span><i data-i="backspace" data-c=""></i></span></div>
+</div>
+        <div class="footer"><div class="btn primary">Enregistrer 12 500&nbsp;F</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f7d"></div>
+      <ul class="notes"><li>Opened from 4d. No "Normalement" line: there is no earlier count to compare with.</li><li>This count starts the cash chain; tomorrow's check uses it as "Hier soir".</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="scam">
+    <h3>8 · Suspicious SMS (operator-only scope)</h3>
+    <p class="rule">Chain-based check for operator senders; shared-in check for anything else.</p>
+    <div class="shots">
+    <figure class="shot" id="f8a">
+      <div class="frame-label">8a · Suspicious credit (operator sender, chain broken)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t"></div><span style="width:24px"></span></div><div class="scroll" style="gap:14px">
+  <div style="display:flex;gap:12px;align-items:center"><span class="avatar ">PM</span><div class="h-title-lg">Reçu de Paul Mbi&nbsp;?</div></div>
+  <div style="display:flex;align-items:center;gap:10px"><span class="money-hero">50 000&nbsp;F</span><span class="badge b-disputed"><i data-i="warning" data-c=""></i>à vérifier</span></div>
+  <dl class="kv card pad">
+    <dt>SMS</dt><dd>Orange Money, 15:10</dd>
+    <dt>Avec le SMS de 14:02</dt><dd>ne colle pas</dd>
+  </dl>
+  <div class="t-body">Ne donnez rien avant de vérifier.</div>
+</div>
+        <div class="footer"><div class="btn primary">Composer #150#</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f8a"></div>
+      <ul class="notes"><li>Decided scope: operator senders only. A spoofed "OrangeMoney" SMS is caught because the next real SMS doesn't include the 50 000 F.</li><li>The SMS claims a new total; it doesn't equal the 14:02 total + 50 000 F, so it is flagged at once. The credit is never counted until the chain agrees.</li><li>No "C'est un vrai" next to the warning: the victim believes the credit. The question comes after #150# (8c).</li><li>#150# opens the dialer (Android); iOS shows the code to copy, same as the pay flow.</li></ul>
+    </figure>
+    <figure class="shot" id="f8c">
+      <div class="frame-label">8c · After #150#: the user decides</div>
+      <div class="frame " data-budget="20">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="close" data-c=""></i></span><div class="t"></div><span style="width:24px"></span></div><div class="scroll" style="gap:14px">
+  <div class="h-headline" style="margin-top:8px">L'argent est là&nbsp;?</div>
+  <div class="t-body muted">Regardez ce que #150# affiche.</div>
+  <div class="select"><span class="op neutral"><i data-i="money-in" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Oui, 50 000&nbsp;F est arrivé</div></div><span class="radio"></span></div>
+  <div class="select on"><span class="op neutral"><i data-i="cancelled" data-c=""></i></span><div style="flex:1;min-width:0"><div class="t-title" style="font-size:16px">Non, rien</div></div><span class="radio"></span></div>
+</div>
+        <div class="footer"><div class="btn primary">Continuer</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f8c"></div>
+      <ul class="notes"><li>Shown when the user comes back from the dialer. "Oui" counts the credit as confirmed by the user (not by SMS).</li><li>"Non" marks the SMS as fake and opens the warning-share of 8b.</li></ul>
+    </figure>
+    <figure class="shot" id="f8b">
+      <div class="frame-label">8b · Check an SMS the user shared in</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="close" data-c=""></i></span><div class="t">Vérifier un SMS</div><span style="width:24px"></span></div><div class="scroll" style="gap:14px">
+  <div class="card pad t-small" style="background:var(--surface-muted)">«&nbsp;Vous avez reçu 50 000&nbsp;F…&nbsp;» <span class="muted" style="display:block;white-space:nowrap;margin-top:4px">+237&nbsp;6••&nbsp;••&nbsp;41&nbsp;21</span></div>
+  <div class="banner bad"><i data-i="warning" data-c=""></i><div><b>Faux SMS. Ne renvoyez rien.</b>Pas envoyé par Orange Money.</div></div>
+  <dl class="kv card pad">
+    <dt>Orange Money</dt><dd>rien depuis 14:02</dd>
+  </dl>
+</div>
+        <div class="footer"><div class="btn primary">Prévenir la famille</div><div class="btn ghost">Fermer</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f8b"></div>
+      <ul class="notes"><li>We never scan personal SMS. The user shares a suspicious message in (Android share sheet or paste); it is checked and discarded.</li><li>"Prévenir la famille" opens the WhatsApp share sheet with a ready warning text. Nothing is sent by the app.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="privacy">
+    <h3>9 · Privacy and deletion</h3>
+    <p class="rule">Stop reading, export, delete everything.</p>
+    <div class="shots">
+    <figure class="shot" id="f9a">
+      <div class="frame-label">9a · Moi › Vos données</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t">Vos données</div><span style="width:24px"></span></div><div class="scroll" style="gap:14px">
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op neutral"><i data-i="sms" data-c=""></i></span><div class="main"><b>Lire les SMS d'argent</b><span>dernier : 14:02</span></div><span class="sw on" role="switch" aria-checked="true"></span></div>
+    <div class="row "><span class="op neutral"><i data-i="list" data-c=""></i></span><div class="main"><b>SMS lus de</b><span>Orange, MTN</span></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op neutral"><i data-i="eye-off" data-c=""></i></span><div class="main"><b>Cacher à l'ouverture</b></div><span class="sw on" role="switch" aria-checked="true"></span></div>
+    <div class="row "><span class="op neutral"><i data-i="locked" data-c=""></i></span><div class="main"><b>Verrou de l'app</b></div><span class="sw" role="switch" aria-checked="false"></span></div>
+    <div class="row "><span class="op neutral"><i data-i="notifications" data-c=""></i></span><div class="main"><b>Notifications sans montant</b></div><span class="dir strong">toujours</span></div>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op neutral"><i data-i="download" data-c=""></i></span><div class="main"><b>Exporter</b></div><span class="chev"><i data-i="chevron" data-c=""></i></span></div>
+    <div class="row "><span class="op neutral" style="color:var(--destructive-dark)"><i data-i="trash" data-c=""></i></span><div class="main"><b><span style="color:var(--destructive-dark)">Tout supprimer</span></b></div></div>
+  </div>
+</div>
+        
+        <div data-tabbar="me"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f9a"></div>
+      <ul class="notes"><li>Law 2024/017: consent can be withdrawn (switch), data exported, everything deleted. All three are one tap from here.</li><li>"Notifications sans montant" is fixed, not a setting; shown so users know.</li></ul>
+    </figure>
+    <figure class="shot" id="f9b">
+      <div class="frame-label">9b · Delete everything (confirm sheet)</div>
+      <div class="frame " data-budget="20">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t">Vos données</div><span style="width:24px"></span></div><div class="scroll" style=""></div>
+        
+        <div data-tabbar="me"></div>
+        
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="h-title-lg">Tout supprimer&nbsp;?</div>
+    <div class="t-body muted">Vos mouvements et poches. Njangis et dettes partagées restent.</div>
+    <div class="btn danger">Tout supprimer</div>
+    <div class="btn ghost">Annuler</div>
+  </div>
+      </div>
+      <div class="wc" data-wc-for="f9b"></div>
+      <ul class="notes"><li>Njangi PaymentRecords and two-sided debts have a counterparty: deleting removes this user's copy and personal data, the other side keeps theirs.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="ios">
+    <h3>10 · iPhone: paste and screenshot</h3>
+    <p class="rule">No SMS access on iOS: the same parser, fed by paste, share and screenshots.</p>
+    <div class="shots">
+    <figure class="shot" id="f10a">
+      <div class="frame-label">10a · iPhone · paste an SMS</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="close" data-c=""></i></span><div class="t">Ajouter un SMS</div><span style="width:24px"></span></div><div class="scroll" style="gap:14px">
+  <div class="card pad t-small muted" style="background:var(--surface-muted)">«&nbsp;Paiement réussi. Boulangerie Saker. Montant&nbsp;: 1500 FCFA…&nbsp;»</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="op om" aria-hidden="true">OM</span><div class="main"><b>Boulangerie Saker</b><span>mardi 7 octobre, 14:02</span></div><div class="end"><span class="money-md">1 500&nbsp;F</span><span class="dir"><i data-i="money-out" data-c="sm"></i>payé</span></div></div>
+  </div>
+  <dl class="kv card pad">
+    <dt>Poche</dt><dd>Orange Money ··41</dd>
+    <dt>Catégorie</dt><dd>Ration</dd>
+  </dl>
+</div>
+        <div class="footer"><div class="btn primary">Ajouter 1 500&nbsp;F</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f10a"></div>
+      <ul class="notes"><li>Same parser as Android. Reached from the share sheet (Messages → Partager → OnCotise) or the "Coller un SMS" button on 4b.</li><li>The pasted text is shown for checking, then discarded; only the fields below are kept.</li></ul>
+    </figure>
+    <figure class="shot" id="f10b">
+      <div class="frame-label">10b · iPhone · screenshot of the Max It history</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="close" data-c=""></i></span><div class="t">Capture d'écran</div><span style="width:24px"></span></div><div class="scroll" style="gap:12px">
+  <div class="t-body">4 mouvements trouvés.</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="cb on" role="checkbox" aria-checked="true"><i data-i="check" data-c="sm"></i></span><div class="main"><b>Boulangerie Saker</b><span>lundi 6 octobre</span></div><div class="end"><span class="money-md">1 500&nbsp;F</span><span class="dir"><i data-i="money-out" data-c="sm"></i>payé</span></div></div>
+    <div class="row "><span class="cb on" role="checkbox" aria-checked="true"><i data-i="check" data-c="sm"></i></span><div class="main"><b>Maman</b><span>lundi 6 octobre</span></div><div class="end"><span class="money-md">15 000&nbsp;F</span><span class="dir"><i data-i="money-in" data-c="sm"></i>reçu</span></div></div>
+    <div class="row "><span class="cb on" role="checkbox" aria-checked="true"><i data-i="check" data-c="sm"></i></span><div class="main"><b>Retrait</b><span>dimanche 5 octobre</span></div><div class="end"><span class="money-md">20 000&nbsp;F</span><span class="dir">déplacé</span></div></div>
+    <div class="row off"><span class="cb" role="checkbox" aria-checked="false"></span><div class="main"><b>Eneo</b><span>samedi 4 octobre · déjà là</span></div><div class="end"><span class="money-md">8 400&nbsp;F</span><span class="dir"><i data-i="money-out" data-c="sm"></i>payé</span></div></div>
+  </div>
+</div>
+        <div class="footer"><div class="btn primary">Ajouter 3 mouvements</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f10b"></div>
+      <ul class="notes"><li>Text recognition runs on the phone (Apple Vision). The screenshot is never uploaded.</li><li>Rows already in the ledger (same operator reference or same amount, party and minute) come unticked as "déjà là".</li><li>UNVERIFIED: the Max It and MoMo history layouts; collect real screenshots in Phase 0.</li></ul>
+    </figure>
+    <figure class="shot" id="f10c">
+      <div class="frame-label">10c · iPhone · SMS not understood</div>
+      <div class="frame " data-budget="20">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="close" data-c=""></i></span><div class="t">Ajouter un SMS</div><span style="width:24px"></span></div><div class="scroll" style="gap:14px">
+  <div class="banner warn"><i data-i="gap" data-c=""></i><div><b>Ce SMS n'est pas compris.</b></div></div>
+  <div class="card pad t-small muted" style="background:var(--surface-muted)">«&nbsp;Cher client, profitez du bonus 200% sur…&nbsp;»</div>
+</div>
+        <div class="footer"><div class="btn primary">Ajouter à la main</div><div class="btn ghost">Annuler</div></div>
+        
+        
+      </div>
+      <div class="wc" data-wc-for="f10c"></div>
+      <ul class="notes"><li>Promotions and new operator wordings land here. "Ajouter à la main" opens the manual form; the text is discarded either way.</li><li>Each miss is counted (not stored) so parser templates can be updated over the air.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="empty">
+    <h3>11 · Empty states</h3>
+    <p class="rule">First runs with nothing to show yet.</p>
+    <div class="shots">
+    <figure class="shot" id="f11a">
+      <div class="frame-label">11a · Mouvements · nothing yet</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px">
+  <div class="h-headline">Mouvements</div>
+  <div class="empty" style="flex:1;justify-content:center">
+    <i data-i="sms" data-c=""></i>
+    <b>Pas encore de mouvement</b>
+    <div class="t-body">Ils arrivent avec vos SMS Orange et MTN.</div>
+  </div>
+</div>
+        <div class="footer"><div class="btn secondary">Compter mon liquide</div></div>
+        <div data-tabbar="feed"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f11a"></div>
+      <ul class="notes"><li>Android with SMS on, but no money SMS since the start date. Nothing to fix, so the button is secondary.</li></ul>
+    </figure>
+    <figure class="shot" id="f11b">
+      <div class="frame-label">11b · Accueil · iPhone first run</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="scroll" style="padding-top:14px">
+  <div class="empty" style="flex:1;justify-content:center">
+    <i data-i="paste" data-c=""></i>
+    <b>Ajoutez un SMS d'argent</b>
+    <div class="t-body">Copiez un SMS Orange ou MTN, puis collez-le ici.</div>
+  </div>
+</div>
+        <div class="footer"><div class="btn primary"><i data-i="paste" data-c=""></i>Coller un SMS</div><div class="btn secondary">Compter mon liquide</div></div>
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f11b"></div>
+      <ul class="notes"><li>iOS cannot read SMS, so the first run teaches the paste. A screenshot import (10b) is offered after the first paste.</li></ul>
+    </figure></div>
+  </section>
+  <section class="section" id="commit">
+    <h3>13 · Vos njangis</h3>
+    <p class="rule">The destination of the Accueil row: njangi positions in Phase 1, plus debts in Phase 2.</p>
+    <div class="shots">
+    <figure class="shot" id="f13a">
+      <div class="frame-label">13a · Vos njangis (Phase 1, from Accueil)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t">Vos njangis</div><span style="width:24px"></span></div><div class="scroll" style="gap:10px">
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="avatar sq">NB</span><div class="main"><b>Njangi Bureau</b><span>pot : 12 mars</span></div><div class="end"><span class="money-md">20 000&nbsp;F</span><span class="dir">versé</span></div></div>
+    <div class="row "><span class="avatar sq">NF</span><div class="main"><b>Njangi Famille</b><span>pot reçu</span></div><div class="end"><span class="money-md">60 000&nbsp;F</span><span class="dir">à verser</span></div></div>
+  </div>
+</div>
+        
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f13a"></div>
+      <ul class="notes"><li>Before your pot: what you have paid in ("versé", confirmed records only). After it: what you still owe the group ("à verser"). Never a signed balance.</li><li>Bureau: tours 1–2 confirmed = 20 000 F. Tour 3 is "envoyé" on 5a (Marie hasn't confirmed), so it isn't counted yet; tour 4 is due on 4a.</li><li>Amounts come from expectedForMember (deux mains) and server sums, never computed on the phone.</li><li>No button: nothing to add here in Phase 1. Tapping a row opens the group's "Ma position".</li></ul>
+    </figure>
+    <figure class="shot" id="f13b">
+      <div class="frame-label">13b · Njangi et dettes (Phase 2 reference)</div>
+      <div class="frame " data-budget="25">
+        <div data-statusbar></div>
+        <div class="nav-h"><span class="icon-btn" aria-label="Retour"><i data-i="back" data-c=""></i></span><div class="t">Njangi et dettes</div><span style="width:24px"></span></div><div class="scroll" style="gap:10px">
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="avatar sq">NB</span><div class="main"><b>Njangi Bureau</b><span>pot : 12 mars</span></div><div class="end"><span class="money-md">20 000&nbsp;F</span><span class="dir">versé</span></div></div>
+    <div class="row "><span class="avatar sq">NF</span><div class="main"><b>Njangi Famille</b><span>pot reçu</span></div><div class="end"><span class="money-md">60 000&nbsp;F</span><span class="dir">à verser</span></div></div>
+  </div>
+  <div class="section-h">Dettes</div>
+  <div class="card" style="overflow:hidden">
+    <div class="row "><span class="avatar ">BT</span><div class="main"><b>Brice</b><span>2 octobre</span></div><div class="end"><span class="money-md">10 000&nbsp;F</span><span class="dir">à recevoir</span></div></div>
+    <div class="row "><span class="avatar ">TR</span><div class="main"><b>Rose</b><span>28 septembre</span></div><div class="end"><span class="money-md">5 000&nbsp;F</span><span class="dir">à rendre</span></div></div>
+  </div>
+</div>
+        <div class="footer"><div class="btn secondary">Nouvelle dette</div></div>
+        <div data-tabbar="home"></div>
+        
+      </div>
+      <div class="wc" data-wc-for="f13b"></div>
+      <ul class="notes"><li>Phase 2 only. Do not build the button before debt create and counterparty confirm exist (a dead-end CTA was a pilot blocker in September).</li><li>Debts are two-sided like PaymentRecords: the other person confirms; deleting (9b) keeps their copy.</li></ul>
+    </figure></div>
+  </section>
+  </main>
+</div>
+</body>
+</html>
