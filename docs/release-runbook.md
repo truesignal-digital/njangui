@@ -1,10 +1,10 @@
 # Release Runbook
 
-Actions only. The *why* lives in [deployment-model.html](./deployment-model.html).
+Actions only. The *why* lives in [ADR-0001](./adr/0001-develop-is-staging.md) and [deployment-model.html](./deployment-model.html).
 Always online at: `github.com/truesignal-digital/njangui/blob/main/docs/release-runbook.md`
 
-**The model in one line:** merging to main auto-deploys the backend (staging → prod).
-Nothing reaches users' phones until you run a command from this page.
+**The model in one line:** merging into `develop` deploys the staging backend and publishes the `preview` update; a release PR `develop` → `main` deploys the prod backend.
+Nothing reaches production phones until you promote the tested `preview` update from this page.
 
 ---
 
