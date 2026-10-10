@@ -29,7 +29,9 @@ export function isAlive(pid: number): boolean {
 }
 
 /** Stops a process group we started (by its leader's PID, never by name). */
-export async function killGroup(pid: number, timeoutMs = 5000): Promise<void> {
+export async function killGroup(pid: number, timeoutMs = 5000, expect?: RegExp): Promise<void> {
+  // A dead Metro's PID can be reused by an unrelated process; leave that alone.
+  if (expect !== undefined && !expect.test(run('ps', ['-o', 'command=', '-p', String(pid)], { allowFail: true }))) return;
   try {
     process.kill(-pid, 'SIGTERM');
   } catch {

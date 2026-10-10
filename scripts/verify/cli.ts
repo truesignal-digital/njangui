@@ -2,7 +2,7 @@
  * Record the real app doing a flow, and turn the recording into a captioned
  * reel for a PR: `bun run verify <command>`. See .claude/skills/verify-njangi.
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs, resolveFlow, type Args } from './args';
@@ -77,7 +77,7 @@ async function down(args: Args): Promise<void> {
     console.log(`slot ${args.slot} is not up`);
     return;
   }
-  await killGroup(state.pid);
+  await killGroup(state.pid, 5000, /expo|metro|bun/i);
   if (state.platform === 'android') {
     try {
       reversePort(androidDevice(state.device), state.port, true);
@@ -141,6 +141,10 @@ async function drive(args: Args): Promise<number> {
   const maestro = process.env.MAESTRO_BIN ?? (existsSync(path.join(process.env.HOME ?? '', '.maestro/bin/maestro')) ? path.join(process.env.HOME ?? '', '.maestro/bin/maestro') : 'maestro');
   const code = await new Promise<number>((resolve) => {
     const child = spawn(maestro, maestroArgs, { cwd: dir, stdio: 'inherit' });
+    child.on('error', (err) => {
+      console.error(`could not run ${maestro}: ${err.message}`);
+      resolve(127);
+    });
     child.on('exit', (exit) => resolve(exit ?? 1));
   });
   await recording.stop();
@@ -187,7 +191,13 @@ function upload(args: Args): void {
   const lines: string[] = [];
   for (const file of args.positional) {
     const name = encodeURIComponent(path.basename(file));
-    const url = run('curl', ['-sS', '--fail-with-body', '-X', 'PUT', '-T', file, '-H', `X-Upload-Token: ${token}`, `${HOST}/${name}`]);
+    // The header comes from stdin so the token never shows in `ps`.
+    const result = spawnSync('curl', ['-sS', '--fail-with-body', '-X', 'PUT', '-T', file, '-H', '@-', `${HOST}/${name}`], {
+      input: `X-Upload-Token: ${token}\n`,
+      encoding: 'utf8',
+    });
+    if (result.status !== 0) throw new Error(`upload of ${file} failed: ${(result.stdout || result.stderr).trim()}`);
+    const url = result.stdout.trim();
     console.log(`${file} → ${url}`);
     lines.push(/\.(mp4|mov|webm)$/i.test(file) ? `[📼 ${path.basename(file)}](${url})` : `![${path.basename(file)}](${url})`);
   }

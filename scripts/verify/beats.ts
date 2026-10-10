@@ -18,6 +18,8 @@ export interface FlowResult {
   beats: Beat[];
 }
 
+const CONTAINERS = ['runFlowCommand', 'repeatCommand', 'retryCommand'];
+
 interface Metadata {
   status?: string;
   timestamp?: number;
@@ -52,6 +54,9 @@ export function parseCommands(raw: unknown, opts: { shotsDir: string; failureSho
   for (const entry of entries) {
     const meta = entry.metadata!;
     const end = ((meta.timestamp ?? 0) + (meta.duration ?? 0)) / 1000;
+    // A failing step also fails every runFlow/repeat/retry around it, with a
+    // lower sequence number; only the leaf ends the beats.
+    if (meta.status === 'FAILED' && CONTAINERS.some((key) => entry.command?.[key] !== undefined)) continue;
     if (meta.status === 'FAILED') {
       error = meta.error?.message?.trim() || `${Object.keys(entry.command ?? {})[0] ?? 'a step'} failed`;
       beats.push({ label: 'failed', caption: error, t: end, frame: opts.failureShot, failed: true });

@@ -34,7 +34,8 @@ export interface Shot {
 }
 
 export function shotsOf(summary: RunSummary, files: ReadonlyMap<string, string>): Shot[] {
-  const first = summary.beats[0]?.t ?? summary.recordingStartedAt;
+  // A run that fails before its first screenshot measures from the recording's start.
+  const first = summary.beats.find((beat) => !beat.failed)?.t ?? summary.recordingStartedAt;
   return summary.beats.map((beat) => ({
     label: beat.label,
     caption: beat.caption,

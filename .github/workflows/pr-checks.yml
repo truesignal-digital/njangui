@@ -16,6 +16,8 @@ jobs:
   # that judges it. The PR that adds the script falls back to its own copy.
   evidence:
     name: pr-evidence
+    # Release PRs (develop → main) and hotfixes carry reels from their feature PRs.
+    if: github.base_ref != 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -48,6 +48,15 @@ describe('parseCommands', () => {
     expect(result.beats).toHaveLength(2);
   });
 
+  test('a failure inside a runFlow keeps the beats the sub-flow reached', () => {
+    const raw = [
+      entry(1, { runFlowCommand: {} }, 'FAILED', { error: { message: 'x not visible' } }),
+      entry(2, { takeScreenshotCommand: { path: 'shots/01-a', label: 'A' } }),
+      entry(3, { assertConditionCommand: {} }, 'FAILED', { error: { message: 'x not visible' } }),
+    ];
+    expect(parseCommands(raw, { shotsDir: '/run' }).beats.map((b) => b.label)).toEqual(['01-a', 'failed']);
+  });
+
   test('skipped optional screenshots are not beats', () => {
     const raw = [entry(1, { takeScreenshotCommand: { path: 'a' } }, 'SKIPPED')];
     expect(parseCommands(raw, { shotsDir: '/' }).beats).toEqual([]);
