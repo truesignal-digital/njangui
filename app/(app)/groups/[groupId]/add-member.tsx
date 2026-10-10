@@ -6,16 +6,15 @@ import { useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { XMarkIcon } from 'react-native-heroicons/outline';
-import { CheckCircleIcon } from 'react-native-heroicons/solid';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { toast } from 'sonner-native';
 
-import { api, type Id } from '../../../../src/lib/convex-api';
-import { haptics } from '../../../../src/lib/haptics';
-import { useAppTheme } from '../../../../src/lib/theme';
-import { AppButton } from '../../../../src/components/ui/button';
-import { TextField } from '../../../../src/components/ui/text-field';
+import { api, type Id } from '@/lib/convex-api';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme } from '@/lib/theme';
+import { AppButton } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Icon } from '@/components/ui/icon';
 
 /** Best-effort E.164 for Cameroon numbers (9 digits starting with 6 → +237…). */
 function normalizePhone(raw: string): string {
@@ -163,7 +162,7 @@ export default function AddMemberModal() {
           onPress={close}
           className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
         >
-          <XMarkIcon size={22} color={theme.textMuted} />
+          <Icon name="close" size="control" color={theme.textMuted} />
         </Pressable>
       </View>
 
@@ -232,7 +231,7 @@ export default function AddMemberModal() {
                           </Text>
                         </View>
                       ) : selected ? (
-                        <CheckCircleIcon size={18} color={theme.accent} />
+                        <Icon name="confirmed" size="control" color={theme.accent} />
                       ) : null}
                     </Pressable>
                   );

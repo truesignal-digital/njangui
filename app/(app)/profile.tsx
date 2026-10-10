@@ -4,11 +4,6 @@ import { Redirect, router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  CalendarDaysIcon,
-  ChevronRightIcon,
-  LanguageIcon,
-} from 'react-native-heroicons/outline';
 
 import { api } from '@/lib/convex-api';
 import { useAuth, useClerk } from '@/lib/clerk-client';
@@ -16,11 +11,11 @@ import { useAppTheme } from '@/lib/theme';
 import { AppButton } from '@/components/ui/button';
 import { LanguageToggle } from '@/components/language-toggle';
 import { Skeleton } from '@/components/skeleton';
-import { ICON_SIZE } from '@/lib/icons';
 import { useThemePreference, type ThemePreference } from '@/lib/theme-preference';
 import { AppearanceSelector } from '@/components/native/appearance-selector';
 import { NjangiMark } from '@/components/brand/njangi-mark';
 import { SoftPressable } from '@/components/ui/soft-pressable';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Profile screen — minimal (Slice 3 stub; the fuller profile is roadmap #13):
@@ -150,10 +145,7 @@ export default function ProfileScreen() {
           <View className="overflow-hidden rounded-2xl border border-border-subtle bg-surface">
             <PreferenceRow
               icon={
-                <CalendarDaysIcon
-                  size={ICON_SIZE.control}
-                  color={theme.successDark}
-                />
+                <Icon name="calendar" size="control" color={theme.successDark} />
               }
               title={t('calendar.title')}
               detail={t('profile.calendarDescription')}
@@ -163,10 +155,7 @@ export default function ProfileScreen() {
             <View className="gap-sm p-md">
               <View className="flex-row items-center gap-sm">
                 <View className="h-[40px] w-[40px] items-center justify-center rounded-full bg-success-bg">
-                  <LanguageIcon
-                    size={ICON_SIZE.control}
-                    color={theme.successDark}
-                  />
+                  <Icon name="language" size="control" color={theme.successDark} />
                 </View>
                 <View className="min-w-0 flex-1">
                   <Text className="font-body-semi text-body text-foreground">
@@ -284,7 +273,7 @@ function PreferenceRow({
           {detail}
         </Text>
       </View>
-      <ChevronRightIcon size={ICON_SIZE.metadata} color={theme.textPlaceholder} />
+      <Icon name="chevron" size="metadata" color={theme.textPlaceholder} />
     </SoftPressable>
   );
 }

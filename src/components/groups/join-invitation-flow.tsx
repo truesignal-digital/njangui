@@ -3,12 +3,6 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 import { router } from 'expo-router';
 import { useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
-import {
-  CheckCircleIcon,
-  ClockIcon,
-  ShieldCheckIcon,
-  UserGroupIcon,
-} from 'react-native-heroicons/outline';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { toast } from 'sonner-native';
 
@@ -19,6 +13,7 @@ import { extractInviteCode, inviteCodeCells } from '@/lib/invite-code';
 import { useAppTheme } from '@/lib/theme';
 import { AppButton } from '@/components/ui/button';
 import { CircleSeal } from '@/components/groups/circle-seal';
+import { Icon } from '@/components/ui/icon';
 
 export function JoinInvitationFlow({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
@@ -75,7 +70,7 @@ export function JoinInvitationFlow({ onClose }: { onClose: () => void }) {
           </Text>
         </View>
         <View className="w-full flex-row items-center gap-sm rounded-2xl border border-success bg-success-bg p-md">
-          <ClockIcon size={22} color={theme.successDark} />
+          <Icon name="pending" size="emphasis" color={theme.successDark} />
           <View className="min-w-0 flex-1">
             <Text className="font-body-semi text-body text-foreground">
               {preview?.groupName}
@@ -172,7 +167,7 @@ export function JoinInvitationFlow({ onClose }: { onClose: () => void }) {
         >
           <View className="flex-row items-center gap-md">
             <View className="h-[48px] w-[48px] items-center justify-center rounded-full bg-success-bg">
-              <UserGroupIcon size={24} color={theme.successDark} />
+              <Icon name="groups" size="emphasis" color={theme.successDark} />
             </View>
             <View className="min-w-0 flex-1 gap-[2px]">
               <Text className="font-heading text-title-lg text-foreground">
@@ -182,7 +177,7 @@ export function JoinInvitationFlow({ onClose }: { onClose: () => void }) {
                 {t('groups.join.memberCount', { count: preview.memberCount })}
               </Text>
             </View>
-            <ShieldCheckIcon size={22} color={theme.successDark} />
+            <Icon name="custody" size="emphasis" color={theme.successDark} />
           </View>
           <View className="h-px bg-border-faint" />
           <Text className="font-body text-body-sm text-muted">
@@ -192,7 +187,7 @@ export function JoinInvitationFlow({ onClose }: { onClose: () => void }) {
             })}
           </Text>
           <View className="flex-row items-start gap-xs rounded-xl bg-success-bg p-sm">
-            <CheckCircleIcon size={18} color={theme.successDark} />
+            <Icon name="confirmed" size="control" color={theme.successDark} />
             <Text className="flex-1 font-body text-body-sm text-muted">
               {t('groups.join.previewSafety')}
             </Text>

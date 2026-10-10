@@ -8,41 +8,35 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
-import {
-  ArrowUturnLeftIcon,
-  CheckCircleIcon,
-  CloudArrowUpIcon,
-  ExclamationTriangleIcon,
-  XMarkIcon,
-} from 'react-native-heroicons/outline';
 
-import { api, type Id } from '../../../../../../src/lib/convex-api';
-import { formatCurrencyXAF } from '../../../../../../src/lib/format-currency';
-import { throwIfPilotOffline } from '../../../../../../src/lib/dev-pilot';
-import { haptics } from '../../../../../../src/lib/haptics';
-import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
+import { api, type Id } from '@/lib/convex-api';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { throwIfPilotOffline } from '@/lib/dev-pilot';
+import { haptics } from '@/lib/haptics';
+import { newIdempotencyKey } from '@/lib/idempotency';
 import {
   dequeueTap,
   enqueueTap,
   isTransientMeetingSyncError,
   loadQueue,
   replayQueue,
-} from '../../../../../../src/lib/meeting-queue';
+} from '@/lib/meeting-queue';
 import {
   buildRoundSummary,
   shareRoundSummary,
-} from '../../../../../../src/lib/round-summary';
-import { useAppTheme } from '../../../../../../src/lib/theme';
-import { AppButton } from '../../../../../../src/components/ui/button';
+} from '@/lib/round-summary';
+import { useAppTheme } from '@/lib/theme';
+import { AppButton } from '@/components/ui/button';
 import {
   Badge,
   PaymentStateBadge,
-} from '../../../../../../src/components/ui/badge';
-import { TextField } from '../../../../../../src/components/ui/text-field';
-import { Skeleton } from '../../../../../../src/components/skeleton';
-import { mobileUiConfig } from '../../../../../../src/lib/mobile-ui-config';
-import { toIntlLocale } from '../../../../../../src/lib/app-locale';
-import { NjangiMark } from '../../../../../../src/components/brand/njangi-mark';
+} from '@/components/ui/badge';
+import { TextField } from '@/components/ui/text-field';
+import { Skeleton } from '@/components/skeleton';
+import { mobileUiConfig } from '@/lib/mobile-ui-config';
+import { toIntlLocale } from '@/lib/app-locale';
+import { NjangiMark } from '@/components/brand/njangi-mark';
+import { Icon } from '@/components/ui/icon';
 
 type PaymentRow = FunctionReturnType<
   typeof api.rounds.listRoundPayments
@@ -389,7 +383,7 @@ export default function MeetingModeScreen() {
             onPress={() => router.back()}
             className="h-[44px] w-[44px] items-center justify-center rounded-full bg-surface active:bg-surface-muted"
           >
-            <XMarkIcon size={22} color={theme.textMuted} />
+            <Icon name="close" size="control" color={theme.textMuted} />
           </Pressable>
           <View className="absolute bottom-md right-md opacity-20">
             <NjangiMark size={62} color={theme.successDark} />
@@ -597,7 +591,7 @@ function MeetingSteps({ reviewing }: { reviewing: boolean }) {
             }`}
           >
             {step.state === 'done' ? (
-              <CheckCircleIcon size={16} color={theme.textInverted} />
+              <Icon name="confirmed" size="metadata" color={theme.textInverted} />
             ) : (
               <Text
                 className={`font-body-semi text-caption ${
@@ -645,7 +639,7 @@ function MeetingSyncStatus({
     return (
       <View className="mt-sm gap-xs rounded-lg border border-destructive bg-destructive-bg p-sm">
         <View className="flex-row items-start gap-xs">
-          <ExclamationTriangleIcon size={18} color={theme.destructiveDark} />
+          <Icon name="warning" size="control" color={theme.destructiveDark} />
           <View className="min-w-0 flex-1">
             <Text className="font-body-semi text-body-sm text-destructive-dark">
               {t('meeting.needsAttention', { count: issueEntries.length })}
@@ -685,7 +679,7 @@ function MeetingSyncStatus({
   if (pendingCount > 0) {
     return (
       <View className="mt-sm flex-row items-start gap-xs rounded-lg border border-warning-dark bg-warning-bg p-sm">
-        <CloudArrowUpIcon size={18} color={theme.warningDark} />
+        <Icon name="queued" size="control" color={theme.warningDark} />
         <View className="min-w-0 flex-1">
           <Text className="font-body-semi text-body-sm text-warning-dark">
             {t('meeting.savedOnPhone', { count: pendingCount })}
@@ -703,7 +697,7 @@ function MeetingSyncStatus({
   if (recordedCount > 0) {
     return (
       <View className="mt-sm flex-row items-center gap-xs rounded-lg bg-success-bg p-sm">
-        <CheckCircleIcon size={18} color={theme.successDark} />
+        <Icon name="confirmed" size="control" color={theme.successDark} />
         <Text className="font-body-semi text-body-sm text-success-dark">
           {t('meeting.recordedCount', { count: recordedCount })}
         </Text>
@@ -789,7 +783,7 @@ function RollCallRow({
             label={t('payments.state.claimed')}
           />
           {myTick ? (
-            <ArrowUturnLeftIcon size={16} color={theme.accent} />
+            <Icon name="undo" size="metadata" color={theme.accent} />
           ) : null}
         </View>
       ) : visual === 'payerClaimed' ? (

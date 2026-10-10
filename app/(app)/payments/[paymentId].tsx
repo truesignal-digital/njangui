@@ -6,24 +6,23 @@ import type { FunctionReturnType } from 'convex/server';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
-import { ChevronLeftIcon } from 'react-native-heroicons/outline';
-import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { api, type Id } from '../../../src/lib/convex-api';
-import { useAuth } from '../../../src/lib/clerk-client';
-import { showErrorToast } from '../../../src/lib/error-toast';
-import { formatCurrencyXAF } from '../../../src/lib/format-currency';
-import { formatDateTime } from '../../../src/lib/format-date';
-import { haptics } from '../../../src/lib/haptics';
-import { useAppTheme, useShadow } from '../../../src/lib/theme';
+import { api, type Id } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { showErrorToast } from '@/lib/error-toast';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { formatDateTime } from '@/lib/format-date';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme, useShadow } from '@/lib/theme';
 import {
   PaymentStateBadge,
   type PaymentState,
-} from '../../../src/components/ui/badge';
-import { AppButton } from '../../../src/components/ui/button';
-import { TextField } from '../../../src/components/ui/text-field';
-import { Skeleton } from '../../../src/components/skeleton';
-import { ImagePreviewModal } from '../../../src/components/image-preview-modal';
+} from '@/components/ui/badge';
+import { AppButton } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Skeleton } from '@/components/skeleton';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { Icon } from '@/components/ui/icon';
 
 type DisputeReason = 'not_received' | 'wrong_amount' | 'other';
 
@@ -114,7 +113,7 @@ export default function PaymentDetailScreen() {
             }
             className="h-[40px] w-[40px] items-center justify-center rounded-full bg-surface active:bg-surface-muted"
           >
-            <ChevronLeftIcon size={22} color={theme.textMuted} />
+            <Icon name="back" size="control" color={theme.textMuted} />
           </Pressable>
           <View className="min-w-0 flex-1 gap-[3px]">
             <Text className="font-body-semi text-overline uppercase text-success-dark">
@@ -456,7 +455,7 @@ function PaymentActions({ record }: { record: RecordDetail }) {
               <>
                 <AppButton
                   label={t('payment.confirmCta')}
-                  icon={<CheckCircleIcon size={18} color={theme.primaryForeground} />}
+                  icon="confirmed"
                   testID="payment-confirm"
                   onPress={() => setMode('confirming')}
                 />
@@ -533,7 +532,7 @@ function PaymentActions({ record }: { record: RecordDetail }) {
                 }
               >
                 {reason === r ? (
-                  <CheckCircleIcon size={18} color={theme.accent} />
+                  <Icon name="check" size="control" color={theme.accent} />
                 ) : (
                   <View className="h-[16px] w-[16px] rounded-full border-2 border-placeholder" />
                 )}

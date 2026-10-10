@@ -173,6 +173,7 @@
   "dimensions": {
     "metricCardMinHeight": 120,
     "metricCompactMinHeight": 96,
+    "iconXs": 12,
     "iconSm": 16,
     "iconMd": 20,
     "iconLg": 24,

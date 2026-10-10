@@ -1,26 +1,15 @@
-import type { ComponentType } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import {
-  ArrowRightIcon,
-  BanknotesIcon,
-  CalendarDaysIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  GiftIcon,
-  LockClosedIcon,
-  UserPlusIcon,
-  UsersIcon,
-} from 'react-native-heroicons/outline';
 
 import type {
   AttentionAction,
   AttentionCardModel,
-} from '../../lib/attention-presentation';
-import { haptics } from '../../lib/haptics';
-import { ICON_SIZE } from '../../lib/icons';
-import { useAppTheme, type AppTheme } from '../../lib/theme';
-import { Badge, type BadgeTone } from '../ui/badge';
-import { AppButton } from '../ui/button';
+} from '@/lib/attention-presentation';
+import type { IconName } from '@/lib/icons';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme, type AppTheme } from '@/lib/theme';
+import { Badge, type BadgeTone } from '@/components/ui/badge';
+import { AppButton } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * One visual family per job: money out (accent), pot handover (accent,
@@ -30,58 +19,58 @@ import { AppButton } from '../ui/button';
 const ACTION_VISUALS: Record<
   AttentionAction['kind'],
   {
-    icon: ComponentType<{ size?: number; color?: string }>;
+    icon: IconName;
     boxClass: string;
     tint: (theme: AppTheme) => string;
   }
 > = {
   resolve_dispute: {
-    icon: ExclamationTriangleIcon,
+    icon: 'disputed',
     boxClass: 'bg-warning-bg',
     tint: (theme) => theme.destructive,
   },
   confirm_records: {
-    icon: CheckCircleIcon,
+    icon: 'actions',
     boxClass: 'bg-success-bg',
     tint: (theme) => theme.successDark,
   },
   run_meeting: {
-    icon: UsersIcon,
+    icon: 'groups',
     boxClass: 'bg-accent-light',
     tint: (theme) => theme.accent,
   },
   record_payout_handover: {
-    icon: GiftIcon,
+    icon: 'pot',
     boxClass: 'bg-accent-light',
     tint: (theme) => theme.accent,
   },
   confirm_payout_handover: {
-    icon: GiftIcon,
+    icon: 'pot',
     boxClass: 'bg-success-bg',
     tint: (theme) => theme.successDark,
   },
   record_contribution: {
-    icon: BanknotesIcon,
+    icon: 'cash',
     boxClass: 'bg-accent-light',
     tint: (theme) => theme.accent,
   },
   review_membership_requests: {
-    icon: UserPlusIcon,
+    icon: 'add-person',
     boxClass: 'bg-surface-muted',
     tint: (theme) => theme.textMuted,
   },
   assign_president: {
-    icon: UserPlusIcon,
+    icon: 'add-person',
     boxClass: 'bg-surface-muted',
     tint: (theme) => theme.textMuted,
   },
   prepare_draft_cycle: {
-    icon: CalendarDaysIcon,
+    icon: 'calendar',
     boxClass: 'bg-surface-muted',
     tint: (theme) => theme.textMuted,
   },
   lock_draft_cycle: {
-    icon: LockClosedIcon,
+    icon: 'locked',
     boxClass: 'bg-surface-muted',
     tint: (theme) => theme.textMuted,
   },
@@ -141,7 +130,7 @@ export function AttentionPrimaryCard({
         variant="highlight"
         size="sm"
         iconPosition="end"
-        icon={<ArrowRightIcon size={ICON_SIZE.metadata} color={theme.highlightForeground} />}
+        icon="next"
         onPress={onPress}
       />
     </View>
@@ -159,7 +148,6 @@ export function AttentionRow({
 }) {
   const theme = useAppTheme();
   const visual = ACTION_VISUALS[model.kind];
-  const Icon = visual.icon;
 
   return (
     <Pressable
@@ -180,10 +168,7 @@ export function AttentionRow({
           'h-[34px] w-[34px] rounded-full'
         } items-center justify-center ${visual.boxClass}`}
       >
-        <Icon
-          size={ICON_SIZE.metadata}
-          color={visual.tint(theme)}
-        />
+        <Icon name={visual.icon} size="metadata" color={visual.tint(theme)} />
       </View>
       <View className="min-w-0 flex-1 gap-[2px]">
         <Text numberOfLines={1} className="font-body-semi text-body text-foreground">
@@ -202,7 +187,7 @@ export function AttentionRow({
           <Badge label={model.deadline} tone={TONE_BADGES[model.tone]} />
         ) : null}
         {!compact ? (
-          <ArrowRightIcon size={ICON_SIZE.metadata} color={theme.textMuted} />
+          <Icon name="next" size="metadata" color={theme.textMuted} />
         ) : null}
       </View>
     </Pressable>

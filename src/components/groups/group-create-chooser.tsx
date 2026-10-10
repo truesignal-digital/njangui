@@ -1,12 +1,6 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  ArrowPathRoundedSquareIcon,
-  KeyIcon,
-  SparklesIcon,
-} from 'react-native-heroicons/outline';
 
-import { useAppTheme } from '@/lib/theme';
 import { ChoiceCard } from '@/components/groups/choice-card';
 
 export function GroupCreateChooser({
@@ -19,7 +13,6 @@ export function GroupCreateChooser({
   onJoin: () => void;
 }) {
   const { t } = useTranslation();
-  const theme = useAppTheme();
 
   return (
     <View className="gap-lg">
@@ -37,26 +30,21 @@ export function GroupCreateChooser({
           dominant
           title={t('groups.unifiedChooser.contributionTitle')}
           description={t('groups.unifiedChooser.contributionBody')}
-          icon={<SparklesIcon size={22} color={theme.textInverted} />}
+          icon="featured"
           onPress={onContribution}
           testID="choose-contribution"
         />
         <ChoiceCard
           title={t('groups.unifiedChooser.njangiTitle')}
           description={t('groups.unifiedChooser.njangiBody')}
-          icon={
-            <ArrowPathRoundedSquareIcon
-              size={22}
-              color={theme.successDark}
-            />
-          }
+          icon="rotation"
           onPress={onNjangi}
           testID="choose-njangi"
         />
         <ChoiceCard
           title={t('groups.unifiedChooser.joinTitle')}
           description={t('groups.unifiedChooser.joinBody')}
-          icon={<KeyIcon size={22} color={theme.successDark} />}
+          icon="invite-code"
           onPress={onJoin}
           testID="choose-invitation"
         />

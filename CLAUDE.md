@@ -125,7 +125,7 @@ Rules:
 - In-screen RN `<Modal>` is only for overlays colocated with their caller (confirm sheets, `src/components/image-preview-modal.tsx`). If a trigger and its overlay would live in different components, make the overlay a route instead.
 - Shared primitives live in `src/components/ui/` and take **flat props** — no compound/context component APIs at this app's size. Extract a shared component only on the second concrete use (a second confirm sheet → `ui/confirm-sheet.tsx`; the radio rows in `groups/new.tsx` + `payments/[paymentId].tsx` → one SelectRow with `accessibilityRole="radio"` built in).
 - Accessibility is required at the type level, not the review level: interactive components take a required `label`/text prop (like AppButton); every raw `Pressable` sets `accessibilityRole`, icon-only ones set `accessibilityLabel={t(...)}`, selection rows set `accessibilityState={{selected}}`. All labels through i18next (en/fr), never literals.
-- When passing an `icon` to AppButton, its color must match the variant's label color (`primary` → `theme.primaryForeground`, else `theme.accent`/foreground). If this pairing appears a third time, refactor `icon` to a render function that receives the color.
+- Icons are native, through `Icon` (`src/components/ui/icon.tsx`, names in `src/lib/icons.ts`); `lint:design` bans other icon libraries and `expo-symbols` outside `icon.tsx`. `AppButton` and `ChoiceCard` take an icon *name* and colour it themselves from their variant or chip; never pass an icon colour to them by hand (the manual pairing went wrong three times).
 
 ## Server State (Convex)
 

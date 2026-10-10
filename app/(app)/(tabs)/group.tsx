@@ -4,23 +4,22 @@ import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { PlusIcon, UsersIcon } from 'react-native-heroicons/outline';
 
-import { api } from '../../../src/lib/convex-api';
-import { useAuth } from '../../../src/lib/clerk-client';
-import { haptics } from '../../../src/lib/haptics';
-import { useAppTheme } from '../../../src/lib/theme';
-import { Skeleton } from '../../../src/components/skeleton';
-import { AppButton } from '../../../src/components/ui/button';
-import { SoftPressable } from '../../../src/components/ui/soft-pressable';
-import { StatusBarCover } from '../../../src/components/ui/status-bar-cover';
+import { api } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme } from '@/lib/theme';
+import { Skeleton } from '@/components/skeleton';
+import { AppButton } from '@/components/ui/button';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { StatusBarCover } from '@/components/ui/status-bar-cover';
 import {
   GroupCard,
   type GroupListItem,
-} from '../../../src/components/groups/group-card';
-import { usePullRefresh } from '../../../src/hooks/use-pull-refresh';
-import { ICON_SIZE } from '../../../src/lib/icons';
-import { NjangiMark } from '../../../src/components/brand/njangi-mark';
+} from '@/components/groups/group-card';
+import { usePullRefresh } from '@/hooks/use-pull-refresh';
+import { NjangiMark } from '@/components/brand/njangi-mark';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Groupe tab — calm row list (round-2 §2 option B): one gradient disc,
@@ -127,7 +126,7 @@ export default function GroupTabScreen() {
                 }}
                 className="h-[44px] w-[44px] items-center justify-center rounded-full bg-success-bg active:opacity-80"
               >
-                <PlusIcon size={ICON_SIZE.control} color={theme.successDark} />
+                <Icon name="add" size="control" color={theme.successDark} />
               </SoftPressable>
             </View>
             {groups.length > 0 ? (
@@ -151,7 +150,7 @@ export default function GroupTabScreen() {
         ListEmptyComponent={
           <View className="items-center gap-sm pt-xl">
             <View className="h-[56px] w-[56px] items-center justify-center rounded-full border border-border bg-surface">
-              <UsersIcon size={ICON_SIZE.emphasis} color={theme.textMuted} />
+              <Icon name="groups" size="emphasis" color={theme.textMuted} />
             </View>
             <Text className="font-body-semi text-title text-foreground">
               {t('groups.tab.emptyTitle')}

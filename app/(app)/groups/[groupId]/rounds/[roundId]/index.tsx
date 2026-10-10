@@ -6,33 +6,31 @@ import type { FunctionReturnType } from 'convex/server';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
-import { ChevronLeftIcon } from 'react-native-heroicons/outline';
-import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { api, type Id } from '../../../../../../src/lib/convex-api';
-import { useAuth } from '../../../../../../src/lib/clerk-client';
-import { formatCurrencyXAF } from '../../../../../../src/lib/format-currency';
-import { haptics } from '../../../../../../src/lib/haptics';
-import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
+import { api, type Id } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { haptics } from '@/lib/haptics';
+import { newIdempotencyKey } from '@/lib/idempotency';
 import {
   buildRoundSummary,
   shareRoundSummary,
-} from '../../../../../../src/lib/round-summary';
-import { useAppTheme, useShadow } from '../../../../../../src/lib/theme';
-import { TextField } from '../../../../../../src/components/ui/text-field';
+} from '@/lib/round-summary';
+import { useAppTheme, useShadow } from '@/lib/theme';
+import { TextField } from '@/components/ui/text-field';
 import {
   Badge,
   PaymentStateBadge,
   type PaymentState,
-} from '../../../../../../src/components/ui/badge';
-import { AppButton } from '../../../../../../src/components/ui/button';
-import { PotProgress } from '../../../../../../src/components/ui/pot-progress';
-import { SectionCard } from '../../../../../../src/components/ui/section-card';
-import { resolveSeed } from '../../../../../../src/lib/group-colors';
-import { Skeleton } from '../../../../../../src/components/skeleton';
-import { SoftPressable } from '../../../../../../src/components/ui/soft-pressable';
-import { ICON_SIZE } from '../../../../../../src/lib/icons';
-import { NjangiMark } from '../../../../../../src/components/brand/njangi-mark';
+} from '@/components/ui/badge';
+import { AppButton } from '@/components/ui/button';
+import { PotProgress } from '@/components/ui/pot-progress';
+import { SectionCard } from '@/components/ui/section-card';
+import { resolveSeed } from '@/lib/group-colors';
+import { Skeleton } from '@/components/skeleton';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { NjangiMark } from '@/components/brand/njangi-mark';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Round detail (docs/03 B4 entry, payment-features-plan Slice 1): pot
@@ -134,7 +132,7 @@ export default function RoundDetailScreen() {
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           className="mt-[2px] h-[44px] w-[44px] items-center justify-center rounded-full bg-surface active:bg-surface-muted"
         >
-          <ChevronLeftIcon size={ICON_SIZE.control} color={theme.textMuted} />
+          <Icon name="back" size="control" color={theme.textMuted} />
         </SoftPressable>
         <View className="min-w-0 flex-1 gap-[3px]">
           <Text className="font-heading text-display-lg text-warning-dark">
@@ -328,7 +326,7 @@ function MyContributionBlock({
 
       {row.isSettled ? (
         <View className="flex-row items-center gap-xs">
-          <CheckCircleIcon size={16} color={theme.successDark} />
+          <Icon name="confirmed" size="metadata" color={theme.successDark} />
           <Text className="font-body-medium text-body-sm text-success-dark">
             {t('round.settled')}
           </Text>

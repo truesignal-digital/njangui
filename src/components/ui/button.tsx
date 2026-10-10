@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
 import { ActivityIndicator, Text } from 'react-native';
 
-import { cn } from '../../lib/cn';
-import { haptics } from '../../lib/haptics';
-import { useAppTheme } from '../../lib/theme';
+import { cn } from '@/lib/cn';
+import { haptics } from '@/lib/haptics';
+import type { IconName } from '@/lib/icons';
+import { useAppTheme, type AppTheme } from '@/lib/theme';
+import { Icon } from './icon';
 import { SoftPressable } from './soft-pressable';
 
 type ButtonVariant = 'primary' | 'highlight' | 'outline' | 'ghost' | 'destructive';
@@ -23,6 +24,15 @@ const LABEL_VARIANTS: Record<ButtonVariant, string> = {
   outline: 'font-body-semi text-body text-foreground',
   ghost: 'font-body-medium text-body text-muted',
   destructive: 'font-body-semi text-body text-inverted',
+};
+
+// Icon colour always matches the label colour in LABEL_VARIANTS.
+const ICON_COLORS: Record<ButtonVariant, (theme: AppTheme) => string> = {
+  primary: (theme) => theme.primaryForeground,
+  highlight: (theme) => theme.highlightForeground,
+  outline: (theme) => theme.text,
+  ghost: (theme) => theme.textMuted,
+  destructive: (theme) => theme.textInverted,
 };
 
 const CONTAINER_SIZES: Record<ButtonSize, string> = {
@@ -52,13 +62,16 @@ export function AppButton({
   size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
-  icon?: ReactNode;
+  icon?: IconName;
   iconPosition?: 'start' | 'end';
   className?: string;
   testID?: string;
 }) {
   const theme = useAppTheme();
   const blocked = disabled || loading;
+  const iconNode = icon ? (
+    <Icon name={icon} size="control" color={ICON_COLORS[variant](theme)} />
+  ) : null;
 
   return (
     <SoftPressable
@@ -92,10 +105,10 @@ export function AppButton({
           }
         />
       ) : iconPosition === 'start' ? (
-        icon
+        iconNode
       ) : null}
       <Text className={LABEL_VARIANTS[variant]}>{label}</Text>
-      {!loading && iconPosition === 'end' ? icon : null}
+      {!loading && iconPosition === 'end' ? iconNode : null}
     </SoftPressable>
   );
 }

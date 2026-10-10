@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { KeyIcon, PlusIcon, XMarkIcon } from 'react-native-heroicons/outline';
 import Animated, { FadeInRight, ReduceMotion } from 'react-native-reanimated';
 
 import { ChoiceCard } from '@/components/groups/choice-card';
@@ -12,6 +11,7 @@ import { CircleSeal } from '@/components/groups/circle-seal';
 import { JoinInvitationFlow } from '@/components/groups/join-invitation-flow';
 import { SoftPressable } from '@/components/ui/soft-pressable';
 import { useAppTheme } from '@/lib/theme';
+import { Icon } from '@/components/ui/icon';
 
 export default function CreateOrJoinSheet() {
   const { t } = useTranslation();
@@ -42,7 +42,7 @@ export default function CreateOrJoinSheet() {
           onPress={close}
           className="h-[44px] w-[44px] items-center justify-center rounded-full bg-surface-muted"
         >
-          <XMarkIcon size={22} color={theme.textMuted} />
+          <Icon name="close" size="control" color={theme.textMuted} />
         </SoftPressable>
       </View>
 
@@ -62,14 +62,14 @@ export default function CreateOrJoinSheet() {
               dominant
               title={t('groups.entry.createTitle')}
               description={t('groups.entry.createBody')}
-              icon={<PlusIcon size={22} color={theme.textInverted} />}
+              icon="add"
               onPress={() => router.replace('/groups/new')}
               testID="entry-create"
             />
             <ChoiceCard
               title={t('groups.entry.joinTitle')}
               description={t('groups.entry.joinBody')}
-              icon={<KeyIcon size={22} color={theme.successDark} />}
+              icon="invite-code"
               onPress={() => setMode('join')}
               testID="entry-join"
             />

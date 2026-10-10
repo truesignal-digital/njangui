@@ -9,25 +9,19 @@ import { useMutation } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
-import {
-  CameraIcon,
-  ChevronLeftIcon,
-  InformationCircleIcon,
-  PhotoIcon,
-} from 'react-native-heroicons/outline';
 
-import { api, type Id } from '../../../../../../../src/lib/convex-api';
-import { formatCurrencyXAF } from '../../../../../../../src/lib/format-currency';
-import { haptics } from '../../../../../../../src/lib/haptics';
-import { newIdempotencyKey } from '../../../../../../../src/lib/idempotency';
-import { useAppTheme } from '../../../../../../../src/lib/theme';
-import { usePayFlow } from '../../../../../../../src/hooks/use-pay-flow';
-import { AppButton } from '../../../../../../../src/components/ui/button';
-import { TextField } from '../../../../../../../src/components/ui/text-field';
-import { Skeleton } from '../../../../../../../src/components/skeleton';
-import { ImagePreviewModal } from '../../../../../../../src/components/image-preview-modal';
-import { SoftPressable } from '../../../../../../../src/components/ui/soft-pressable';
-import { ICON_SIZE } from '../../../../../../../src/lib/icons';
+import { api, type Id } from '@/lib/convex-api';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { haptics } from '@/lib/haptics';
+import { newIdempotencyKey } from '@/lib/idempotency';
+import { useAppTheme } from '@/lib/theme';
+import { usePayFlow } from '@/hooks/use-pay-flow';
+import { AppButton } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { TextField } from '@/components/ui/text-field';
+import { Skeleton } from '@/components/skeleton';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { SoftPressable } from '@/components/ui/soft-pressable';
 
 /**
  * Pay flow step 3 — claim (docs/03 B4): amount prefilled with the remaining
@@ -172,7 +166,7 @@ export default function PayClaimScreen() {
           onPress={() => router.back()}
           className="h-[44px] w-[44px] items-center justify-center rounded-full active:bg-surface-muted"
         >
-          <ChevronLeftIcon size={ICON_SIZE.control} color={theme.textMuted} />
+          <Icon name="back" size="control" color={theme.textMuted} />
         </SoftPressable>
         <View className="min-w-0 flex-1">
           <Text className="font-heading text-title text-foreground">
@@ -285,7 +279,7 @@ export default function PayClaimScreen() {
                   className="flex-1 flex-row items-center justify-center gap-xs rounded-lg border border-border bg-surface px-sm py-md active:bg-surface-muted"
                   testID="claim-take-photo"
                 >
-                  <CameraIcon size={18} color={theme.textMuted} />
+                  <Icon name="camera" size="control" color={theme.textMuted} />
                   <Text className="font-body-medium text-body-sm text-foreground">
                     {t('pay.takePhoto')}
                   </Text>
@@ -296,7 +290,7 @@ export default function PayClaimScreen() {
                   className="flex-1 flex-row items-center justify-center gap-xs rounded-lg border border-border bg-surface px-sm py-md active:bg-surface-muted"
                   testID="claim-choose-image"
                 >
-                  <PhotoIcon size={18} color={theme.textMuted} />
+                  <Icon name="photo" size="control" color={theme.textMuted} />
                   <Text className="font-body-medium text-body-sm text-foreground">
                     {t('pay.chooseImage')}
                   </Text>
@@ -309,7 +303,7 @@ export default function PayClaimScreen() {
           </View>
 
           <View className="flex-row items-start gap-xs">
-            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Icon name="info" size="metadata" color={theme.textMuted} />
             <Text className="flex-1 font-body text-body-sm text-muted">
               {t('pay.proofNote', { name: flow.payee?.displayName ?? '—' })}
             </Text>

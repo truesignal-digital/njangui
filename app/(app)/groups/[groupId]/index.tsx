@@ -4,27 +4,26 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeftIcon, PlusIcon } from 'react-native-heroicons/outline';
 
-import { api, type Id } from '../../../../src/lib/convex-api';
-import { useAuth } from '../../../../src/lib/clerk-client';
-import { formatCurrencyXAF } from '../../../../src/lib/format-currency';
-import { useAppTheme, useShadow } from '../../../../src/lib/theme';
-import { Badge, GROUP_STATUS_TONE } from '../../../../src/components/ui/badge';
-import { AppButton } from '../../../../src/components/ui/button';
-import { Skeleton } from '../../../../src/components/skeleton';
-import { ActivityFeed } from '../../../../src/components/groups/activity-feed';
-import { ReadinessCard } from '../../../../src/components/groups/readiness-card';
-import { InviteShare } from '../../../../src/components/groups/invite-share';
-import { MemberList } from '../../../../src/components/groups/member-list';
-import { RotationSection } from '../../../../src/components/groups/rotation-section';
-import { TreasurerHandover } from '../../../../src/components/groups/treasurer-handover';
-import { GroupSeal } from '../../../../src/components/groups/group-seal';
-import { CollectiveTableCard } from '../../../../src/components/groups/collective-table-card';
-import { SectionCard } from '../../../../src/components/ui/section-card';
-import { StatusBarCover } from '../../../../src/components/ui/status-bar-cover';
-import { SoftPressable } from '../../../../src/components/ui/soft-pressable';
-import { ICON_SIZE } from '../../../../src/lib/icons';
+import { api, type Id } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { useAppTheme, useShadow } from '@/lib/theme';
+import { Badge, GROUP_STATUS_TONE } from '@/components/ui/badge';
+import { AppButton } from '@/components/ui/button';
+import { Skeleton } from '@/components/skeleton';
+import { ActivityFeed } from '@/components/groups/activity-feed';
+import { ReadinessCard } from '@/components/groups/readiness-card';
+import { InviteShare } from '@/components/groups/invite-share';
+import { MemberList } from '@/components/groups/member-list';
+import { RotationSection } from '@/components/groups/rotation-section';
+import { TreasurerHandover } from '@/components/groups/treasurer-handover';
+import { GroupSeal } from '@/components/groups/group-seal';
+import { CollectiveTableCard } from '@/components/groups/collective-table-card';
+import { SectionCard } from '@/components/ui/section-card';
+import { StatusBarCover } from '@/components/ui/status-bar-cover';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Group home shell (docs/03 B2, Week 1 slice): roster with roles + status
@@ -136,7 +135,7 @@ export default function GroupHomeScreen() {
         <AppButton
           variant="outline"
           label={t('groups.detail.addMember')}
-          icon={<PlusIcon size={18} color={theme.accent} />}
+          icon="add"
           className="mt-sm"
           onPress={() =>
             router.push({
@@ -220,7 +219,7 @@ export default function GroupHomeScreen() {
             }
             className="mt-[2px] h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
           >
-            <ChevronLeftIcon size={ICON_SIZE.control} color={theme.textMuted} />
+            <Icon name="back" size="control" color={theme.textMuted} />
           </SoftPressable>
           <GroupSeal
             name={group.name}

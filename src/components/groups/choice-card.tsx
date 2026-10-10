@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
-import { CheckIcon, ChevronRightIcon } from 'react-native-heroicons/outline';
 
+import { choiceCardIconColor } from '@/lib/choice-card';
 import { cn } from '@/lib/cn';
 import { haptics } from '@/lib/haptics';
+import type { IconName } from '@/lib/icons';
 import { useAppTheme } from '@/lib/theme';
+import { Icon } from '@/components/ui/icon';
 import { SoftPressable } from '@/components/ui/soft-pressable';
 
 export function ChoiceCard({
@@ -18,7 +19,7 @@ export function ChoiceCard({
 }: {
   title: string;
   description?: string;
-  icon?: ReactNode;
+  icon?: IconName;
   selected?: boolean;
   dominant?: boolean;
   onPress: () => void;
@@ -56,7 +57,11 @@ export function ChoiceCard({
             dominant ? 'bg-overlay-light' : selected ? 'bg-accent-light' : 'bg-success-bg'
           )}
         >
-          {icon}
+          <Icon
+            name={icon}
+            size="emphasis"
+            color={choiceCardIconColor({ dominant, selected }, theme)}
+          />
         </View>
       ) : null}
       <View className="min-w-0 flex-1 gap-[3px]">
@@ -80,9 +85,9 @@ export function ChoiceCard({
         ) : null}
       </View>
       {selected ? (
-        <CheckIcon size={20} color={foreground} />
+        <Icon name="check" size="control" color={foreground} />
       ) : (
-        <ChevronRightIcon size={20} color={foreground} />
+        <Icon name="chevron" size="control" color={foreground} />
       )}
     </SoftPressable>
   );

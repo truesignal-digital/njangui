@@ -5,12 +5,6 @@ import { useMutation } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
-import {
-  BanknotesIcon,
-  DevicePhoneMobileIcon,
-  InformationCircleIcon,
-  XMarkIcon,
-} from 'react-native-heroicons/outline';
 
 import { api, type Id } from '@/lib/convex-api';
 import { showErrorToast } from '@/lib/error-toast';
@@ -20,9 +14,9 @@ import { newIdempotencyKey } from '@/lib/idempotency';
 import { useAppTheme } from '@/lib/theme';
 import { usePayFlow } from '@/hooks/use-pay-flow';
 import { AppButton } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/skeleton';
 import { SoftPressable } from '@/components/ui/soft-pressable';
-import { ICON_SIZE } from '@/lib/icons';
 
 /**
  * Pay flow step 1 — method picker (docs/03 B4). Kind-aware via `?record=`.
@@ -125,7 +119,7 @@ export default function PayMethodScreen() {
           onPress={close}
           className="h-[44px] w-[44px] items-center justify-center rounded-full active:bg-surface-muted"
         >
-          <XMarkIcon size={ICON_SIZE.control} color={theme.textMuted} />
+          <Icon name="close" size="control" color={theme.textMuted} />
         </SoftPressable>
       </View>
 
@@ -175,8 +169,9 @@ export default function PayMethodScreen() {
 
           <MethodCard
             icon={
-              <DevicePhoneMobileIcon
-                size={22}
+              <Icon
+                name="mobile-money"
+                size="emphasis"
                 color={
                   flow.methodAvailability.momo_mtn.available
                     ? theme.accent
@@ -193,8 +188,9 @@ export default function PayMethodScreen() {
           />
           <MethodCard
             icon={
-              <DevicePhoneMobileIcon
-                size={22}
+              <Icon
+                name="mobile-money"
+                size="emphasis"
                 color={
                   flow.methodAvailability.orange_money.available
                     ? theme.accent
@@ -210,7 +206,7 @@ export default function PayMethodScreen() {
             testID="pay-orange"
           />
           <MethodCard
-            icon={<BanknotesIcon size={22} color={theme.accent} />}
+            icon={<Icon name="cash" size="emphasis" color={theme.accent} />}
             label={t('pay.cash')}
             selected={selectedMethod === 'cash'}
             onPress={() => setSelectedMethod('cash')}
@@ -246,7 +242,7 @@ export default function PayMethodScreen() {
           ) : null}
 
           <View className="mt-sm flex-row items-start gap-xs">
-            <InformationCircleIcon size={16} color={theme.textMuted} />
+            <Icon name="info" size="metadata" color={theme.textMuted} />
             <Text className="flex-1 font-body text-body-sm text-muted">
               {t('pay.custodyNoteNeutral')}
             </Text>

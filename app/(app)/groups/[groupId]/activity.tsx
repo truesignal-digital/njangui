@@ -3,12 +3,12 @@ import { Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 
-import { type Id } from '../../../../src/lib/convex-api';
-import { useAppTheme } from '../../../../src/lib/theme';
-import { ActivityFeed } from '../../../../src/components/groups/activity-feed';
-import { NjangiMark } from '../../../../src/components/brand/njangi-mark';
+import { type Id } from '@/lib/convex-api';
+import { useAppTheme } from '@/lib/theme';
+import { ActivityFeed } from '@/components/groups/activity-feed';
+import { NjangiMark } from '@/components/brand/njangi-mark';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Full group activity — the complete immutable who-did-what-when (trust
@@ -42,7 +42,7 @@ export default function GroupActivityScreen() {
           }
           className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
         >
-          <ChevronLeftIcon size={22} color={theme.textMuted} />
+          <Icon name="back" size="control" color={theme.textMuted} />
         </Pressable>
         <Text className="font-heading text-headline text-foreground">
           {t('feed.fullTitle')}

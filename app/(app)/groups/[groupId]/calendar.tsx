@@ -2,11 +2,11 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 
-import { useAppTheme } from '../../../../src/lib/theme';
-import { CalendarAgenda } from '../../../../src/components/calendar-agenda';
-import { NjangiMark } from '../../../../src/components/brand/njangi-mark';
+import { useAppTheme } from '@/lib/theme';
+import { CalendarAgenda } from '@/components/calendar-agenda';
+import { NjangiMark } from '@/components/brand/njangi-mark';
+import { Icon } from '@/components/ui/icon';
 
 /** Group-scoped agenda — every round of this njangi's cycle, month by month. */
 export default function GroupCalendarScreen() {
@@ -41,7 +41,7 @@ export default function GroupCalendarScreen() {
           }
           className="h-[36px] w-[36px] items-center justify-center rounded-md active:bg-surface-muted"
         >
-          <ChevronLeftIcon size={22} color={theme.textMuted} />
+          <Icon name="back" size="control" color={theme.textMuted} />
         </Pressable>
         <View className="min-w-0 flex-1">
           <Text className="font-heading text-headline text-foreground">

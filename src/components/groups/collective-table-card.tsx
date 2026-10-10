@@ -2,7 +2,6 @@ import { Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useConvexAuth, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRightIcon } from 'react-native-heroicons/outline';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 
 import { api, type Id } from '@/lib/convex-api';
@@ -12,7 +11,6 @@ import { toIntlLocale } from '@/lib/app-locale';
 import { AppButton } from '@/components/ui/button';
 import { NjangiMark } from '@/components/brand/njangi-mark';
 import { Skeleton } from '@/components/skeleton';
-import { ICON_SIZE } from '@/lib/icons';
 import { mobileUiConfig } from '@/lib/mobile-ui-config';
 
 type TableMember = {
@@ -129,12 +127,7 @@ export function CollectiveTableCard({
       {currentRound ? (
         <AppButton
           label={t('groups.table.prepareTogether')}
-          icon={
-            <ArrowRightIcon
-              size={ICON_SIZE.control}
-              color={theme.primaryForeground}
-            />
-          }
+          icon="next"
           iconPosition="end"
           onPress={() =>
             router.push({

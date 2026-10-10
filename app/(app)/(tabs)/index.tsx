@@ -2,10 +2,6 @@ import { ScrollView, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArrowRightIcon,
-  CheckCircleIcon,
-} from 'react-native-heroicons/outline';
 
 import {
   AttentionPrimaryCard,
@@ -14,6 +10,7 @@ import {
 import { WaitingShelf } from '@/components/attention/waiting-shelf';
 import { Skeleton } from '@/components/skeleton';
 import { AppButton } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { SoftPressable } from '@/components/ui/soft-pressable';
 import { StatusBarCover } from '@/components/ui/status-bar-cover';
 import { useAttention } from '@/hooks/use-attention';
@@ -25,7 +22,6 @@ import {
 } from '@/lib/attention-presentation';
 import { toIntlLocale } from '@/lib/app-locale';
 import { useAppTheme } from '@/lib/theme';
-import { ICON_SIZE } from '@/lib/icons';
 
 /**
  * Today answers one question: what can I move forward now? Waiting and the
@@ -149,7 +145,7 @@ export default function TodayScreen() {
             className="gap-sm rounded-2xl border border-success bg-success-bg p-lg"
             style={{ borderCurve: 'continuous' }}
           >
-            <CheckCircleIcon size={28} color={theme.successDark} />
+            <Icon name="confirmed" size="emphasis" color={theme.successDark} />
             <Text className="font-heading text-headline text-foreground">
               {t('attention.today.allClearTitle')}
             </Text>
@@ -187,7 +183,7 @@ export default function TodayScreen() {
                 ? t('attention.today.moreActions', { count: moreCount })
                 : t('attention.today.seeAllActions')}
             </Text>
-            <ArrowRightIcon size={ICON_SIZE.metadata} color={theme.accent} />
+            <Icon name="next" size="metadata" color={theme.accent} />
           </SoftPressable>
         ) : null}
 

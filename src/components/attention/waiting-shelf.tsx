@@ -9,21 +9,20 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { ChevronDownIcon, ChevronRightIcon } from 'react-native-heroicons/outline';
 
 import type {
   AttentionSnapshot,
   WaitingFact,
-} from '../../lib/attention-presentation';
+} from '@/lib/attention-presentation';
 import {
   presentWaitingFact,
   waitingFactCount,
-} from '../../lib/attention-presentation';
-import { haptics } from '../../lib/haptics';
-import { ICON_SIZE } from '../../lib/icons';
-import { mobileUiConfig } from '../../lib/mobile-ui-config';
-import { useAppTheme } from '../../lib/theme';
-import { SoftPressable } from '../ui/soft-pressable';
+} from '@/lib/attention-presentation';
+import { haptics } from '@/lib/haptics';
+import { mobileUiConfig } from '@/lib/mobile-ui-config';
+import { useAppTheme } from '@/lib/theme';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { Icon } from '@/components/ui/icon';
 
 type Translate = (
   key: string,
@@ -81,7 +80,7 @@ export function WaitingShelf({
           {t('attention.waiting.label', { count })}
         </Text>
         <Animated.View style={chevronStyle}>
-          <ChevronDownIcon size={ICON_SIZE.metadata} color={theme.textMuted} />
+          <Icon name="expand" size="metadata" color={theme.textMuted} />
         </Animated.View>
       </SoftPressable>
 
@@ -122,10 +121,7 @@ export function WaitingShelf({
                   </Text>
                 </View>
                 {canOpen ? (
-                  <ChevronRightIcon
-                    size={ICON_SIZE.metadata}
-                    color={theme.textMuted}
-                  />
+                  <Icon name="chevron" size="metadata" color={theme.textMuted} />
                 ) : null}
               </SoftPressable>
             );
