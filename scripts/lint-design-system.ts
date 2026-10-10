@@ -145,9 +145,14 @@ for (const file of [...sourceFiles(join(ROOT, 'app')), ...sourceFiles(join(ROOT,
 // 6 — Compose slots only render Compose children (ExpoComposeView.Children
 // skips non-Compose views), so a bare string in a `*.Label` slot is invisible.
 const NATIVE_DIR = join(ROOT, 'src', 'components', 'native');
-const composeLabelRe = /<([\w.]+)\.Label>([\s\S]*?)<\/\1\.Label>/g;
+const composeLabelRe = /<([\w.]+)\.Label\b[^>]*>([\s\S]*?)<\/\1\.Label>/g;
 for (const file of sourceFiles(NATIVE_DIR).filter((path) => path.endsWith('index.android.tsx'))) {
   const source = readFileSync(file, 'utf8');
+  const hasComposeLabel = composeLabelRe.test(source);
+  composeLabelRe.lastIndex = 0;
+  if (hasComposeLabel && !/import\s*\{[^}]*\bText\b[^}]*\}\s*from\s*['"]@expo\/ui\/jetpack-compose['"]/.test(source)) {
+    errors.push(`${file.slice(ROOT.length + 1)}: Compose *.Label slots need Text imported from @expo/ui/jetpack-compose`);
+  }
   for (const match of source.matchAll(composeLabelRe)) {
     const inner = match[2].trim();
     if (!/^<Text[\s>]/.test(inner) || !/(<\/Text>|\/>)$/.test(inner)) {
