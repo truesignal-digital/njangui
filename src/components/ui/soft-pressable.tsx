@@ -11,12 +11,13 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { cssInterop } from "nativewind";
 
 import { mobileUiConfig } from "@/lib/mobile-ui-config";
 
+// No cssInterop: reanimated renders the inner RN Pressable through NativeWind's JSX
+// runtime, which already swaps it for the interop Pressable. Registering the animated
+// wrapper too hid primary CTAs (2026-09-25 pilot review).
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-cssInterop(AnimatedPressable, { className: "style" });
 
 type SoftPressableProps = Omit<PressableProps, "children" | "style"> & {
   children: ReactNode;
