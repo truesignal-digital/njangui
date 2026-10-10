@@ -6,13 +6,16 @@ export type FontStyle = { fontFamily?: string; fontWeight: FontWeight };
 
 /**
  * JS-track twin of the `font-*` classes in tailwind.config.ts. Family
- * `system` leaves fontFamily unset: that is SF Pro on iOS and Roboto on
- * Android, and on Android only an unset family renders real 500/600 weights.
+ * `system` (or a null platform entry) leaves fontFamily unset: SF Pro on iOS,
+ * Roboto on Android. React Native Android only distinguishes Regular from
+ * Bold (>= 700) when picking a face below API 28 and for any named family,
+ * so Android 500/600 name the Roboto Medium face (`systemMedium`).
  */
 export function resolveFontStyle(token: FontToken, os: string): FontStyle {
   const { family, weight } = config.fonts[token];
   const fontWeight = weight as FontWeight;
   if (family === 'system') return { fontWeight };
   const families = config.fontFamilies[family as keyof typeof config.fontFamilies];
-  return { fontFamily: os === 'ios' ? families.ios : families.android, fontWeight };
+  const fontFamily = os === 'ios' ? families.ios : families.android;
+  return fontFamily ? { fontFamily, fontWeight } : { fontWeight };
 }

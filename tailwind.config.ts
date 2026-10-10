@@ -93,10 +93,11 @@ const fontClassNames: Record<keyof typeof mobileUiConfig.fonts, string> = {
 };
 
 /**
- * `font-*` = family + weight. Family `system` emits no font-family: React
- * Native Android only renders 400/700 for a named family (Typeface.create
- * with NORMAL | BOLD), and an unset family is SF Pro / Roboto with real
- * weights. Mirrors resolveFontStyle() in src/lib/fonts.ts.
+ * `font-*` = family + weight. Family `system` emits no font-family (SF Pro /
+ * Roboto); a null platform entry is left out of platformSelect, so that
+ * platform gets no family. Android 500/600 name sans-serif-medium because RN
+ * Android picks only Regular or Bold faces below API 28. Mirrors
+ * resolveFontStyle() in src/lib/fonts.ts.
  */
 function fontUtilities() {
   return Object.fromEntries(
@@ -106,7 +107,10 @@ function fontUtilities() {
       if (family !== 'system') {
         const { ios, android } =
           mobileUiConfig.fontFamilies[family as keyof typeof mobileUiConfig.fontFamilies];
-        rule['font-family'] = platformSelect({ ios, android, default: android });
+        const specifics: Record<string, string> = {};
+        if (ios) specifics.ios = ios;
+        if (android) specifics.android = android;
+        rule['font-family'] = platformSelect(specifics);
       }
       return [`.font-${className}`, rule];
     })

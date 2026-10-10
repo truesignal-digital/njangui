@@ -52,7 +52,7 @@ type ThemeColors = {
 
 type TextTransform = 'none' | 'capitalize' | 'uppercase' | 'lowercase';
 
-type FontFamilyToken = 'system' | 'rounded' | 'mono';
+type FontFamilyToken = 'system' | 'systemMedium' | 'rounded' | 'mono';
 type FontWeightToken = '400' | '500' | '600' | '700';
 type FontConfig = { family: FontFamilyToken; weight: FontWeightToken };
 
@@ -140,8 +140,11 @@ export type MobileUiConfig = {
     pill: number;
     full: number;
   };
-  /** Named families per platform; `system` (no family) is SF Pro / Roboto. */
-  fontFamilies: Record<Exclude<FontFamilyToken, 'system'>, { ios: string; android: string }>;
+  /** Named families per platform; `system` and `null` mean no family (SF Pro / Roboto). */
+  fontFamilies: Record<
+    Exclude<FontFamilyToken, 'system'>,
+    { ios: string | null; android: string | null }
+  >;
   fonts: FontsMap;
   typography: TypographyMap;
   shadows: ShadowMap;

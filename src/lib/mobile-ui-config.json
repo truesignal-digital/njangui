@@ -128,14 +128,15 @@
   },
   "fontFamilies": {
     "rounded": { "ios": "ui-rounded", "android": "sans-serif" },
-    "mono": { "ios": "ui-monospace", "android": "monospace" }
+    "mono": { "ios": "ui-monospace", "android": "monospace" },
+    "systemMedium": { "ios": null, "android": "sans-serif-medium" }
   },
   "fonts": {
     "heading": { "family": "system", "weight": "700" },
-    "headingSemiBold": { "family": "system", "weight": "600" },
+    "headingSemiBold": { "family": "systemMedium", "weight": "600" },
     "body": { "family": "system", "weight": "400" },
-    "bodyMedium": { "family": "system", "weight": "500" },
-    "bodySemiBold": { "family": "system", "weight": "600" },
+    "bodyMedium": { "family": "systemMedium", "weight": "500" },
+    "bodySemiBold": { "family": "systemMedium", "weight": "600" },
     "bodyBold": { "family": "system", "weight": "700" },
     "mono": { "family": "mono", "weight": "600" },
     "monoBold": { "family": "mono", "weight": "700" },
