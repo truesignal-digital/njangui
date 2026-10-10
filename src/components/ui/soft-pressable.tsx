@@ -11,12 +11,12 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { cssInterop } from "nativewind";
 
 import { mobileUiConfig } from "@/lib/mobile-ui-config";
 
+// No cssInterop here: the inner Pressable already maps className. Registering the
+// animated wrapper too made primary CTAs render invisible (2026-09-25 pilot review).
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-cssInterop(AnimatedPressable, { className: "style" });
 
 type SoftPressableProps = Omit<PressableProps, "children" | "style"> & {
   children: ReactNode;
