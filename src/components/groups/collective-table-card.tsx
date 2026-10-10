@@ -12,7 +12,6 @@ import { AppButton } from '@/components/ui/button';
 import { NjangiMark } from '@/components/brand/njangi-mark';
 import { Skeleton } from '@/components/skeleton';
 import { mobileUiConfig } from '@/lib/mobile-ui-config';
-import { Icon } from '@/components/ui/icon';
 
 type TableMember = {
   membershipId: string;
@@ -128,9 +127,7 @@ export function CollectiveTableCard({
       {currentRound ? (
         <AppButton
           label={t('groups.table.prepareTogether')}
-          icon={
-            <Icon name="next" size="control" color={theme.primaryForeground} />
-          }
+          icon="next"
           iconPosition="end"
           onPress={() =>
             router.push({

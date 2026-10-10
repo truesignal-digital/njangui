@@ -330,9 +330,7 @@ export default function StartCycleScreen() {
             {isPresident ? (
               <AppButton
                 label={t('groups.cycle.startCta')}
-                icon={
-                  <Icon name="locked" size="control" color={theme.primaryForeground} />
-                }
+                icon="locked"
                 className="mt-xl"
                 disabled={(order?.length ?? 0) < 2}
                 onPress={() => setConfirming(true)}

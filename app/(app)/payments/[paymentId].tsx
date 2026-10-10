@@ -455,7 +455,7 @@ function PaymentActions({ record }: { record: RecordDetail }) {
               <>
                 <AppButton
                   label={t('payment.confirmCta')}
-                  icon={<Icon name="confirmed" size="control" color={theme.primaryForeground} />}
+                  icon="confirmed"
                   testID="payment-confirm"
                   onPress={() => setMode('confirming')}
                 />
@@ -532,7 +532,7 @@ function PaymentActions({ record }: { record: RecordDetail }) {
                 }
               >
                 {reason === r ? (
-                  <Icon name="confirmed" size="control" color={theme.accent} />
+                  <Icon name="check" size="control" color={theme.accent} />
                 ) : (
                   <View className="h-[16px] w-[16px] rounded-full border-2 border-placeholder" />
                 )}

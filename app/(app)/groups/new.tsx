@@ -139,7 +139,7 @@ export default function GroupCreationWizard() {
             <AppButton
               variant="outline"
               label={t('groups.wizard.addWithoutPhone')}
-              icon={<Icon name="add-person" size="control" color={theme.text} />}
+              icon="add-person"
               onPress={() =>
                 router.push({
                   pathname: '/groups/[groupId]/add-member',
@@ -199,7 +199,7 @@ export default function GroupCreationWizard() {
             />
             <AppButton
               label={t('common.continue')}
-              icon={<Icon name="next" size="control" color={theme.primaryForeground} />}
+              icon="next"
               iconPosition="end"
               disabled={!name.trim()}
               onPress={() => goToStep(2)}

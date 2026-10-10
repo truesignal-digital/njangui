@@ -130,7 +130,7 @@ export function AttentionPrimaryCard({
         variant="highlight"
         size="sm"
         iconPosition="end"
-        icon={<Icon name="next" size="metadata" color={theme.highlightForeground} />}
+        icon="next"
         onPress={onPress}
       />
     </View>

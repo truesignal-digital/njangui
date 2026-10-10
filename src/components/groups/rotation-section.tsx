@@ -59,7 +59,7 @@ export function RotationSection({
         {canStart ? (
           <AppButton
             label={t('groups.cycle.startCta')}
-            icon={<Icon name="start" size="control" color={theme.primaryForeground} />}
+            icon="start"
             disabled={activeMemberCount < 2}
             onPress={() =>
               router.push({

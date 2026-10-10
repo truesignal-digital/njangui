@@ -172,7 +172,7 @@ export default function UssdScreen() {
           <View className="mt-lg gap-sm">
             <AppButton
               label={t('pay.dial', { code: content.code })}
-              icon={<Icon name="call" size="control" color={theme.primaryForeground} />}
+              icon="call"
               onPress={dial}
               testID="ussd-dial"
             />

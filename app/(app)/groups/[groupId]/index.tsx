@@ -135,7 +135,7 @@ export default function GroupHomeScreen() {
         <AppButton
           variant="outline"
           label={t('groups.detail.addMember')}
-          icon={<Icon name="add" size="control" color={theme.text} />}
+          icon="add"
           className="mt-sm"
           onPress={() =>
             router.push({

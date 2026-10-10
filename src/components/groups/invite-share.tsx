@@ -65,7 +65,7 @@ export function InviteShare({
       </View>
       <AppButton
         label={t('groups.invite.whatsapp')}
-        icon={<Icon name="share" size="control" color={theme.primaryForeground} />}
+        icon="share"
         onPress={() => void shareOnWhatsApp()}
       />
     </View>
