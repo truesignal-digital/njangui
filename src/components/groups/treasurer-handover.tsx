@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner-native';
 import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { api, type Id } from '../../lib/convex-api';
-import { formatCurrencyXAF } from '../../lib/format-currency';
-import { haptics } from '../../lib/haptics';
-import { useAppTheme } from '../../lib/theme';
-import { AppButton } from '../ui/button';
+import { api, type Id } from '@/lib/convex-api';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { MoneyText } from '@/components/ui/money-text';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme } from '@/lib/theme';
+import { AppButton } from '@/components/ui/button';
 import type { GroupMemberItem } from './member-list';
 
 export function TreasurerHandover({
@@ -167,9 +168,9 @@ export function TreasurerHandover({
                 name: preview.currentTreasurerName ?? '—',
               })}
             </Text>
-            <Text className="pt-xs font-mono text-title text-foreground">
+            <MoneyText size="row" className="pt-xs">
               {formatCurrencyXAF(preview.custodyAmount)}
-            </Text>
+            </MoneyText>
           </View>
           <AppButton
             label={t('groups.handover.confirm')}

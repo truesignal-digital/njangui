@@ -41,9 +41,6 @@
   },
   "dependencies": {
     "@clerk/expo": "^3.7.8",
-    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
-    "@expo-google-fonts/newsreader": "^0.4.1",
-    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/ui": "~57.0.4",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@sentry/react-native": "~7.11.0",

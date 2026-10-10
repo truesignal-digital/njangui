@@ -17,6 +17,10 @@
  *    key-identical; no typography entry but tabLabel is below 14 px; the
  *    light background is a neutral grey (no cream); textMuted on background
  *    is >= 7:1 in light; every status *Dark on *Bg is >= 4.5:1 in both modes.
+ * 7. System fonts: no fontFamily string literal in app/ or src/ (families live
+ *    in mobile-ui-config.json); no @expo-google-fonts dependency or import;
+ *    money renders through <MoneyText>, with a shrink-only baseline of files
+ *    that still put formatCurrencyXAF() directly inside a <Text>.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -198,6 +202,77 @@ for (const mode of ['light', 'dark'] as const) {
     if (ratio < 4.5) {
       errors.push(`mobile-ui-config: ${mode} ${status}Dark on ${status}Bg is ${ratio.toFixed(2)}:1 (minimum 4.5)`);
     }
+  }
+}
+
+// 7 — system fonts and one money style.
+// Shrink-only baseline: files that still render a formatCurrencyXAF() string
+// as a direct <Text> child, with how many. Migrate to <MoneyText> on touch,
+// then lower or delete the entry; growth or a stale entry fails the lint.
+const MONEY_TEXT_BASELINE: Record<string, number> = {
+  'app/(app)/groups/[groupId]/rounds/[roundId]/index.tsx': 1,
+  'app/(app)/groups/[groupId]/rounds/[roundId]/meeting.tsx': 1,
+  'src/components/groups/group-row.tsx': 2,
+};
+
+function moneyTextViolations(source: string): number {
+  let count = 0;
+  const openTag = /<Text(?=[\s>])/g;
+  let match: RegExpExecArray | null;
+  while ((match = openTag.exec(source))) {
+    // Skip past the opening tag, ignoring `>` inside {...} prop expressions.
+    let i = match.index + match[0].length;
+    let depth = 0;
+    for (; i < source.length; i++) {
+      const ch = source[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') depth--;
+      else if (ch === '>' && depth === 0) break;
+    }
+    if (source[i - 1] === '/') continue;
+    const directChildren = source.slice(i + 1, source.indexOf('<', i + 1));
+    if (/\{\s*(?:`[^`]*\$\{\s*)?formatCurrencyXAF\(/.test(directChildren)) count++;
+  }
+  return count;
+}
+
+const packageJson = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+};
+for (const name of Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies })) {
+  if (name.startsWith('@expo-google-fonts/')) {
+    errors.push(`package.json: ${name} — the app uses the system font (mobile-ui-config.json fonts)`);
+  }
+}
+
+const moneyCounts = new Map<string, number>();
+for (const file of [...sourceFiles(join(ROOT, 'app')), ...sourceFiles(join(ROOT, 'src'))]) {
+  const rel = file.slice(ROOT.length + 1);
+  const source = readFileSync(file, 'utf8');
+  if (!rel.endsWith('.test.ts') && /\bfontFamily\s*:\s*['"`]/.test(source)) {
+    errors.push(`${rel}: fontFamily string literal — read the family from mobile-ui-config.json fonts`);
+  }
+  if (/(?:from|import|require\()\s*['"]@expo-google-fonts\//.test(source)) {
+    errors.push(`${rel}: @expo-google-fonts import — the app uses the system font`);
+  }
+  const violations = moneyTextViolations(source);
+  if (violations > 0) moneyCounts.set(rel, violations);
+}
+for (const [rel, count] of moneyCounts) {
+  const allowed = MONEY_TEXT_BASELINE[rel] ?? 0;
+  if (count > allowed) {
+    errors.push(
+      `${rel}: ${count} <Text> render(s) of formatCurrencyXAF() (baseline ${allowed}) — use <MoneyText> from @/components/ui/money-text`
+    );
+  }
+}
+for (const [rel, allowed] of Object.entries(MONEY_TEXT_BASELINE)) {
+  const count = moneyCounts.get(rel) ?? 0;
+  if (count < allowed) {
+    errors.push(
+      `scripts/lint-design-system.ts: MONEY_TEXT_BASELINE['${rel}'] is ${allowed} but the file has ${count} — lower it (the baseline only shrinks)`
+    );
   }
 }
 

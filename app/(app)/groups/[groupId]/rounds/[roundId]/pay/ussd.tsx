@@ -14,6 +14,7 @@ import {
 } from 'react-native-heroicons/outline';
 
 import { formatCurrencyXAF } from '@/lib/format-currency';
+import { MoneyText } from '@/components/ui/money-text';
 import { haptics } from '@/lib/haptics';
 import { useAppTheme } from '@/lib/theme';
 import {
@@ -138,9 +139,9 @@ export default function UssdScreen() {
               <Text className="font-body-semi text-overline uppercase text-success-dark">
                 {t('pay.roundEyebrow', { n: flow.round.index })}
               </Text>
-              <Text className="pt-xs font-heading text-display-lg text-foreground">
+              <MoneyText size="hero" className="pt-xs">
                 {formatCurrencyXAF(flow.record.amount)}
-              </Text>
+              </MoneyText>
               <Text className="font-heading text-title-lg text-foreground">
                 {t('pay.yourContribution')}
               </Text>

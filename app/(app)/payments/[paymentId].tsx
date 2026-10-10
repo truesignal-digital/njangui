@@ -9,21 +9,22 @@ import { toast } from 'sonner-native';
 import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { api, type Id } from '../../../src/lib/convex-api';
-import { useAuth } from '../../../src/lib/clerk-client';
-import { showErrorToast } from '../../../src/lib/error-toast';
-import { formatCurrencyXAF } from '../../../src/lib/format-currency';
-import { formatDateTime } from '../../../src/lib/format-date';
-import { haptics } from '../../../src/lib/haptics';
-import { useAppTheme, useShadow } from '../../../src/lib/theme';
+import { api, type Id } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { showErrorToast } from '@/lib/error-toast';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { MoneyText } from '@/components/ui/money-text';
+import { formatDateTime } from '@/lib/format-date';
+import { haptics } from '@/lib/haptics';
+import { useAppTheme, useShadow } from '@/lib/theme';
 import {
   PaymentStateBadge,
   type PaymentState,
-} from '../../../src/components/ui/badge';
-import { AppButton } from '../../../src/components/ui/button';
-import { TextField } from '../../../src/components/ui/text-field';
-import { Skeleton } from '../../../src/components/skeleton';
-import { ImagePreviewModal } from '../../../src/components/image-preview-modal';
+} from '@/components/ui/badge';
+import { AppButton } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Skeleton } from '@/components/skeleton';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
 
 type DisputeReason = 'not_received' | 'wrong_amount' | 'other';
 
@@ -120,9 +121,9 @@ export default function PaymentDetailScreen() {
             <Text className="font-body-semi text-overline uppercase text-success-dark">
               {record.groupName}
             </Text>
-            <Text selectable className="font-heading text-display-lg text-foreground">
+            <MoneyText selectable size="hero">
               {formatCurrencyXAF(record.amount)}
-            </Text>
+            </MoneyText>
             <Text className="font-heading text-title-lg text-foreground">
               {t(`payment.kind.${record.kind}`)}
             </Text>
