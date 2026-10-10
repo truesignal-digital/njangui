@@ -18,11 +18,16 @@ bun run release:status
 
 ## Ship JS to staging testers (preview channel)
 
+Automatic. Every push to `develop` runs `.github/workflows/eas-update.yml`:
+
+- If this commit's runtime matches the installed preview builds, it publishes
+  `eas update --channel preview --environment preview` with the commit SHA in
+  the message.
+- If native code changed, it publishes nothing and fails with "New preview build
+  needed"; the job summary names the new runtime. Build (see "When OTA is not
+  enough" below), then re-run the workflow.
+
 ```bash
-git checkout main && git pull
-bun run release:status                        # read what testers currently have
-npx eas-cli@latest update --channel preview --environment preview \
-  --message "one line: what changed"
 bun run release:status                        # confirm the publish landed
 ```
 
@@ -30,19 +35,25 @@ Testers get it on their **second** app launch (first launch downloads, second ru
 
 ## Ship JS to real users (production channel)
 
-Same commands, swap the channel **and** the environment — they must always match:
+Promote the update testers already ran on `preview`. Never publish a fresh
+`eas update` to production: that would be a new, untested bundle (ADR-0001,
+invariant 4). The bundle picks its backend from its channel at runtime
+(`src/lib/env-channel.ts`), so the same update talks to staging on `preview` and
+to prod on `production`.
+
+After the release PR (`develop` → `main`) merges:
 
 ```bash
-git checkout main && git pull
 bun run release:status
-git log --oneline <last-released-commit>..main   # READ THIS — it is your release
-npx eas-cli@latest update --channel production --environment production \
-  --message "one line: what changed"
-bun run release:status
+npx eas-cli@latest update:list --branch preview --limit 5  # find the group whose message names the released develop SHA, note its runtime
+npx eas-cli@latest build:list --channel production --status finished --limit 2  # its runtime must match the group's
+npx eas-cli@latest update:republish --group <update-group-id> \
+  --destination-channel production --message "Release: <what> (YYYY-MM-DD)"
+bun run release:status                                     # confirm production shows the group
 ```
 
-> ⚠️ `--environment` bakes in that tier's backend URL + Clerk key.
-> Wrong flag = staging app talking to prod money. Never omit it.
+> ⚠️ If the production builds' runtime differs from the preview update's, the
+> republished update reaches nobody. Ship a production build instead.
 
 ## Put the current native app on a phone
 

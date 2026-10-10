@@ -1,0 +1,91 @@
+name: EAS Update (preview)
+
+# develop = staging (docs/adr/0001-develop-is-staging.md). Every push to develop
+# publishes its JS to the `preview` channel, but only when the native runtime
+# matches the installed preview builds; otherwise the update would reach nobody.
+# The bundle picks its backend from the update channel at runtime
+# (src/lib/env-channel.ts), so this same update is later promoted to
+# production with `eas update:republish` (docs/release-runbook.md).
+on:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eas-update-preview
+  cancel-in-progress: false # never cancel a half-finished publish
+
+jobs:
+  publish-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check EXPO_TOKEN is set
+        run: test -n "$EXPO_TOKEN" || { echo "EXPO_TOKEN secret is missing"; exit 1; }
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.6 # keep in sync with packageManager in package.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - run: bun install --frozen-lockfile
+
+      # The channel → backend map is what makes republish-to-production safe.
+      - run: bun test src/lib/env-channel.test.ts
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # Compare this commit's runtime (fingerprint policy) with the newest
+      # finished preview build per platform. A platform with no preview build
+      # yet does not block; any mismatch blocks the whole publish.
+      - name: Check the fingerprint matches the preview builds
+        run: |
+          set -euo pipefail
+          mismatch=0
+          {
+            echo "## Preview update for \`${GITHUB_SHA::7}\`"
+            echo
+            echo "| Platform | This commit's runtime | Installed preview build runtime |"
+            echo "|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for platform in android ios; do
+            local_rv=$(npx expo-updates runtimeversion:resolve --platform "$platform" | jq -r '.runtimeVersion')
+            build_rv=$(eas build:list --channel preview --platform "$platform" --status finished \
+              --limit 1 --json --non-interactive | jq -r '.[0].runtimeVersion // empty')
+            echo "| $platform | \`$local_rv\` | \`${build_rv:-no preview build}\` |" >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$build_rv" ] && [ "$local_rv" != "$build_rv" ]; then
+              mismatch=1
+            fi
+          done
+          if [ "$mismatch" = 1 ]; then
+            {
+              echo
+              echo "**New preview build needed.** Native code changed, so an update for this runtime reaches no installed preview build. Nothing was published."
+              echo "Run \`bun run eas:build:preview:android\` (and the iOS preview build if testers use it), then re-run this workflow."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::New preview build needed: the runtime differs from the installed preview builds (see job summary). Nothing was published."
+            exit 1
+          fi
+
+      - name: Publish to the preview channel
+        run: |
+          set -euo pipefail
+          subject=$(git log -1 --format=%s "$GITHUB_SHA")
+          eas update --channel preview --environment preview --non-interactive \
+            --message "develop ${GITHUB_SHA::7}: $subject"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo "Published \`${GITHUB_SHA::7}\` to \`preview\`." >> "$GITHUB_STEP_SUMMARY"
