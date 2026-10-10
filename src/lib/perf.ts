@@ -62,19 +62,39 @@ export function measure<T>(name: SpanName, fn: () => T): T {
   return result;
 }
 
-let appStart: PerfSpan | null = null;
+// Home's route name in app/(app)/(tabs)/index.tsx. Other index screens
+// carry their path (e.g. 'groups/[groupId]/index'), so this is unique.
+const HOME_ROUTE = 'index';
+// Older than this is a detour (sign-in, backgrounding), not a cold start.
+const APP_START_MAX_MS = 30_000;
 
-/** Called once from app/_layout.tsx, right after Sentry.init. */
+let appStart: { span: PerfSpan; startMs: number } | null = null;
+
+/**
+ * Called once from app/_layout.tsx, right after Sentry.init. The start point
+ * is JS module eval, so the span undercounts native init and bundle load;
+ * Sentry's own app-start span covers those.
+ */
 export function beginAppStart() {
-  appStart ??= startSpan('app.start.home');
+  appStart ??= { span: startSpan('app.start.home'), startMs: Date.now() };
 }
 
 /**
- * Home reports 'home' on its first render with Convex data. A start that
- * detours through sign-in reports 'abandoned' and sends nothing, so the
- * budget only sees real cold starts.
+ * RootLayout reports each focused-route change. Any route other than Home
+ * (deep link, onboarding, sign-in) abandons the start, so only cold starts
+ * that land on Home reach the budget.
+ */
+export function noteAppStartRoute(routeName: string | undefined) {
+  if (routeName !== undefined && routeName !== HOME_ROUTE) endAppStart('abandoned');
+}
+
+/**
+ * Home reports 'home' on its first render with Convex data. Abandoned or
+ * stale starts send nothing. Later calls are no-ops.
  */
 export function endAppStart(outcome: 'home' | 'abandoned') {
-  if (outcome === 'home') appStart?.end();
+  if (outcome === 'home' && appStart && Date.now() - appStart.startMs <= APP_START_MAX_MS) {
+    appStart.span.end();
+  }
   appStart = null;
 }

@@ -32,7 +32,7 @@ import { Toaster } from 'sonner-native';
 import * as Sentry from '@sentry/react-native';
 
 import { AppProviders } from '@/providers/app-providers';
-import { beginAppStart } from '@/lib/perf';
+import { beginAppStart, noteAppStartRoute } from '@/lib/perf';
 import { useAppTheme } from '@/lib/theme';
 import { useThemePreference } from '@/lib/theme-preference';
 
@@ -136,6 +136,14 @@ export default Sentry.wrap(function RootLayout() {
     if (navigationRef?.current) {
       navigationIntegration.registerNavigationContainer(navigationRef);
     }
+    // No-op once the app-start span is settled.
+    const reportRoute = () => {
+      // RootParamList is untyped here, so getCurrentRoute() infers `never`.
+      const route: { name: string } | undefined = navigationRef.getCurrentRoute();
+      noteAppStartRoute(route?.name);
+    };
+    if (navigationRef.isReady()) reportRoute();
+    return navigationRef.addListener('state', reportRoute);
   }, [navigationRef]);
 
   return (

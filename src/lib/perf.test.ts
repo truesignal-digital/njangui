@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, setSystemTime, test } from 'bun:test';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
@@ -11,13 +11,18 @@ mock.module('./logger', () => ({ logger: { debug } }));
 
 const globals = globalThis as { __DEV__?: boolean };
 globals.__DEV__ = false;
-const { measure, startSpan } = await import('./perf');
+const { beginAppStart, endAppStart, measure, noteAppStartRoute, startSpan } = await import('./perf');
 
 beforeEach(() => {
   globals.__DEV__ = false;
   spanEnd.mockClear();
   startInactiveSpan.mockClear();
   debug.mockClear();
+  endAppStart('abandoned');
+});
+
+afterEach(() => {
+  setSystemTime();
 });
 
 describe('measure', () => {
@@ -72,6 +77,51 @@ describe('startSpan', () => {
       // @ts-expect-error span names are a fixed union, not free strings
       startSpan('home loaded 10000 F');
     expect(typeof typeOnly).toBe('function');
+  });
+});
+
+describe('app start', () => {
+  test('sends app.start.home when Home is the first route and gets data', () => {
+    beginAppStart();
+    noteAppStartRoute(undefined);
+    noteAppStartRoute('index');
+    endAppStart('home');
+    expect(startInactiveSpan).toHaveBeenCalledTimes(1);
+    expect(startInactiveSpan.mock.calls[0]?.[0]).toMatchObject({ name: 'app.start.home' });
+  });
+
+  test('a start that lands elsewhere (deep link, onboarding) sends nothing', () => {
+    beginAppStart();
+    noteAppStartRoute('payments/[paymentId]');
+    noteAppStartRoute('index');
+    endAppStart('home');
+    expect(startInactiveSpan).not.toHaveBeenCalled();
+  });
+
+  test('leaving Home before its data arrives sends nothing', () => {
+    beginAppStart();
+    noteAppStartRoute('index');
+    noteAppStartRoute('join-by-code');
+    endAppStart('home');
+    expect(startInactiveSpan).not.toHaveBeenCalled();
+  });
+
+  test('a start older than 30 s is dropped, not sent', () => {
+    const t0 = new Date('2026-10-09T08:00:00Z');
+    setSystemTime(t0);
+    beginAppStart();
+    setSystemTime(new Date(t0.getTime() + 31_000));
+    endAppStart('home');
+    expect(startInactiveSpan).not.toHaveBeenCalled();
+  });
+
+  test('a start just under 30 s is still sent', () => {
+    const t0 = new Date('2026-10-09T08:00:00Z');
+    setSystemTime(t0);
+    beginAppStart();
+    setSystemTime(new Date(t0.getTime() + 29_000));
+    endAppStart('home');
+    expect(startInactiveSpan).toHaveBeenCalledTimes(1);
   });
 });
 
