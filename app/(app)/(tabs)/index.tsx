@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,7 @@ import {
 import { toIntlLocale } from '@/lib/app-locale';
 import { useAppTheme } from '@/lib/theme';
 import { ICON_SIZE } from '@/lib/icons';
+import { endAppStart } from '@/lib/perf';
 
 /**
  * Today answers one question: what can I move forward now? Waiting and the
@@ -37,6 +39,13 @@ export default function TodayScreen() {
   const theme = useAppTheme();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const { data, currentUser, isLoading } = useAttention();
+  const signedOut = isLoaded && !isSignedIn;
+  const hasData = data !== undefined;
+
+  useEffect(() => {
+    if (signedOut) endAppStart('abandoned');
+    else if (hasData) endAppStart('home');
+  }, [signedOut, hasData]);
 
   if (isLoaded && !isSignedIn) return <Redirect href="/sign-in" />;
 
