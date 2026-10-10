@@ -682,6 +682,12 @@
     "claimedByPayee": "{{name}} recorded your payment — confirm or flag it",
     "emptyHint": "When a member declares a payment that involves you, it shows up here."
   },
+  "confirmations": {
+    "title": "To confirm",
+    "emptyTitle": "All confirmed",
+    "emptyBody": "No payment in this group is waiting for your answer.",
+    "rowLabel": "Check {{amount}} from {{name}}"
+  },
   "payment": {
     "notFound": "Payment not found.",
     "group": "Group",

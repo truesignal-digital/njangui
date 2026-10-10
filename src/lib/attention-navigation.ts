@@ -10,7 +10,10 @@ export function attentionHref(destination: AttentionDestination): Href {
         params: { paymentId: destination.paymentRecordId },
       };
     case 'confirmation_queue':
-      return '/inbox';
+      return {
+        pathname: '/groups/[groupId]/confirmations',
+        params: { groupId: destination.groupId },
+      };
     case 'meeting_mode':
       return {
         pathname: '/groups/[groupId]/rounds/[roundId]/meeting',

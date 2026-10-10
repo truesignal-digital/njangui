@@ -70,6 +70,7 @@ export default function AppLayout() {
         />
         <Stack.Screen name="groups/new" />
         <Stack.Screen name="groups/[groupId]/index" />
+        <Stack.Screen name="groups/[groupId]/confirmations" />
         <Stack.Screen name="groups/[groupId]/rounds/[roundId]/index" />
         {/* Pay flow: ONE modal layer (the picker, a content-fit sheet —
             three method rows must not claim the full screen). USSD + claim
