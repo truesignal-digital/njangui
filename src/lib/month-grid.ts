@@ -17,7 +17,8 @@ export type MonthGrid = {
 };
 
 /** 0 = Sunday. Hermes has no Intl.Locale week info, so the app locales are mapped by hand. */
-const firstDayOfWeek: Record<AppLocale, number> = { fr: 1, en: 0 };
+// Cameroon starts the week on Monday in both languages.
+const firstDayOfWeek: Record<AppLocale, number> = { fr: 1, en: 1 };
 
 // 4 October 2026 is a Sunday; adding 0..6 walks one full week.
 const referenceSunday = { year: 2026, month: 9, day: 4 };

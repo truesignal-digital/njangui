@@ -21,19 +21,19 @@ describe('monthGrid', () => {
     expect(grid.title).toBe('octobre 2026');
   });
 
-  test('en starts the week on Sunday with English names', () => {
+  test('en also starts the week on Monday (Cameroon) with English names', () => {
     const grid = monthGrid(2026, OCTOBER, 'en');
 
     expect(grid.weekdays.map((d) => d.long)).toEqual([
-      'Sunday',
       'Monday',
       'Tuesday',
       'Wednesday',
       'Thursday',
       'Friday',
       'Saturday',
+      'Sunday',
     ]);
-    expect(grid.weekdays[0]?.short).toBe('Sun');
+    expect(grid.weekdays[0]?.short).toBe('Mon');
     expect(grid.title).toBe('October 2026');
   });
 
@@ -51,7 +51,7 @@ describe('monthGrid', () => {
       null, null, null, 1, 2, 3, 4,
     ]);
     expect(en.weeks[0]?.map((cell) => cell?.day ?? null)).toEqual([
-      null, null, null, null, 1, 2, 3,
+      null, null, null, 1, 2, 3, 4,
     ]);
   });
 
