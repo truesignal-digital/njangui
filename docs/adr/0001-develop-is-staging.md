@@ -20,8 +20,8 @@ Two long-lived branches:
 1. Nothing lands on `main` except release merges and hotfixes. No direct pushes to `main` or `develop`; no force pushes.
 2. A release merges the current head of `develop`, with a merge commit.
 3. A hotfix branches from `main`, merges into `main`, and is merged back into `develop` the same day.
-4. JS is promoted, never rebuilt: the update tested on `preview` goes to production with `eas update:republish --destination-channel production`. A fresh `eas update` from `main` would be a new, untested artifact.
-5. Convex prod deploys only from `main`; staging only from `develop` (`.github/workflows/deploy-convex.yml`). Each GitHub environment (`staging`, `production`) holds its own `CONVEX_DEPLOY_KEY`; the job fails if it is missing.
+4. JS is promoted, never rebuilt: the update tested on `preview` goes to production with `eas update:republish --destination-channel production`. A fresh `eas update` from `main` would be a new, untested artifact. **Precondition:** `EXPO_PUBLIC_*` values are baked in when an update is published (`src/lib/env.ts:3-4`), so a republished preview bundle would point production users at staging. The bundle must pick its backend at runtime from its update channel (`preview` → staging, `production` → prod); slice E0.4 does this. Until it lands, production updates are published from `main` with the production environment, a known exception.
+5. Convex prod deploys only from `main`; staging only from `develop` (`.github/workflows/deploy-convex.yml`). Two jobs, each naming only its own secret (`CONVEX_STAGING_DEPLOY_KEY`, `CONVEX_DEPLOY_KEY`), with no ternaries and no GitHub Environments: a missing environment secret silently falls back to a repo secret of the same name. Each job fails if its key is missing or targets the other deployment.
 6. Public Convex function signatures evolve additively across both deployments (CLAUDE.md, Server State).
 7. Branch protection on both branches: one required check named `CI`, conversations resolved, no force push, no deletion, admins included.
 
