@@ -603,7 +603,8 @@
     "notOpenBody": "Contributions for this round open at the start of the period. You will be notified.",
     "potTitle": "Round pot",
     "pot": {
-      "custody": "Pot: {{confirmed}} / {{expected}} · received by {{name}}"
+      "custody": "Pot: {{confirmed}} / {{expected}} · received by {{name}}",
+      "inHand": "{{amount}} in hand, held by {{name}}"
     },
     "inFlight": "{{amount}} declared, awaiting confirmation",
     "myRowTitle": "My contribution",
@@ -778,7 +779,8 @@
     "markCta": "Mark the pot handed over",
     "receivedCta": "I received the pot",
     "amountLabel": "Amount handed to {{name}}",
-    "amountHint": "Prefilled with the confirmed total — record what was actually handed over.",
+    "amountHint": "Prefilled with the money in hand (confirmed and received at the meeting) — record what was actually handed over.",
+    "shortWarning": "{{gap}} short of the {{expected}} expected. You can still hand it over.",
     "claimCta": "Confirm the handover",
     "claimed": "Handover declared — the other party must confirm ✓",
     "selfDone": "Pot handed over and confirmed (same person) ✓",

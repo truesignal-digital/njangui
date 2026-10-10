@@ -575,6 +575,10 @@ const roundDetailValidator = v.object({
   expectedTotal: v.number(), // obligated contributors × expected — pot denominator
   confirmedTotal: v.number(), // sum of confirmed contributions — the only ledger-final money
   inFlightTotal: v.number(), // claimed + disputed contributions
+  // confirmed + payee-side claims (Meeting Mode cash ticks): what the
+  // custodian says they hold. Display + payout prefill only — settlement
+  // still reads confirmedTotal.
+  inHandTotal: v.number(),
   payout: v.union(v.null(), payoutSummaryValidator), // null in direct mode / before open
   // Who the viewer's contribution goes to, WITH the number the USSD flow
   // needs. Deliberately narrower than the roster phone gate (04 §B): a
@@ -690,6 +694,7 @@ export const getRound = query({
         state: r.state,
         amount: r.amount,
         claimedAt: r.claimedAt,
+        claimedBySide: r.claimedBySide,
       }))
     );
     // Σ per-payer expected (hands-aware) — never payers × base amount.
@@ -723,6 +728,7 @@ export const getRound = query({
       expectedTotal,
       confirmedTotal: pot.confirmedAmount,
       inFlightTotal: pot.inFlightAmount,
+      inHandTotal: pot.inHandAmount,
       payout: payout
         ? {
             paymentRecordId: payout._id,

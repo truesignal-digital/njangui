@@ -9,6 +9,7 @@ import {
   addDays,
   addMonthsClamped,
   computePotProgress,
+  payoutShortfall,
   computeRoundTimes,
   expectedContributionAmount,
   handsByMembership,
@@ -206,7 +207,61 @@ describe('computePotProgress', () => {
     expect(computePotProgress(records)).toEqual({
       confirmedAmount: 10_000,
       inFlightAmount: 7500,
+      inHandAmount: 10_000,
     });
+  });
+
+  test('a payee-side claim (Meeting Mode cash tick) is in hand but not confirmed', () => {
+    const pot = computePotProgress([
+      { state: 'claimed', amount: 10_000, claimedAt: 1, claimedBySide: 'payee' },
+    ]);
+    expect(pot.inHandAmount).toBe(10_000);
+    expect(pot.confirmedAmount).toBe(0);
+    expect(pot.inFlightAmount).toBe(10_000);
+  });
+
+  test('a payer-side claim is neither in hand nor confirmed', () => {
+    const pot = computePotProgress([
+      { state: 'claimed', amount: 10_000, claimedAt: 1, claimedBySide: 'payer' },
+    ]);
+    expect(pot.inHandAmount).toBe(0);
+    expect(pot.confirmedAmount).toBe(0);
+  });
+
+  test('disputed and cancelled records count in neither, whichever side claimed', () => {
+    const pot = computePotProgress([
+      { state: 'disputed', amount: 10_000, claimedAt: 1, claimedBySide: 'payee' },
+      { state: 'disputed', amount: 5000, claimedAt: 2, claimedBySide: 'payer' },
+      { state: 'cancelled', amount: 10_000, claimedAt: 3, claimedBySide: 'payee' },
+      { state: 'pending', amount: 10_000 },
+    ]);
+    expect(pot.inHandAmount).toBe(0);
+    expect(pot.confirmedAmount).toBe(0);
+  });
+
+  test('in hand = confirmed + payee-side claims', () => {
+    const pot = computePotProgress([
+      { state: 'confirmed', amount: 10_000, claimedAt: 1, claimedBySide: 'payer' },
+      { state: 'claimed', amount: 10_000, claimedAt: 2, claimedBySide: 'payee' },
+      { state: 'claimed', amount: 5000, claimedAt: 3, claimedBySide: 'payee' },
+      { state: 'claimed', amount: 10_000, claimedAt: 4, claimedBySide: 'payer' },
+    ]);
+    expect(pot).toEqual({
+      confirmedAmount: 10_000,
+      inFlightAmount: 25_000,
+      inHandAmount: 25_000,
+    });
+  });
+});
+
+describe('payoutShortfall', () => {
+  test('gap below the expected pot', () => {
+    expect(payoutShortfall(70_000, 100_000)).toBe(30_000);
+  });
+
+  test('zero when the payout covers or exceeds the expected pot', () => {
+    expect(payoutShortfall(100_000, 100_000)).toBe(0);
+    expect(payoutShortfall(120_000, 100_000)).toBe(0);
   });
 });
 

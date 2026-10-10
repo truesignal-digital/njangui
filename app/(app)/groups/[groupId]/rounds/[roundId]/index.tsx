@@ -9,30 +9,33 @@ import { toast } from 'sonner-native';
 import { ChevronLeftIcon } from 'react-native-heroicons/outline';
 import { CheckCircleIcon } from 'react-native-heroicons/solid';
 
-import { api, type Id } from '../../../../../../src/lib/convex-api';
-import { useAuth } from '../../../../../../src/lib/clerk-client';
-import { formatCurrencyXAF } from '../../../../../../src/lib/format-currency';
-import { haptics } from '../../../../../../src/lib/haptics';
-import { newIdempotencyKey } from '../../../../../../src/lib/idempotency';
+import { api, type Id } from '@/lib/convex-api';
+import { useAuth } from '@/lib/clerk-client';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { showErrorToast } from '@/lib/error-toast';
+import { haptics } from '@/lib/haptics';
+import { newIdempotencyKey } from '@/lib/idempotency';
 import {
   buildRoundSummary,
   shareRoundSummary,
-} from '../../../../../../src/lib/round-summary';
-import { useAppTheme, useShadow } from '../../../../../../src/lib/theme';
-import { TextField } from '../../../../../../src/components/ui/text-field';
+} from '@/lib/round-summary';
+import { useAppTheme, useShadow } from '@/lib/theme';
+import { TextField } from '@/components/ui/text-field';
 import {
   Badge,
   PaymentStateBadge,
   type PaymentState,
-} from '../../../../../../src/components/ui/badge';
-import { AppButton } from '../../../../../../src/components/ui/button';
-import { PotProgress } from '../../../../../../src/components/ui/pot-progress';
-import { SectionCard } from '../../../../../../src/components/ui/section-card';
-import { resolveSeed } from '../../../../../../src/lib/group-colors';
-import { Skeleton } from '../../../../../../src/components/skeleton';
-import { SoftPressable } from '../../../../../../src/components/ui/soft-pressable';
-import { ICON_SIZE } from '../../../../../../src/lib/icons';
-import { NjangiMark } from '../../../../../../src/components/brand/njangi-mark';
+} from '@/components/ui/badge';
+import { AppButton } from '@/components/ui/button';
+import { PotProgress } from '@/components/ui/pot-progress';
+import { SectionCard } from '@/components/ui/section-card';
+import { resolveSeed } from '@/lib/group-colors';
+import { Skeleton } from '@/components/skeleton';
+import { SoftPressable } from '@/components/ui/soft-pressable';
+import { ICON_SIZE } from '@/lib/icons';
+import { NjangiMark } from '@/components/brand/njangi-mark';
+// No alias for convex/ — same direct import as src/hooks/use-pay-flow.ts.
+import { payoutShortfall } from '../../../../../../convex/lib/roundMath';
 
 /**
  * Round detail (docs/03 B4 entry, payment-features-plan Slice 1): pot
@@ -189,6 +192,7 @@ export default function RoundDetailScreen() {
               confirmedTotal={round.confirmedTotal}
               expectedTotal={round.expectedTotal}
               inFlightTotal={round.inFlightTotal}
+              inHandTotal={round.inHandTotal}
               custodianName={round.custodianName}
               colorSeed={resolveSeed(group?.colorSeed ?? null, round.groupId)}
             />
@@ -387,14 +391,17 @@ function PayoutBlock({
     round.beneficiaryMembershipId === round.viewerMembershipId;
   const viewerIsTreasurer = viewerRole === 'treasurer';
 
-  // Prefill = confirmed pot (what is actually in hand), not the estimate.
+  // Prefill = money in hand (confirmed + cash the treasurer ticked at the
+  // meeting), not the estimate.
   const prefill =
-    round.confirmedTotal > 0 ? round.confirmedTotal : (payout?.amount ?? 0);
+    round.inHandTotal > 0 ? round.inHandTotal : (payout?.amount ?? 0);
   const effectiveText = amountText ?? String(prefill);
   const amount = useMemo(() => {
     const parsed = Number(effectiveText.replace(/[\s.]/g, ''));
     return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
   }, [effectiveText]);
+  const shortfall =
+    amount === null ? 0 : payoutShortfall(amount, round.expectedTotal);
 
   if (!payout) return null;
 
@@ -416,8 +423,7 @@ function PayoutBlock({
       );
       setEditing(false);
     } catch (err) {
-      haptics.error();
-      toast.error(err instanceof Error ? err.message : t('common.error'));
+      showErrorToast(err, t);
     } finally {
       setBusy(false);
     }
@@ -472,6 +478,17 @@ function PayoutBlock({
         <Text className="font-body text-caption text-muted">
           {t('payout.amountHint')}
         </Text>
+        {shortfall > 0 ? (
+          <Text
+            className="font-body-medium text-body-sm text-warning-dark"
+            testID="payout-short-warning"
+          >
+            {t('payout.shortWarning', {
+              gap: formatCurrencyXAF(shortfall),
+              expected: formatCurrencyXAF(round.expectedTotal),
+            })}
+          </Text>
+        ) : null}
         <View className="flex-row gap-sm">
           <AppButton
             className="flex-1"

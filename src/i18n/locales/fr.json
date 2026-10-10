@@ -603,7 +603,8 @@
     "notOpenBody": "Les cotisations de ce tour s'ouvriront au début de la période. Vous serez notifié(e).",
     "potTitle": "Pot du tour",
     "pot": {
-      "custody": "Pot : {{confirmed}} / {{expected}} · reçu par {{name}}"
+      "custody": "Pot : {{confirmed}} / {{expected}} · reçu par {{name}}",
+      "inHand": "{{amount}} en main chez {{name}}"
     },
     "inFlight": "{{amount}} déclaré, en attente de confirmation",
     "myRowTitle": "Ma cotisation",
@@ -778,7 +779,8 @@
     "markCta": "Marquer le pot remis",
     "receivedCta": "J'ai reçu le pot",
     "amountLabel": "Montant remis à {{name}}",
-    "amountHint": "Prérempli avec le total confirmé — enregistrez ce qui a réellement été remis.",
+    "amountHint": "Prérempli avec l'argent en main (confirmé et reçu en réunion) — enregistrez ce qui a réellement été remis.",
+    "shortWarning": "Il manque {{gap}} sur les {{expected}} attendus. La remise reste possible.",
     "claimCta": "Confirmer la remise",
     "claimed": "Remise déclarée — l'autre partie doit confirmer ✓",
     "selfDone": "Pot remis et confirmé (même personne) ✓",
