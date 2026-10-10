@@ -113,7 +113,7 @@ Rules:
 - Never write `dark:` variants. Dark mode is handled by the CSS-var flip (`darkMode: 'media'`); if a color looks wrong in dark, fix the dark value in `mobile-ui-config.json`, not the call site.
 - A `theme.isDark ? a : b` ternary is the escape hatch for genuine one-offs. If the same pair shows up in a second component, promote it to a named token in `mobile-ui-config.json` (add to BOTH `colors.light` and `colors.dark` — they must stay key-identical).
 - Spacing/radius/type: use tokens (`p-lg`, `gap-sm`, `rounded-xl`, `text-title`, `font-body-semi`). Arbitrary values like `h-[96px]` are OK for one-off dimensions (skeletons, icon boxes) but NOT for padding/gap/margin — snap those to the scale or add a token to `spacingExtras`.
-- Every `<Text>` must include a `font-*` class (`font-body`, `font-body-semi`, `font-heading`, `font-mono`) — Android breaks on bare fontWeight with our static font files.
+- Every `<Text>` must include a `font-*` class (`font-body`, `font-body-semi`, `font-heading`, `font-mono`). The class sets the weight from tokens; on Android, weights 500/600 also need the `sans-serif-medium` face, because a bare `fontWeight` there only gives Regular or Bold. Money amounts use `MoneyText`.
 - Shadows: use `useShadow()('card')` via the `style` prop (handles dark-mode opacity), or the `shadow-card`/`shadow-floating` classes.
 - Always-on colors (same in light and dark, e.g. on-scrim white) come from `mobileUiConfig.structuralColors`, not literals.
 - If a dark-first redesign or theme toggle ships, switch `tailwind.config.ts` to `darkMode: 'class'` (NativeWind `colorScheme.set`) in the same PR that adds the setting — do not scatter `isDark` overrides to fake it under `darkMode: 'media'`.
@@ -221,7 +221,7 @@ Typed routes are ON (`experiments.typedRoutes` in app.json). Rules:
 1. **Plain `throw new Error` in `convex/` reaches prod users as "Server Error"** — use `ConvexError({ code })` for anything the UI shows or branches on.
 2. **`setVisible(false)` + `router.back()` in the same tick** races two dismissal animations. Navigate OR use the Modal's `onDismiss`, never both at once.
 3. **`bg-amber-100` etc. silently produce nothing** — the Tailwind default palette is removed. Only semantic token classes exist.
-4. **`<Text>` without a `font-*` class breaks on Android** (bare fontWeight + static font files).
+4. **`<Text>` without a `font-*` class renders the wrong weight on Android**: a bare `fontWeight` 500/600 falls back to Regular. The `font-*` classes add the `sans-serif-medium` face.
 5. **`dark:` variants are dead code** — dark mode flips via CSS vars from `mobile-ui-config.json`; fix the dark token, not the call site.
 6. **Bare `toLocaleString()` / hardcoded `'fr-FR'`** ignores the in-app FR/EN toggle — always `toIntlLocale(i18n.language)`.
 7. **`useQuery` args from per-keystroke state** tear down the Convex subscription on every character — `useDeferredValue` the derived arg.
