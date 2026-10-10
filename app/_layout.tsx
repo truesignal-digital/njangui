@@ -6,6 +6,7 @@ import {
   DefaultTheme as NavLightTheme,
   Stack,
   ThemeProvider as NavThemeProvider,
+  useNavigationContainerRef,
 } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -31,8 +32,14 @@ import { Toaster } from 'sonner-native';
 import * as Sentry from '@sentry/react-native';
 
 import { AppProviders } from '@/providers/app-providers';
+import { beginAppStart } from '@/lib/perf';
 import { useAppTheme } from '@/lib/theme';
 import { useThemePreference } from '@/lib/theme-preference';
+
+// Screen loads: one transaction per navigation, with time to initial display.
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: true,
+});
 
 Sentry.init({
   // DSN is a public identifier, safe in source.
@@ -41,10 +48,14 @@ Sentry.init({
   enabled: !__DEV__,
   // Tiny user base — capture every error until volume forces sampling.
   sampleRate: 1.0,
+  // Pilot volume: trace every session until volume forces sampling.
+  tracesSampleRate: 1.0,
+  integrations: [navigationIntegration],
   // Money app: no IP/device identifiers attached to events.
   sendDefaultPii: false,
   enableLogs: false,
 });
+beginAppStart();
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -120,6 +131,13 @@ function AppNavigation() {
 }
 
 export default Sentry.wrap(function RootLayout() {
+  const navigationRef = useNavigationContainerRef();
+  useEffect(() => {
+    if (navigationRef?.current) {
+      navigationIntegration.registerNavigationContainer(navigationRef);
+    }
+  }, [navigationRef]);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
