@@ -2,9 +2,11 @@ import {
   Host,
   SegmentedButton,
   SingleChoiceSegmentedButtonRow,
+  Text,
 } from '@expo/ui/jetpack-compose';
 import { fillMaxWidth } from '@expo/ui/jetpack-compose/modifiers';
 
+import { useAppTheme } from '@/lib/theme';
 import type { AppearanceSelectorProps } from './types';
 
 export function AppearanceSelector({
@@ -14,6 +16,8 @@ export function AppearanceSelector({
   accentColor,
   onChange,
 }: AppearanceSelectorProps) {
+  const theme = useAppTheme();
+
   return (
     <Host
       colorScheme={colorScheme}
@@ -27,7 +31,9 @@ export function AppearanceSelector({
             selected={value === option.value}
             onClick={() => onChange(option.value)}
           >
-            <SegmentedButton.Label>{option.label}</SegmentedButton.Label>
+            <SegmentedButton.Label>
+              <Text color={theme.text}>{option.label}</Text>
+            </SegmentedButton.Label>
           </SegmentedButton>
         ))}
       </SingleChoiceSegmentedButtonRow>

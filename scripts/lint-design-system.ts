@@ -13,6 +13,9 @@
  * 4. fr.json and en.json expose the same key set (FR-first i18n contract —
  *    a key present in one language only ships a raw key to users).
  * 5. App-owned UI uses Heroicons, not emoji or a competing icon package.
+ * 6. Jetpack Compose `*.Label` slots in native Android files wrap a Compose
+ *    `<Text>`. A bare `{string}` becomes RN raw text, which Compose slots skip,
+ *    so the label renders blank.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -136,6 +139,23 @@ for (const file of [...sourceFiles(join(ROOT, 'app')), ...sourceFiles(join(ROOT,
     errors.push(
       `${file.slice(ROOT.length + 1)}: app-owned icons must come from react-native-heroicons`
     );
+  }
+}
+
+// 6 — Compose slots only render Compose children (ExpoComposeView.Children
+// skips non-Compose views), so a bare string in a `*.Label` slot is invisible.
+const NATIVE_DIR = join(ROOT, 'src', 'components', 'native');
+const composeLabelRe = /<([\w.]+)\.Label>([\s\S]*?)<\/\1\.Label>/g;
+for (const file of sourceFiles(NATIVE_DIR).filter((path) => path.endsWith('index.android.tsx'))) {
+  const source = readFileSync(file, 'utf8');
+  for (const match of source.matchAll(composeLabelRe)) {
+    const inner = match[2].trim();
+    if (!/^<Text[\s>]/.test(inner) || !/(<\/Text>|\/>)$/.test(inner)) {
+      const line = source.slice(0, match.index).split('\n').length;
+      errors.push(
+        `${file.slice(ROOT.length + 1)}:${line}: ${match[1]}.Label must wrap a <Text> from @expo/ui/jetpack-compose, not a bare expression`
+      );
+    }
   }
 }
 
