@@ -820,7 +820,15 @@
     "summaryCounts": "{{settled}} / {{total}} contributions settled",
     "readOutNote": "Read the entries aloud for members without the app — that is their receipt.",
     "backToRollCall": "Back to roll call",
-    "share": "Share the summary (WhatsApp)"
+    "share": "Share the summary (WhatsApp)",
+    "exitConfirm": {
+      "title_one": "{{count}} tap not sent yet",
+      "title_other": "{{count}} taps not sent yet",
+      "body_one": "It stays on this phone and is sent the next time you open Meeting Mode.",
+      "body_other": "They stay on this phone and are sent the next time you open Meeting Mode.",
+      "stay": "Stay",
+      "leave": "Leave"
+    }
   },
   "feed": {
     "title": "Activity",

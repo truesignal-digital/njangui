@@ -820,7 +820,15 @@
     "summaryCounts": "{{settled}} / {{total}} cotisations réglées",
     "readOutNote": "Lisez à voix haute les saisies pour les membres sans l'appli — c'est leur reçu.",
     "share": "Partager le résumé (WhatsApp)",
-    "backToRollCall": "Reprendre l'appel"
+    "backToRollCall": "Reprendre l'appel",
+    "exitConfirm": {
+      "title_one": "{{count}} pointage pas encore envoyé",
+      "title_other": "{{count}} pointages pas encore envoyés",
+      "body_one": "Il reste sur ce téléphone et sera envoyé à la prochaine ouverture du mode réunion.",
+      "body_other": "Ils restent sur ce téléphone et seront envoyés à la prochaine ouverture du mode réunion.",
+      "stay": "Rester",
+      "leave": "Quitter"
+    }
   },
   "feed": {
     "title": "Activité",
