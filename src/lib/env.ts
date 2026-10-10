@@ -8,12 +8,12 @@ import { resolveBackendEnv } from '@/lib/env-channel';
 const channel = process.env.EXPO_OS === 'web' ? null : Updates.channel;
 
 // Throws at startup on an unknown update channel rather than guessing a backend.
-const { clerkPublishableKey, convexUrl } = resolveBackendEnv(channel, {
+const { clerkPublishableKey, convexUrl, siteUrl } = resolveBackendEnv(channel, {
   // Literal process.env reads so Metro inlines them; only dev builds use them.
   clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
   convexUrl: process.env.EXPO_PUBLIC_CONVEX_URL,
+  siteUrl: process.env.EXPO_PUBLIC_SITE_URL,
 });
-const siteUrl = process.env.EXPO_PUBLIC_SITE_URL ?? 'https://njangi.app';
 
 /**
  * The 'ios' | 'android' literal backend payloads expect — this app never

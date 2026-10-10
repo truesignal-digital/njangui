@@ -8,10 +8,12 @@ const PROD_DEPLOYMENT = 'fantastic-zebra-245';
 const stagingBuildEnv = {
   convexUrl: `https://${STAGING_DEPLOYMENT}.convex.cloud`,
   clerkPublishableKey: 'pk_test_c3RhZ2luZyQ',
+  siteUrl: 'https://staging.njangi.example',
 };
 const prodBuildEnv = {
   convexUrl: `https://${PROD_DEPLOYMENT}.convex.cloud`,
   clerkPublishableKey: 'pk_live_cHJvZCQ',
+  siteUrl: 'https://prod.njangi.example',
 };
 
 describe('resolveBackendEnv', () => {
@@ -37,6 +39,19 @@ describe('resolveBackendEnv', () => {
   test('dev builds (no channel, or the development channel) keep build-time values', () => {
     expect(resolveBackendEnv(null, stagingBuildEnv)).toEqual(stagingBuildEnv);
     expect(resolveBackendEnv('development', stagingBuildEnv)).toEqual(stagingBuildEnv);
+  });
+
+  test('channel builds ignore the publish-time site URL', () => {
+    for (const channel of ['preview', 'production']) {
+      for (const buildEnv of [stagingBuildEnv, prodBuildEnv, {}]) {
+        expect(resolveBackendEnv(channel, buildEnv).siteUrl).toBe('https://njangi.app');
+      }
+    }
+  });
+
+  test('dev builds fall back to the default site URL', () => {
+    const { siteUrl: _siteUrl, ...withoutSiteUrl } = stagingBuildEnv;
+    expect(resolveBackendEnv(null, withoutSiteUrl).siteUrl).toBe('https://njangi.app');
   });
 
   test('dev builds without build-time values throw', () => {

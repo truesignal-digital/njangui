@@ -43,6 +43,7 @@ jobs:
 
       # The channel → backend map is what makes republish-to-production safe.
       - run: bun test src/lib/env-channel.test.ts
+      - run: bun run typecheck
 
       - uses: expo/expo-github-action@v8
         with:

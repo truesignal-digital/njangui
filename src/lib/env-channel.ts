@@ -10,18 +10,26 @@
 export type BackendEnv = {
   convexUrl: string;
   clerkPublishableKey: string;
+  siteUrl: string;
 };
+
+// EXPO_PUBLIC_SITE_URL is set in no EAS environment, so both channels share
+// the default. Kept per channel so a republished update never carries a
+// publish-time value across.
+const DEFAULT_SITE_URL = 'https://njangi.app';
 
 const CHANNEL_BACKENDS = {
   // Staging: Convex benevolent-gopher-102 + the dev Clerk instance.
   preview: {
     convexUrl: 'https://benevolent-gopher-102.convex.cloud',
     clerkPublishableKey: 'pk_test_aW1tb3J0YWwtY2FsZi01Mi5jbGVyay5hY2NvdW50cy5kZXYk',
+    siteUrl: DEFAULT_SITE_URL,
   },
   // Prod: Convex fantastic-zebra-245 + clerk.njangui.truesignaldigital.com.
   production: {
     convexUrl: 'https://fantastic-zebra-245.convex.cloud',
     clerkPublishableKey: 'pk_live_Y2xlcmsubmphbmd1aS50cnVlc2lnbmFsZGlnaXRhbC5jb20k',
+    siteUrl: DEFAULT_SITE_URL,
   },
 } as const satisfies Record<string, BackendEnv>;
 
@@ -38,10 +46,10 @@ export function resolveBackendEnv(
   buildTimeEnv: Partial<BackendEnv>
 ): BackendEnv {
   if (BUILD_TIME_CHANNELS.has(channel)) {
-    const { convexUrl, clerkPublishableKey } = buildTimeEnv;
+    const { convexUrl, clerkPublishableKey, siteUrl = DEFAULT_SITE_URL } = buildTimeEnv;
     if (!convexUrl) throw new Error('Missing EXPO_PUBLIC_CONVEX_URL');
     if (!clerkPublishableKey) throw new Error('Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY');
-    return { convexUrl, clerkPublishableKey };
+    return { convexUrl, clerkPublishableKey, siteUrl };
   }
 
   if (channel !== null && isChannelBackend(channel)) {
