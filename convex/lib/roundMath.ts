@@ -240,6 +240,8 @@ export interface ObligationRecordSnapshot {
   state: ObligationRecordState;
   amount: number;
   claimedAt?: number;
+  /** Who made the claim (schema `claimedBySide`); absent until claimed. */
+  claimedBySide?: 'payer' | 'payee';
 }
 
 export interface PotProgress {
@@ -247,19 +249,44 @@ export interface PotProgress {
   confirmedAmount: number;
   /** Sum of `claimed` + `disputed` records — asserted but not yet acknowledged. */
   inFlightAmount: number;
+  /**
+   * Money the custodian holds: confirmed + `claimed` records the PAYEE side
+   * claimed (Meeting Mode cash tick / « j'ai reçu » — the receiver says they
+   * have it). A payer-side claim is only an assertion by the sender, and a
+   * disputed record is contested, so neither counts. Display/prefill only:
+   * never a substitute for `confirmedAmount` in settlement checks.
+   */
+  inHandAmount: number;
 }
 
 export function computePotProgress(records: readonly ObligationRecordSnapshot[]): PotProgress {
   let confirmedAmount = 0;
   let inFlightAmount = 0;
+  let payeeClaimedAmount = 0;
   for (const record of records) {
     if (record.state === 'confirmed') {
       confirmedAmount += record.amount;
     } else if (record.state === 'claimed' || record.state === 'disputed') {
       inFlightAmount += record.amount;
+      if (record.state === 'claimed' && record.claimedBySide === 'payee') {
+        payeeClaimedAmount += record.amount;
+      }
     }
   }
-  return { confirmedAmount, inFlightAmount };
+  return {
+    confirmedAmount,
+    inFlightAmount,
+    inHandAmount: confirmedAmount + payeeClaimedAmount,
+  };
+}
+
+/**
+ * How far a pot handover falls short of the expected pot (Σ expectedForMember
+ * — the caller passes `getRound.expectedTotal`). 0 when covered. A short
+ * handover is allowed; this only drives the warning.
+ */
+export function payoutShortfall(payoutAmount: number, expectedTotal: number): number {
+  return Math.max(0, expectedTotal - payoutAmount);
 }
 
 // ─────────────────────────────────────────────────────────────

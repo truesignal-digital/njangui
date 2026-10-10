@@ -8,27 +8,31 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { formatCurrencyXAF } from '../../lib/format-currency';
-import { groupAccent } from '../../lib/group-colors';
-import { useAppTheme } from '../../lib/theme';
-import { mobileUiConfig } from '../../lib/mobile-ui-config';
+import { formatCurrencyXAF } from '@/lib/format-currency';
+import { groupAccent } from '@/lib/group-colors';
+import { useAppTheme } from '@/lib/theme';
+import { mobileUiConfig } from '@/lib/mobile-ui-config';
 
 /**
  * The pot filling up IS the njangi — the fill animates (spring) on every
  * confirmed payment so money being acknowledged is something you can SEE.
  * Custody-captioned, never a bare balance (00 red line). When a group
- * seed is provided the fill takes the group's accent hue.
+ * seed is provided the fill takes the group's accent hue. The bar tracks
+ * confirmed money only; cash the custodian ticked at the meeting shows as
+ * its own « en main » figure until the payers confirm.
  */
 export function PotProgress({
   confirmedTotal,
   expectedTotal,
   inFlightTotal,
+  inHandTotal,
   custodianName,
   colorSeed,
 }: {
   confirmedTotal: number;
   expectedTotal: number;
   inFlightTotal: number;
+  inHandTotal: number;
   custodianName: string;
   colorSeed?: number | null;
 }) {
@@ -54,6 +58,10 @@ export function PotProgress({
       ? groupAccent(colorSeed, dark)
       : theme.accent;
 
+  // Payee-side claims already appear in the "en main" line; showing them again as
+  // "déclaré, en attente" made the two lines read as if they should be added.
+  const otherInFlight = Math.max(0, inFlightTotal - Math.max(0, inHandTotal - confirmedTotal));
+
   return (
     <View className="gap-xs">
       <Text className="font-body-semi text-body text-foreground">
@@ -69,9 +77,20 @@ export function PotProgress({
           style={[fillStyle, { backgroundColor: fillColor }]}
         />
       </View>
-      {inFlightTotal > 0 ? (
+      {inHandTotal > confirmedTotal ? (
+        <Text
+          className="font-body-medium text-body-sm text-foreground"
+          testID="pot-in-hand"
+        >
+          {t('round.pot.inHand', {
+            amount: formatCurrencyXAF(inHandTotal),
+            name: custodianName,
+          })}
+        </Text>
+      ) : null}
+      {otherInFlight > 0 ? (
         <Text className="font-body text-caption text-muted">
-          {t('round.inFlight', { amount: formatCurrencyXAF(inFlightTotal) })}
+          {t('round.inFlight', { amount: formatCurrencyXAF(otherInFlight) })}
         </Text>
       ) : null}
     </View>

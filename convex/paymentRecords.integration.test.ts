@@ -587,3 +587,120 @@ describe('payment record integration', () => {
     ).toBe(10_000);
   });
 });
+
+describe('round pot in hand (Meeting Mode cash ticks)', () => {
+  test('three payee-side cash claims count in getRound.inHandTotal, not confirmedTotal', async () => {
+    const t = convexTest({ schema, modules });
+    const ids = await t.run(async (ctx) => {
+      const treasurerUserId = await ctx.db.insert('users', {
+        clerkId: 'inhand-treasurer',
+        name: 'Marie Treasurer',
+        language: 'fr',
+      });
+      const groupId = await ctx.db.insert('groups', {
+        name: 'Njangi En Main',
+        schedule: 'monthly',
+        contributionAmount: 10_000,
+        graceDays: 2,
+        finesEnabled: false,
+        beneficiaryContributes: true,
+        collectionMode: 'via_treasurer',
+        inviteCode: 'INHND1',
+        status: 'active',
+        language: 'fr',
+        createdByUserId: treasurerUserId,
+      });
+      const treasurerMembershipId = await ctx.db.insert('memberships', {
+        groupId,
+        userId: treasurerUserId,
+        displayName: 'Marie Treasurer',
+        role: 'treasurer',
+        status: 'active',
+        joinedAt: Date.now(),
+      });
+      const memberIds: Id<'memberships'>[] = [];
+      for (const [i, name] of ['Ama', 'Bello', 'Chantal', 'Didier'].entries()) {
+        memberIds.push(
+          await ctx.db.insert('memberships', {
+            groupId,
+            displayName: name,
+            role: 'member',
+            status: 'active',
+            joinedAt: Date.now() + i + 1,
+          })
+        );
+      }
+      const payerUserId = await ctx.db.insert('users', {
+        clerkId: 'inhand-payer',
+        name: 'Didier',
+        language: 'fr',
+      });
+      await ctx.db.patch(memberIds[3], { userId: payerUserId });
+      const cycleId = await ctx.db.insert('cycles', {
+        groupId,
+        index: 1,
+        status: 'active',
+        rotationOrder: [treasurerMembershipId, ...memberIds],
+        contributionAmount: 10_000,
+        schedule: 'monthly',
+        beneficiaryContributes: true,
+        collectionMode: 'via_treasurer',
+        graceDays: 2,
+        startDate: '2026-07-10',
+        lockedAt: Date.now(),
+      });
+      const roundId = await ctx.db.insert('rounds', {
+        cycleId,
+        groupId,
+        index: 1,
+        beneficiaryMembershipId: memberIds[0],
+        scheduledOpenAt: Date.now() - 1_000,
+        dueAt: Date.now() + 86_400_000,
+        graceEndAt: Date.now() + 3 * 86_400_000,
+        status: 'open',
+        expectedAmountPerMember: 10_000,
+        openedAt: Date.now(),
+      });
+      const recordIds: Id<'paymentRecords'>[] = [];
+      for (const payerMembershipId of memberIds) {
+        recordIds.push(
+          await ctx.db.insert('paymentRecords', {
+            groupId,
+            roundId,
+            kind: 'contribution',
+            state: 'pending',
+            amount: 10_000,
+            payerMembershipId,
+            payeeMembershipId: treasurerMembershipId,
+            proofType: 'none',
+          })
+        );
+      }
+      return { roundId, recordIds };
+    });
+
+    const treasurer = t.withIdentity({ subject: 'inhand-treasurer' });
+    for (const [i, paymentRecordId] of ids.recordIds.slice(0, 3).entries()) {
+      const result = await treasurer.mutation(api.paymentRecords.claim, {
+        paymentRecordId,
+        idempotencyKey: `meeting-tick-${i}`,
+        method: 'cash',
+      });
+      expect(result.state).toBe('claimed');
+    }
+    // A payer-side « j'ai envoyé » stays in flight, never in hand.
+    const payer = t.withIdentity({ subject: 'inhand-payer' });
+    await payer.mutation(api.paymentRecords.claim, {
+      paymentRecordId: ids.recordIds[3],
+      idempotencyKey: 'payer-self-claim',
+      method: 'cash',
+    });
+
+    const round = await treasurer.query(api.rounds.getRound, { roundId: ids.roundId });
+    expect(round).not.toBeNull();
+    expect(round?.inHandTotal).toBe(30_000);
+    expect(round?.confirmedTotal).toBe(0);
+    expect(round?.inFlightTotal).toBe(40_000);
+    expect(round?.expectedTotal).toBe(40_000);
+  });
+});
